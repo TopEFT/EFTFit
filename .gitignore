@@ -1,0 +1,4 @@
+# Compiled Code #
+*.pyc
+*__init__.py
+
