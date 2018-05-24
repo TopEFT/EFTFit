@@ -22,19 +22,17 @@ class EFT1DModel(PhysicsModel):
     """
 
     def setPhysicsOptions(self, options):
-        self.coefficient = None
+        self.coefficient = []
         self.processes = []
         self.bins = []
         for option, value in [x.split('=') for x in options]:
-            if option == 'coefficient':
-                if self.coefficient is not None:
-                    raise NotImplementedError('only one coefficient currently supported')
-                self.coefficient = value
+            if option == 'coefficient': # list of EFT operators to scale
+                self.coefficient.append(value)
             if option == 'process':  # processes which will be scaled
                 self.processes.append(value)
-            if option == 'bin':
+            if option == 'bin': # bins to be scaled
                 self.bins.append(value)
-            if option == 'scaling':
+            if option == 'scaling': # file with the fit functions
                 self.scaling = value
 
     def setup(self):
@@ -43,28 +41,31 @@ class EFT1DModel(PhysicsModel):
         for process in self.processes:
             for bin in self.bins:
                 self.modelBuilder.out.var(process)
-                name = 'r_{0}_{1}_{2}'.format(process, bin, self.coefficient)
+                name = 'r_{0}_{1}'.format(process, bin)
                 if not self.modelBuilder.out.function(name):
-                    template = "expr::{name}('{a0} + ({a1} * {c}) + ({a2} * {c} * {c})', {c})"
-                    a0, a1, a2 = scaling[self.coefficient][(process,bin)]
-                    quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient))
-                    print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient)
+                    template = "expr::{name}('{a0} + ({a1} * {c}) + ({a2} * {c} * {c2})', {c}, {c2})"
+                    a0, a1, a2 = scaling[self.coefficient[0]][(process,bin)]
+                    print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0],c2=self.coefficient[1])
+                    quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0], c2=self.coefficient[1]))
+                    #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0],c2=self.coefficient[1])
                     self.modelBuilder.out._import(quadratic)
 
     def doParametersOfInterest(self):
         # user should call combine with `--setPhysicsModelParameterRanges` set to sensible ranges
-        self.modelBuilder.doVar('{0}[0, -inf, inf]'.format(self.coefficient))
-        self.modelBuilder.doSet('POI', self.coefficient)
+        self.modelBuilder.doVar('{0}[1, -inf, inf]'.format(self.coefficient[0]))
+        self.modelBuilder.doVar('{0}[1, -inf, inf]'.format(self.coefficient[1]))
+        self.modelBuilder.doSet('POI', '{0},{1}'.format(self.coefficient[0],self.coefficient[1]))
+#        self.modelBuilder.doSet('POI', self.coefficient[1])
         self.setup()
 
     def getYieldScale(self, bin, process):
         if process not in self.processes or bin not in self.bins:
             return 1
         else:
-            print 'Scaling {0}, {1} with {2} fit function'.format(process, bin, self.coefficient)
-            name = 'r_{0}_{1}_{2}'.format(process, bin, self.coefficient)
+            print 'Scaling {0}, {1}'.format(process, bin)
+            name = 'r_{0}_{1}'.format(process, bin)
 
             return name
 
 
-eft1D = EFT1DModel()
+eft2D = EFT1DModel()
