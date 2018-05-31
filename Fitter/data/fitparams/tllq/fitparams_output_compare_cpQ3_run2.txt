@@ -1,0 +1,2 @@
+               sm*sm   sm*cpQ3 cpQ3*cpQ3
+ cpQ3_run2  1.002077  0.205119  0.037105

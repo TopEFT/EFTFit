@@ -1,0 +1,2 @@
+               sm*sm    sm*ctW   ctW*ctW
+  ctW_run2  1.000739  0.041054  0.127513

@@ -1,0 +1,2 @@
+               sm*sm   sm*cpQM cpQM*cpQM
+ cpQM_run2  1.000310  0.021165  0.001089

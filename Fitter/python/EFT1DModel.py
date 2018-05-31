@@ -41,15 +41,14 @@ class EFT1DModel(PhysicsModel):
         print "Setting up fits"
         scaling = np.load(self.scaling)[()]
         for process in self.processes:
-            for bin in self.bins:
-                self.modelBuilder.out.var(process)
-                name = 'r_{0}_{1}_{2}'.format(process, bin, self.coefficient)
-                if not self.modelBuilder.out.function(name):
-                    template = "expr::{name}('{a0} + ({a1} * {c}) + ({a2} * {c} * {c})', {c})"
-                    a0, a1, a2 = scaling[self.coefficient][(process,bin)]
-                    quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient))
-                    print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient)
-                    self.modelBuilder.out._import(quadratic)
+            self.modelBuilder.out.var(process)
+            name = 'r_{0}'.format(process)
+            if not self.modelBuilder.out.function(name):
+                template = "expr::{name}('{a0} + ({a1} * {c}) + ({a2} * {c} * {c})', {c})"
+                a0, a1, a2 = scaling[self.coefficient][(process)]
+                quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient))
+                print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient)
+                self.modelBuilder.out._import(quadratic)
 
     def doParametersOfInterest(self):
         # user should call combine with `--setPhysicsModelParameterRanges` set to sensible ranges
@@ -58,11 +57,11 @@ class EFT1DModel(PhysicsModel):
         self.setup()
 
     def getYieldScale(self, bin, process):
-        if process not in self.processes or bin not in self.bins:
+        if process not in self.processes:
             return 1
         else:
-            print 'Scaling {0}, {1} with {2} fit function'.format(process, bin, self.coefficient)
-            name = 'r_{0}_{1}_{2}'.format(process, bin, self.coefficient)
+            print 'Scaling {0}, {1}'.format(process, bin)
+            name = 'r_{0}'.format(process)
 
             return name
 
