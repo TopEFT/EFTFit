@@ -60,7 +60,7 @@ class EFT1DModel(PhysicsModel):
         if process not in self.processes:
             return 1
         else:
-            print 'Scaling {0}, {1}'.format(process, bin)
+            #print 'Scaling {0}, {1}'.format(process, bin)
             name = 'r_{0}'.format(process)
 
             return name

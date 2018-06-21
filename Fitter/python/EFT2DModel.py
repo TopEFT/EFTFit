@@ -3,7 +3,7 @@ import numpy as np
 from HiggsAnalysis.CombinedLimit.PhysicsModel import PhysicsModel
 #Based on 'Quadratic' model from HiggsAnalysis.CombinedLimit.QuadraticScaling
 
-class EFT1DModel(PhysicsModel):
+class EFT2DModel(PhysicsModel):
     """Apply process scaling due to EFT operators.
 
     This class takes a dictionary of quadratic fits describing how processes are
@@ -39,15 +39,16 @@ class EFT1DModel(PhysicsModel):
         print "Setting up fits"
         scaling = np.load(self.scaling)[()]
         for process in self.processes:
-            for bin in self.bins:
+            #for bin in self.bins:
                 self.modelBuilder.out.var(process)
-                name = 'r_{0}_{1}'.format(process, bin)
+                #name = 'r_{0}_{1}'.format(process, bin)
+                name = 'r_{0}'.format(process)
                 if not self.modelBuilder.out.function(name):
-                    template = "expr::{name}('{a0} + ({a1} * {c}) + ({a2} * {c} * {c2})', {c}, {c2})"
-                    a0, a1, a2 = scaling[self.coefficient[0]][(process,bin)]
-                    print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0],c2=self.coefficient[1])
-                    quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0], c2=self.coefficient[1]))
-                    #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient[0],c2=self.coefficient[1])
+                    template = "expr::{name}('{a0} + ({a1}*{c1}) + ({a2}*{c1}*{c1})+{b0} + ({b1}*{c2}) + ({b2}*{c2}*{c2})', {c1}, {c2})"
+                    a0, a1, a2 = scaling[self.coefficient[0]][process]
+                    b0, b1, b2 = scaling[self.coefficient[1]][process]
+                    #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, b0=b0, b1=b1, b2=b2 c1=self.coefficient[0],c2=self.coefficient[1])
+                    quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, b0=b0, b1=b1, b2=b2, c1=self.coefficient[0], c2=self.coefficient[1]))
                     self.modelBuilder.out._import(quadratic)
 
     def doParametersOfInterest(self):
@@ -55,17 +56,16 @@ class EFT1DModel(PhysicsModel):
         self.modelBuilder.doVar('{0}[1, -inf, inf]'.format(self.coefficient[0]))
         self.modelBuilder.doVar('{0}[1, -inf, inf]'.format(self.coefficient[1]))
         self.modelBuilder.doSet('POI', '{0},{1}'.format(self.coefficient[0],self.coefficient[1]))
-#        self.modelBuilder.doSet('POI', self.coefficient[1])
         self.setup()
 
     def getYieldScale(self, bin, process):
-        if process not in self.processes or bin not in self.bins:
+        if process not in self.processes:
             return 1
         else:
             print 'Scaling {0}, {1}'.format(process, bin)
-            name = 'r_{0}_{1}'.format(process, bin)
+            name = 'r_{0}'.format(process)
 
             return name
 
 
-eft2D = EFT1DModel()
+eft2D = EFT2DModel()
