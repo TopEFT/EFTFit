@@ -1,2 +1,0 @@
-               sm*sm   sm*ctl1 ctl1*ctl1
- ctl1_run2  0.999799  0.000054  0.000030

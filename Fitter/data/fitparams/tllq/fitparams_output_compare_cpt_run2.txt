@@ -1,2 +1,0 @@
-               sm*sm    sm*cpt   cpt*cpt
-  cpt_run2  1.001056  0.006864  0.000488

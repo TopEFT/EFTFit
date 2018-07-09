@@ -1,2 +1,0 @@
-               sm*sm    sm*ctp   ctp*ctp
-  ctp_run2  1.000484 -0.001165  0.000699

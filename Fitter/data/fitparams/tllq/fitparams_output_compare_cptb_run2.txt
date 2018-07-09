@@ -1,2 +1,0 @@
-               sm*sm   sm*cptb cptb*cptb
- cptb_run2  0.998781 -0.000000  0.006424
