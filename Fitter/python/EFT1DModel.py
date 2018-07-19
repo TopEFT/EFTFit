@@ -1,5 +1,6 @@
 import numpy as np
 import ROOT
+import pprint
 ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 
 
@@ -54,6 +55,7 @@ class EFT1DModel(PhysicsModel):
     def setup(self):
         print "Setting up fits"
         fits = np.load(self.fits)[()]
+        #table = {}
         for procbin in self.procbins:
             #self.modelBuilder.out.var(procbin)
             name = 'r_{0}_{1}'.format(procbin[0],procbin[1])
@@ -63,6 +65,13 @@ class EFT1DModel(PhysicsModel):
                 quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient))
                 #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.coefficient)
                 self.modelBuilder.out._import(quadratic)
+            #if a0>0:
+                #categories = ["C_2lss_p_ee_1b_4j","C_2lss_p_ee_1b_5j","C_2lss_p_ee_1b_6j","C_2lss_p_ee_1b_7j","C_3l_ppp_1b_2j","C_3l_ppp_1b_3j","C_3l_ppp_1b_4j","C_3l_ppp_1b_5j","C_3l_ppp_1b_6j","C_3l_ppp_1b_7j","C_3l_ppp_1b_8j"]
+                #if procbin[1] in categories: table[procbin] = (a0,round((a0+a1+a2)/a0,8))
+            #print self.coefficient,"= 0",procbin,a0
+            #print self.coefficient,"= 1",procbin,a0+a1+a2
+        #pprint.pprint(table,indent=1,width=100)
+            
 
     def doParametersOfInterest(self):
         # user should call combine with `--setPhysicsModelParameterRanges` set to sensible ranges
@@ -78,7 +87,6 @@ class EFT1DModel(PhysicsModel):
             fits = np.load(self.fits)[()]
             #print self.coefficient,process,bin,fits[self.coefficient][(process,bin)]
             name = 'r_{0}_{1}'.format(process,bin)
-
             return name
 
 

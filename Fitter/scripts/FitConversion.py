@@ -41,9 +41,12 @@ for key in readfile.GetListOfKeys():
             coeffs = []
             names = fit.getNames()
             if len(names)==0: continue         
-            coeffs.insert(0, round(fit.getParameter('sm','sm')/fit.getParameter('sm','sm'),4))
-            coeffs.insert(1, round(fit.getParameter('sm',operator)/fit.getParameter('sm','sm'),4))
-            coeffs.insert(2, round(fit.getParameter(operator,operator)/fit.getParameter('sm','sm'),4))
+            coeffs.insert(0, round(fit.getParameter('sm','sm')/fit.getParameter('sm','sm'),8))
+            coeffs.insert(1, round(fit.getParameter('sm',operator)/fit.getParameter('sm','sm'),8))
+            coeffs.insert(2, round(fit.getParameter(operator,operator)/fit.getParameter('sm','sm'),8))
+            #coeffs.insert(0, round(fit.getParameter('sm','sm'),8))
+            #coeffs.insert(1, round(fit.getParameter('sm',operator),8))
+            #coeffs.insert(2, round(fit.getParameter(operator,operator),8))
             if operator not in scales: #Check if dict key is initialized
                 scales[operator] = {}
             scales[operator].update({(process,category_njet):tuple(coeffs)})
