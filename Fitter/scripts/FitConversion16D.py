@@ -1,11 +1,15 @@
 print "Importing libraries..."
 import numpy as np
+import itertools
 import os
 import ROOT
 ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 
 #Dict that will hold the parameterizations of the cross-sections
-scales = {}
+fits = {}
+
+#List of operators to extract parameterizations for
+operators = ['sm']+['cptb','cpt','ctlT1','cpQ3','cpQM','ctG','cbW','cQl31','ctl1','ctp','ctlS1','ctZ','cQe1','cQlM1','cte1','ctW']
 
 #Load file
 print "Loading Root file..."
@@ -30,25 +34,25 @@ for key in readfile.GetListOfKeys():
     if systematic != '': continue
 
     #Only use histograms from WC samples
-#    if process.rsplit('_',1)[1] not in ['ctZ','ctW','ctp','ctl1','ctG','cQe1','cpt','cptb','cpQM','cpQ3']:
-    if any(op in process for op in ['ctZ','ctW','ctp','ctl1','ctG','cQe1','cpt','cptb','cpQM','cpQ3']):
-        process,operator = process.rsplit('_',1)
+    if '16D' in process:
+        process = process.split('_',1)[0]
 
         #Loop through bins and extract parameterization
         for bin in range(1,hist.GetNbinsX()):
             category_njet = 'C_{0}_{1}j'.format(category,bin)
             fit = hist.GetBinFit(1+bin)
-            coeffs = []
             names = fit.getNames()
             if len(names)==0: continue
-            coeffs.insert(0, round(fit.getParameter('sm','sm')/fit.getParameter('sm','sm'),8))
-            coeffs.insert(1, round(fit.getParameter('sm',operator)/fit.getParameter('sm','sm'),8))
-            coeffs.insert(2, round(fit.getParameter(operator,operator)/fit.getParameter('sm','sm'),8))
-            if operator not in scales: #Check if dict key is initialized
-                scales[operator] = {}
-            scales[operator].update({(process,category_njet):tuple(coeffs)})
+            if (process,category_njet) not in fits.keys(): fits[(process,category_njet)]={}
+            for pair in itertools.combinations_with_replacement(operators,2):
+                fits[(process,category_njet)][pair] = round(fit.getParameter(pair[0],pair[1])/fit.getParameter('sm','sm'),8)
+            for op1 in operators:
+                for op2 in operators:
+                    fits[(process,category_njet)][(op1,op2)] = round(fit.getParameter(op1,op2)/fit.getParameter('sm','sm'),8)
+                    #fits[(process,category_njet)][(op1,op2)] = round(fit.getParameter(op1,op2),8)
 
-print "Saving numpy file {}...".format("scales.npy")
-#print scales
-print "Keys:",scales.keys()
-np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/data/scales.npy', scales)
+print "Saving numpy file {}...".format("16D_Parameterization.npy")
+#print "Categories:",[key[1] for key in fits.keys()]
+#print "Processes:",[key[0] for key in fits.keys()]
+#print "Keys:",fits.keys()
+np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/data/16D_Parameterization.npy', fits)
