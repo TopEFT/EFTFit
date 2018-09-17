@@ -130,7 +130,7 @@ public:
         std::stringstream ss1;
         std::stringstream ss2;
 
-        ss1 << std::setw(padding) << std::to_string(this->wgt);
+        ss1 << "wgt: " << std::setw(padding-5) << std::to_string(this->wgt);
         ss2 << std::setw(padding) << _str;
         for (auto& kv: this->inputs) {
             ss1 << std::setw(padding) << kv.first;
