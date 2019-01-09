@@ -27,8 +27,9 @@ class EFT16DModel(PhysicsModel):
 
     def setPhysicsOptions(self, options):
         self.fits = None # File containing WC parameterizations of each process+bin *with events*!
+        #self.operators = ['ctW','ctZ'] # Operators to fit for
         #self.operators = ['ctW','ctZ','ctG','cQe1'] # Operators to fit for
-        self.operators = ['cptb','cpt','ctlT1','cpQ3','cpQM','ctG','cbW','cQl31','ctl1','ctp','ctlS1','ctZ','cQe1','cQlM1','cte1','ctW'] # Hardcoded currently...
+        self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
         operators_override = [] # Operators specified by arguments
         self.procbins = [] # Process+bin combinations (tuple) that we have events for
         procbin_override = [] # Process+bin combinations (tuple) specified by arguments
@@ -104,9 +105,6 @@ class EFT16DModel(PhysicsModel):
                 # Export fit function
                 self.modelBuilder.out._import(quadratic)
                 
-            #if a0>0:
-                #categories = ["C_2lss_p_ee_1b_4j","C_2lss_p_ee_1b_5j","C_2lss_p_ee_1b_6j","C_2lss_p_ee_1b_7j","C_3l_ppp_1b_2j","C_3l_ppp_1b_3j","C_3l_ppp_1b_4j","C_3l_ppp_1b_5j","C_3l_ppp_1b_6j","C_3l_ppp_1b_7j","C_3l_ppp_1b_8j"]
-                #if procbin[1] in categories: table[procbin] = (a0,round((a0+a1+a2)/a0,8))
             #print self.coefficient,"= 0",procbin,a0
             #print self.coefficient,"= 1",procbin,a0+a1+a2
         #pprint.pprint(table,indent=1,width=100)
@@ -118,7 +116,7 @@ class EFT16DModel(PhysicsModel):
             self.modelBuilder.doVar('{0}[0, -5, 5]'.format(op))
         print "Operators to fit for: "+",".join(self.operators)
         self.modelBuilder.doSet('POI', ','.join(self.operators))
-        #self.modelBuilder.doSet('POI', 'ctW,ctG,ctZ')
+        #self.modelBuilder.doSet('POI', 'ctW,ctZ')
         self.setup()
 
     def getYieldScale(self, bin, process):

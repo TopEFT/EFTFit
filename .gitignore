@@ -1,4 +1,8 @@
 # Compiled Code #
 *.pyc
 *__init__.py
-
+*.png
+**/hist_files/*.root
+**/fit_files/*.root
+**/test/*/
+**/test/crab*.sh

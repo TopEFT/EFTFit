@@ -9,12 +9,12 @@ ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 fits = {}
 
 #List of operators to extract parameterizations for
-operators = ['sm']+['cptb','cpt','ctlT1','cpQ3','cpQM','ctG','cbW','cQl31','ctl1','ctp','ctlS1','ctZ','cQe1','cQlM1','cte1','ctW']
+operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 #operators = ['sm']+['ctW'] #Debug, but unnecessary
 
 #Load file
 print "Loading Root file..."
-readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/data/anatest9.root')
+readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest10.root')
 
 #Crawl through file
 print "Extracting parameterizations..."
@@ -68,4 +68,4 @@ print "Saving numpy file {}...".format("16D_Parameterization.npy")
 #print "Categories:",[key[1] for key in fits.keys()]
 #print "Processes:",[key[0] for key in fits.keys()]
 #print "Keys:",fits.keys()
-np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/data/16D_Parameterization.npy', fits)
+np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/16D_Parameterization.npy', fits)
