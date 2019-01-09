@@ -114,14 +114,14 @@ class EFTPlot(object):
         rootFile1.Close()
         rootFile2.Close()
 
-    def batchLLPlot1D(self, basename='.test', operators=[], log=False):
+    def BatchLLPlot1D(self, basename='.test', operators=[], log=False):
         if not operators:
             operators = self.operators
 
         for op in operators:
             self.LLPlot1D(basename+'.'+op, op, log)
 
-    def batchOverlayLLPlot1D(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', operators=[], log=False):
+    def BatchOverlayLLPlot1D(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', operators=[], log=False):
         if not operators:
             operators = self.operators
 
@@ -225,7 +225,7 @@ class EFTPlot(object):
         canvas = ROOT.TCanvas()
 
         # Get rooFit object
-        rooFitFile = ROOT.TFile.Open('multidimfit{}.root'.format(name))
+        rooFitFile = ROOT.TFile.Open('../fit_files/multidimfit{}.root'.format(name))
         rooFit = rooFitFile.Get('fit_mdf')
 
         # Get correlation matrix
@@ -298,7 +298,7 @@ if __name__ == "__main__":
     logging.getLogger('').addHandler(console)
 
     plotter = EFTPlot()
-    plotter.Batch2DPlots()
+    #plotter.Batch2DPlots()
     #plotter.LLPlot1D('.EFT.SM.Float.ctW','ctW')
     #plotter.OverlayLLPlot1D('.EFT.SM.Float.ctW','.EFT.SM.Freeze.ctW','ctW')
-    #plotter.batchOverlayLLPlot1D()
+    #plotter.BatchOverlayLLPlot1D()
