@@ -47,8 +47,7 @@ To make the standard array of plots:
     #(1) Navigate to the test directory.
     #(2) Use the batch functions to make them all automatically
         python -i ../scripts/EFTPlot.py
-        Batch2DPlots(<base tag name of fit files>) #Assumes standard naming convention from EFTFit e.g. preScanFit, gridScan, postScanFit
-        BatchOverlayLLPlot1D(<basename of frozen/floating files>, <basename of floating/frozen files>)
-    #The 2D plots will also be stored in a root file names Histos<base tag name>.root
+        Batch2DPlots(<gridScan 'name'>,<bestFit 'name'>)
+        BatchOverlayLLPlot1D(<'basename' of frozen/floating files>, <'basename' of floating/frozen files>)
+    #The 2D plots will also be stored in a root file named Histos.root
         
-    

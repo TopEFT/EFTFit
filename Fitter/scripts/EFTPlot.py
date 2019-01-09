@@ -8,9 +8,11 @@ class EFTPlot(object):
         self.logger = logging.getLogger(__name__)
 
         self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.histosFileName = 'Histos.root'
 
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
+        self.histosFileName = 'Histos{}.root'.format(name)
 
     def LLPlot1D(self, name='.test', operator='', log=False):
         if not operator:
@@ -136,7 +138,7 @@ class EFTPlot(object):
         canvas = ROOT.TCanvas()
 
         # Open file and draw 2D histogram
-        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.gridScan.root'.format(name))
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
         hname = '{}{}less{}'.format(operators[0],operators[1],ceiling)
         if log:
@@ -163,7 +165,7 @@ class EFTPlot(object):
         # Save to root file
         # Log settings don't save to the histogram, so redundant to save those
         if not log:
-            outfile = ROOT.TFile("Histos.root","UPDATE")
+            outfile = ROOT.TFile(self.histosFileName,'UPDATE')
             hist.Write()
             outfile.Close()
 
@@ -213,10 +215,10 @@ class EFTPlot(object):
 
         # Draw and save plot
         h_contour.Draw('prof colz')
-        canvas.Print('Contour.png','png')
+        canvas.Print('contour.png','png')
 
         # Save contour to histogram file
-        outfile = ROOT.TFile('Histos.root','UPDATE')
+        outfile = ROOT.TFile(self.histosFileName,'UPDATE')
         h_contour.Write()
         outfile.Close()
 
@@ -254,24 +256,24 @@ class EFTPlot(object):
         canvas.Print(matrix.GetName()+'.png','png')
 
         # Save the plot to the histogram file
-        outfile = ROOT.TFile('Histos.root','UPDATE')
+        outfile = ROOT.TFile(self.histosFileName,'UPDATE')
         matrix.Write()
         outfile.Close()
 
-    def Batch2DPlots(self, name='.EFT.ctWctZ.SM.Float.2', operators=['ctW','ctZ'], freeze=False):
-        self.ResetHistoFile(name)
+    def Batch2DPlots(self, histosFileName='.EFT.SM.Float.2', gridScanName='.EFT.ctWctZ.SM.Float.2', postScanName='.EFT.SM.Float.2.postScan', operators=['ctW','ctZ'], freeze=False):
+        self.ResetHistoFile(histosFileName)
 
-        self.LLPlot2D(name,operators,1,False)
-        self.LLPlot2D(name,operators,10,False)
-        self.LLPlot2D(name,operators,100,False)
-        self.LLPlot2D(name,operators,1,True)
-        self.LLPlot2D(name,operators,10,True)
-        self.LLPlot2D(name,operators,100,True)
+        self.LLPlot2D(gridScanName,operators,1,False)
+        self.LLPlot2D(gridScanName,operators,10,False)
+        self.LLPlot2D(gridScanName,operators,100,False)
+        self.LLPlot2D(gridScanName,operators,1,True)
+        self.LLPlot2D(gridScanName,operators,10,True)
+        self.LLPlot2D(gridScanName,operators,100,True)
 
-        self.CorrelationMatrix(name,False,freeze)
-        self.CorrelationMatrix(name,True,freeze)
+        self.CorrelationMatrix(postScanName,False,freeze)
+        self.CorrelationMatrix(postScanName,True,freeze)
 
-        self.ContourPlot(name,operators)
+        self.ContourPlot(gridScanName,operators)
 
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'

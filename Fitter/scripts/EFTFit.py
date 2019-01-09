@@ -43,7 +43,7 @@ class EFTFit(object):
         args=['combine','-d','16D.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=0']
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
-        args.extend(['--trackParameters',[op for op in self.operators if op not in operators_POI]])
+        args.extend(['--trackParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if startValuesString: args.extend(['--setParameters',startValuesString])
         if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if autoBounds:        args.extend(['--autoBoundsPOIs=*'])
@@ -119,7 +119,7 @@ class EFTFit(object):
         bestDeltaNLL=1000000;
         bestEntry=-1;
 
-        fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.root'
+        fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.gridScan.root'
         print fitFile
 
         if not os.path.isfile(fitFile):
@@ -210,8 +210,8 @@ if __name__ == "__main__":
     #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], operators_tracked=[], freeze=False, autoBounds=True)
     #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', batch=True, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=5000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
-    startValuesString = fitter.getBestValues(name='.EFT.SM.Float.2.gridScan.ctWctZ', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
-    fitter.bestFit(name='.EFT.SM.Float.2.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], operators_tracked=[], startValuesString=startValuesString, freeze=False, autoBounds=True)
+    #startValuesString = fitter.getBestValues(name='.EFT.ctWctZ.SM.Float.2', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
+    #fitter.bestFit(name='.EFT.SM.Float.2.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], startValuesString=startValuesString, freeze=False, autoBounds=True)
 
     #logging.info("Logger shutting down!")
     #logging.shutdown()
