@@ -169,7 +169,7 @@ class EFTFit(object):
         for pois in itertools.combinations(operators_POI,2):
             operators_tracked = [op for op in self.operators if op not in pois]
             #print pois, operators_tracked
-            #self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), grid=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
+            self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), grid=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
 
     def retrieveBatch2DGridScans(self, basename='.test', operators_POI=[]):
         ### For each combination of operators, retrieves finished grid jobs, extracts, and hadd's into a single file ###

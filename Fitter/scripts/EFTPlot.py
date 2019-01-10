@@ -178,7 +178,7 @@ class EFTPlot(object):
         canvas = ROOT.TCanvas()
 
         # Get Grid scan and copy to h_contour
-        gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.gridScan.root'.format(name))
+        gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,-5,5,50,-5,5)'.format(operators[0],operators[1]), '2*deltaNLL<100', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
@@ -260,7 +260,7 @@ class EFTPlot(object):
         matrix.Write()
         outfile.Close()
 
-    def Batch2DPlots(self, histosFileName='.EFT.SM.Float.2', gridScanName='.EFT.ctWctZ.SM.Float.2', postScanName='.EFT.SM.Float.2.postScan', operators=['ctW','ctZ'], freeze=False):
+    def Batch2DPlots(self, histosFileName='.EFT.SM.Float', gridScanName='.EFT.SM.Float.gridScan.ctWctZ', postScanName='.EFT.SM.Float.postScan', operators=['ctW','ctZ'], freeze=False):
         self.ResetHistoFile(histosFileName)
 
         self.LLPlot2D(gridScanName,operators,1,False)
