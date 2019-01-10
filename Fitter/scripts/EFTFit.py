@@ -70,7 +70,7 @@ class EFTFit(object):
         if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
         if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if other:             args.extend(other)
-        if crab:             args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','250'])
+        if crab:             args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
         logging.info(' '.join(args))
 
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -145,13 +145,13 @@ class EFTFit(object):
             startValues.append('{}={}'.format(op,value))
         return ','.join(startValues)
 
-    def batch1DScan(self, basename='.test', grid=False, operators_POI=[], points=100, freeze=False):
+    def batch1DScan(self, basename='.test', crab=False, operators_POI=[], points=100, freeze=False):
         ### For each operator, run a 1D deltaNLL Scan.
         if not operators_POI:
             operators_POI = self.operators
 
         for poi in operators_POI:
-            self.gridScan('{}.{}'.format(basename,poi), grid, [poi], [], points, freeze)
+            self.gridScan('{}.{}'.format(basename,poi), crab, [poi], [], points, freeze)
 
     def retrieveBatch1DGridScans(self, basename='.test', operators_POI=[]):
         ### For each operator, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
@@ -161,7 +161,7 @@ class EFTFit(object):
         for poi in operators_POI:
             retrieveGridScan('{}.{}'.format(basename,poi))
 
-    def batch2DGridScan(self, basename='.test', operators_POI=[], points=5000, freeze=False):
+    def batch2DGridScan(self, basename='.EFT.gridScan', operators_POI=[], points=50000, freeze=False):
         ### For each combination of operators, runs deltaNLL Scan in two operators using CRAB ###
         if not operators_POI:
             operators_POI = self.operators
@@ -169,9 +169,19 @@ class EFTFit(object):
         for pois in itertools.combinations(operators_POI,2):
             operators_tracked = [op for op in self.operators if op not in pois]
             #print pois, operators_tracked
-            self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), grid=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
+            self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
 
-    def retrieveBatch2DGridScans(self, basename='.test', operators_POI=[]):
+    def batchResubmit(self, basename='.EFT.gridScan', operators_POI=[]):
+        ### For each combination of operators, attempt to resubmit failed CRAB jobs ###
+        if not operators_POI:
+            operators_POI = self.operators
+
+        for pois in itertools.combinations(operators_POI,2):
+            process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+pois[0]+pois[1]], stdout=sp.PIPE, stderr=sp.PIPE)
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+
+    def retrieveBatch2DGridScans(self, basename='.EFT.gridScan', operators_POI=[]):
         ### For each combination of operators, retrieves finished grid jobs, extracts, and hadd's into a single file ###
         if not operators_POI:
             operators_POI = self.operators
@@ -206,9 +216,9 @@ if __name__ == "__main__":
     fitter = EFTFit()
 
     #Example of a workflow:
-    #fitter.makeWorkspace('EFT_MultiDim_Datacard_SM.txt')
+    #fitter.makeWorkspace('EFT_MultiDim_Datacard.txt')
     #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
-    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=False, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=5000, freeze=False)
+    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=50000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
     #startValuesString = fitter.getBestValues(name='.EFT.SM.Float.gridScan.ctWctZ', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
     #fitter.bestFit(name='.EFT.SM.Float.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], startValuesString=startValuesString, freeze=False, autoBounds=True)
