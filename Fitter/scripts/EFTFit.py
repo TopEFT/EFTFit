@@ -59,7 +59,7 @@ class EFTFit(object):
         if os.path.isfile('multidimfit'+name+'.root'):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
-    def gridScan(self, name='.test', grid=False, operators_POI=['ctW','ctZ'], operators_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
+    def gridScan(self, name='.test', crab=False, operators_POI=['ctW','ctZ'], operators_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two operators using CRAB ###
         logging.info("Doing grid scan...")
 
@@ -70,7 +70,7 @@ class EFTFit(object):
         if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
         if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if other:             args.extend(other)
-        if grid:             args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','250'])
+        if crab:             args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','250'])
         logging.info(' '.join(args))
 
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -78,7 +78,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
         logging.info("Done with gridScan.")
-        if not grid: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+        if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
 
     def retrieveGridScan(self, name='.test', user=getpass.getuser()):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
@@ -119,7 +119,7 @@ class EFTFit(object):
         bestDeltaNLL=1000000;
         bestEntry=-1;
 
-        fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.gridScan.root'
+        fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.root'
         print fitFile
 
         if not os.path.isfile(fitFile):
@@ -168,7 +168,7 @@ class EFTFit(object):
 
         for pois in itertools.combinations(operators_POI,2):
             operators_tracked = [op for op in self.operators if op not in pois]
-            print operators_tracked
+            #print pois, operators_tracked
             #self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), grid=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
 
     def retrieveBatch2DGridScans(self, basename='.test', operators_POI=[]):
@@ -207,11 +207,11 @@ if __name__ == "__main__":
 
     #Example of a workflow:
     #fitter.makeWorkspace('EFT_MultiDim_Datacard_SM.txt')
-    #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], operators_tracked=[], freeze=False, autoBounds=True)
-    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', batch=True, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=5000, freeze=False)
+    #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
+    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=False, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=5000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
-    #startValuesString = fitter.getBestValues(name='.EFT.ctWctZ.SM.Float.2', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
-    #fitter.bestFit(name='.EFT.SM.Float.2.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], startValuesString=startValuesString, freeze=False, autoBounds=True)
+    #startValuesString = fitter.getBestValues(name='.EFT.SM.Float.gridScan.ctWctZ', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
+    #fitter.bestFit(name='.EFT.SM.Float.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], startValuesString=startValuesString, freeze=False, autoBounds=True)
 
     #logging.info("Logger shutting down!")
     #logging.shutdown()
