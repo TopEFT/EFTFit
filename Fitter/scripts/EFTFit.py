@@ -38,8 +38,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stderr,'err')
         
     def bestFit(self, name='.test', operators_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
-        ### Multidimensional fit using default start values for operators (all 0) ###
-        logging.info("Doing fit before grid scan...")
+        ### Multidimensional fit ###
         args=['combine','-d','16D.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=0']
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
@@ -187,7 +186,18 @@ class EFTFit(object):
             operators_POI = self.operators
 
         for pois in itertools.combinations(operators_POI,2):
-            retrieveGridScan('{}.{}{}'.format(basename,pois[0],pois[1]))
+            self.retrieveGridScan('{}.{}{}'.format(basename,pois[0],pois[1]))
+
+    def batchBestFit(self, basenamegrid='.EFT.gridScan', basenamefit='.EFT.gridScan', operators_POI=[], freeze=False):
+        ### For each combination of operators, do a best fit using the new start point ###
+        if not operators_POI:
+            operators_POI = self.operators
+
+        for pois in itertools.combinations(operators_POI,2):
+            operators_tracked = [op for op in self.operators if op not in pois]
+            startValuesString = self.getBestValues(name='{}.{}{}'.format(basenamegrid,pois[0],pois[1]), operators_POI=pois, operators_tracked=operators_tracked)
+            self.bestFit(name='{}.{}{}'.format(basenamefit,pois[0],pois[1]), operators_POI=pois, startValuesString=startValuesString, freeze=freeze)
+            
 
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'

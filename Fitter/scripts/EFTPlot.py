@@ -1,7 +1,10 @@
 import ROOT
 import logging
+import os
 import sys
 import numpy
+import itertools
+import subprocess as sp
 
 class EFTPlot(object):
     def __init__(self):
@@ -261,6 +264,7 @@ class EFTPlot(object):
         outfile.Close()
 
     def Batch2DPlots(self, histosFileName='.EFT.SM.Float', gridScanName='.EFT.SM.Float.gridScan.ctWctZ', postScanName='.EFT.SM.Float.postScan', operators=['ctW','ctZ'], freeze=False):
+        ROOT.gROOT.SetBatch(True)
         self.ResetHistoFile(histosFileName)
 
         self.LLPlot2D(gridScanName,operators,1,False)
@@ -274,6 +278,23 @@ class EFTPlot(object):
         self.CorrelationMatrix(postScanName,True,freeze)
 
         self.ContourPlot(gridScanName,operators)
+
+    def BatchBatch2DPlots(self, histosFileName='.EFT.SM.Float', basenamegrid='.EFT.SM.Float.gridScan', basenamefit='.EFT.SM.Float.postScanFit', operators=[], freeze=False):
+        if not operators:
+            operators = self.operators
+
+        ROOT.gROOT.SetBatch(True)
+
+        for pois in itertools.combinations(operators,2):
+            self.Batch2DPlots('{}.{}{}'.format(histosFileName,pois[0],pois[1]), '{}.{}{}'.format(basenamegrid,pois[0],pois[1]), '{}.{}{}'.format(basenamefit,pois[0],pois[1]), operators=pois, freeze=freeze)
+
+            if not os.path.isdir('Histos{}.{}{}'.format(histosFileName,pois[0],pois[1])):
+                sp.call(['mkdir', 'Histos{}.{}{}'.format(histosFileName,pois[0],pois[1])])
+            sp.call(['mv', 'Histos{}.{}{}.root'.format(histosFileName,pois[0],pois[1]), 'Histos{}.{}{}/'.format(histosFileName,pois[0],pois[1])])
+
+            for filename in os.listdir('.'):
+                if filename.endswith('.png'):            
+                    sp.call(['mv', filename, 'Histos{}.{}{}/'.format(histosFileName,pois[0],pois[1])])
 
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'
@@ -300,7 +321,7 @@ if __name__ == "__main__":
     logging.getLogger('').addHandler(console)
 
     plotter = EFTPlot()
-    #plotter.Batch2DPlots()
+    #plotter.Batch2DPlots('.EFT.SM.Float.ctWctZ','.EFT.SM.Float.ctWctZ','.EFT.SM.Float.postScan')
     #plotter.LLPlot1D('.EFT.SM.Float.ctW','ctW')
     #plotter.OverlayLLPlot1D('.EFT.SM.Float.ctW','.EFT.SM.Freeze.ctW','ctW')
     #plotter.BatchOverlayLLPlot1D()
