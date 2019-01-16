@@ -39,8 +39,14 @@ for key in readfile.GetListOfKeys():
         process = process.split('_',1)[0]
 
         #Loop through bins and extract parameterization
-        for bin in range(1,hist.GetNbinsX()):
-            category_njet = 'C_{0}_{1}j'.format(category,bin)
+        for bin in range(1,5):
+            category_njet = ''
+            if "2lss" in category:
+                category_njet = 'C_{0}_{1}{2}j'.format(category, 'ge' if bin==4 else '', bin+3)
+            if "3l" in category:
+                category_njet = 'C_{0}_{1}{2}j'.format(category, 'ge' if bin==4 else '', bin+1)
+            if "4l" in category:
+                category_njet = 'C_{0}_{1}{2}j'.format(category, 'ge' if bin==4 else '', bin)
             fit = hist.GetBinFit(1+bin)
             #print category_njet,fit.getCoefficient('sm','sm')
             names = fit.getNames()
