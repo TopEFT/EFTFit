@@ -30,6 +30,15 @@ class EFT16DModel(PhysicsModel):
         #self.operators = ['ctW','ctZ'] # Operators to fit for
         #self.operators = ['ctW','ctZ','ctG','cQe1'] # Operators to fit for
         self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
+        self.op_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
+                            'cpt':(-40,30), 'ctp':(-35,65),
+                            'ctli':(-20,20),'ctlSi':(-10,10),
+                            'cQl3i':(-20,20),'cptb':(-5,5),
+                            'ctG':(-3,3),   'cpQM':(-30,50),  
+                            'ctlTi':(-1,1),'ctei':(-20,20),
+                            'cQei':(-12,12),'cQlMi':(-17,17),
+                            'cpQ3':(-18,12),'cbW':(-2.6,2.6)
+                         }
         operators_override = [] # Operators specified by arguments
         self.procbins = [] # Process+bin combinations (tuple) that we have events for
         procbin_override = [] # Process+bin combinations (tuple) specified by arguments
@@ -113,7 +122,7 @@ class EFT16DModel(PhysicsModel):
     def doParametersOfInterest(self):
         # user can call combine with `--setPhysicsModelParameterRanges` to set to sensible ranges
         for op in self.operators:
-            self.modelBuilder.doVar('{0}[0, -5, 5]'.format(op))
+            self.modelBuilder.doVar('{0}[0, {1}, {2}]'.format(op,self.op_ranges[op][0],self.op_ranges[op][1]))
         print "Operators to fit for: "+",".join(self.operators)
         self.modelBuilder.doSet('POI', ','.join(self.operators))
         #self.modelBuilder.doSet('POI', 'ctW,ctZ')
