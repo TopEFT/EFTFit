@@ -32,12 +32,12 @@ class EFT16DModel(PhysicsModel):
         self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
         self.op_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
                             'cpt':(-40,30), 'ctp':(-35,65),
-                            'ctli':(-20,20),'ctlSi':(-10,10),
-                            'cQl3i':(-20,20),'cptb':(-5,5),
+                            'ctli':(-20,20),'ctlSi':(-22,22),
+                            'cQl3i':(-20,20),'cptb':(-40,40),
                             'ctG':(-3,3),   'cpQM':(-30,50),  
-                            'ctlTi':(-1,1),'ctei':(-20,20),
-                            'cQei':(-12,12),'cQlMi':(-17,17),
-                            'cpQ3':(-18,12),'cbW':(-2.6,2.6)
+                            'ctlTi':(-4,4),'ctei':(-20,20),
+                            'cQei':(-16,16),'cQlMi':(-17,17),
+                            'cpQ3':(-20,12),'cbW':(-10,10)
                          }
         operators_override = [] # Operators specified by arguments
         self.procbins = [] # Process+bin combinations (tuple) that we have events for
