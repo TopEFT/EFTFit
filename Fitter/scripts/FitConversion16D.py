@@ -14,7 +14,7 @@ operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQ
 
 #Load file
 print "Loading Root file..."
-readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest12_Jan18btagReqs.root')
+readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest13.root')
 
 #Crawl through file
 print "Extracting parameterizations..."
