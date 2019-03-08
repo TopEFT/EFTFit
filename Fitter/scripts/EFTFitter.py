@@ -34,7 +34,42 @@ class EFTFit(object):
             if level=='info': logging.info(line.rstrip('\n'))
             if level=='error': logging.error(line.rstrip('\n'))
 
-    def makeWorkspace(self, datacard='EFT_MultiDim_Datacard.txt'):
+    def makeWorkspaceSM(self, datacard='EFT_MultiDim_Datacard.txt'):
+        ### Generates a workspace from a datacard ###
+        logging.info("Creating workspace")
+        if not os.path.isfile(datacard):
+            logging.error("Datacard does not exist!")
+            sys.exit()
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
+                '--PO','map=.*/ttll:mu_ttll[1,0,20]','--PO','map=.*/tHq:mu_tHq[1,0,20]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,20]','--PO','map=.*/ttH:mu_ttH[1,0,20]','--PO','map=.*/tllq:mu_tllq[1,0,20]',
+                '-o','SMWorkspace.root']
+
+        logging.info(" ".join(args))
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+
+    def SMFit(self, name='.test', freeze=[], autoBounds=True, other=[]):
+        ### Multidimensional fit ###
+        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminDefaultMinimizerStrategy=2']
+        if name:        args.extend(['-n','{}'.format(name)])
+        if freeze:      args.extend(['--freezeParameters',','.join[freeze]])
+        if autoBounds:  args.extend(['--autoBoundsPOIs=*'])
+        if other:       args.extend(other)
+
+        logging.info(" ".join(args))
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        logging.info("Done with SMFit.")
+        sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+        #if os.path.isfile('multidimfit'+name+'.root'):
+        #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
+
+    def makeWorkspace16D(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard and fit parameterization file ###
         logging.info("Creating workspace")
         if not os.path.isfile(datacard):
@@ -42,6 +77,8 @@ class EFTFit(object):
             sys.exit()
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','EFTFit.Fitter.EFT16DModel:eft16D','--PO','fits='+CMSSW_BASE+'/src/EFTFit/Fitter/hist_files/16D_Parameterization.npy','-o','16DWorkspace.root']
+
+        logging.info(' '.join(args))
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
@@ -49,7 +86,7 @@ class EFTFit(object):
         
     def bestFit(self, name='.test', operators_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
-        args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=0']
+        args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
         args.extend(['--trackParameters',','.join([op for op in self.operators if op not in operators_POI])])
@@ -57,8 +94,8 @@ class EFTFit(object):
         if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if autoBounds:        args.extend(['--autoBoundsPOIs=*'])
         if other:             args.extend(other)
-        logging.info(" ".join(args))
 
+        logging.info(" ".join(args))
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
@@ -72,7 +109,7 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in two operators using CRAB ###
         logging.info("Doing grid scan...")
 
-        args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
@@ -196,7 +233,7 @@ class EFTFit(object):
             operators_POI = self.operators
 
         for poi in operators_POI:
-            self.gridScan('{}.{}'.format(basename,poi), crab, [poi], [], points, freeze)
+            self.gridScan('{}.{}'.format(basename,poi), crab, [poi], [pois for pois in self.operators if pois != poi], points, freeze)
 
     def batch2DScan(self, basename='.EFT.gridScan', freeze=False, points=50000, allPairs=False):
         ### For pairs of operators, runs deltaNLL Scan in two operators using CRAB ###
@@ -293,6 +330,39 @@ class EFTFit(object):
             start_point = self.getBestValues1D(basename,[op])
             logging.info("Start value: {}".format(start_point))
             self.bestFit('{}.BestFit.{}'.format(basename,op), [op], start_point, True)
+
+    def comparefits(self,basename='.EFT.SM.Float'):
+        ### Compare results of different 1D scans ###
+        tfiles = {}
+        limits = {}
+        bestFits = {} # Nested dict; bestFit of key1 according to key2
+        for poi in self.operators:
+            tfiles[poi] = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(basename+'.'+poi))
+            limits[poi] = tfiles[poi].Get('limit')
+            bestFits[poi] = {}
+        for limitpoi in self.operators:
+            limit = limits[limitpoi]
+            bestNLL = (-1,1000000)
+            for entry in range(limit.GetEntries()):
+                limit.GetEntry(entry)
+                currentNLL = limit.GetLeaf('deltaNLL').GetValue(0)
+                if bestNLL[1] > currentNLL: bestNLL = (entry,currentNLL)
+            print "Best entry for {} is {}.".format(limitpoi,bestNLL[0])
+            limit.GetEntry(bestNLL[0])
+            bestFits[limitpoi][limitpoi] = limit.GetLeaf(limitpoi).GetValue(0)
+            trackedpois = list(self.operators)
+            trackedpois.remove(limitpoi)
+            for poi in trackedpois:
+                bestFits[poi][limitpoi] = limit.GetLeaf('trackedParam_'+poi).GetValue(0)
+
+        for poi in self.operators:
+            trackedpois = list(self.operators)
+            trackedpois.remove(poi)
+            print("Best value of {}: {}".format(poi,bestFits[poi][poi]))
+            for trackedpoi in trackedpois:
+                print("Value according to {}: {}".format(trackedpoi,bestFits[poi][trackedpoi]))
+                #print("Diff according to {}: {}".format(trackedpoi,bestFits[poi][poi]-bestFits[poi][trackedpoi]))
+            
 
     def printBestFits(self, basename='.EFT.SM.Float', operators=[], simultaneous=True):
         ### Print a table of operators, their best fits, and their uncertainties ###
@@ -423,7 +493,7 @@ if __name__ == "__main__":
     fitter = EFTFit()
 
     #Example of a workflow:
-    #fitter.makeWorkspace('EFT_MultiDim_Datacard.txt')
+    #fitter.makeWorkspace16D('EFT_MultiDim_Datacard.txt')
     #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
     #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=50000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')

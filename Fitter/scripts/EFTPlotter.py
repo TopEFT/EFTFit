@@ -496,53 +496,53 @@ class EFTPlot(object):
             fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,op))
             limit_tree = fit_file.Get('limit')
 
-            limit_tree.Draw('2*deltaNLL:{}>>{}1DNLL(50,{},{})'.format(op,op,self.op_ranges[op][0],self.op_ranges[op][1]),'2*deltaNLL>-1','same')
-            graph = canvas.GetPrimitive('Graph')
-            #graph.SetName("Graph")
-
-            graph.Sort()
+            wc_values = []
+            nll_values = []
+            for entry in range(limit_tree.GetEntries()):
+                limit_tree.GetEntry(entry)
+                wc_values.append(limit_tree.GetLeaf(op).GetValue(0))
+                nll_values.append(limit_tree.GetLeaf('deltaNLL').GetValue(0))
+            bestNLL = min(nll_values)
+            nll_values = [oldValue-bestNLL for oldValue in nll_values]
+            coords = zip(numpy.asarray(wc_values),numpy.asarray(nll_values))
+            coords = zip(wc_values,nll_values)
+            coords.sort(key = lambda t: t[0])
 
             lowedges=[]
             highedges=[]
-            minimums=[]
-            true_minimum = [-1000,1000]
+            true_minimum = -1000
             prev = 1000
-            for idx in range(graph.GetN()):
-                y_val = graph.GetY()[idx]
-                if prev>4 and 4>y_val:
-                    lowedges.append((graph.GetX()[idx-1]+graph.GetX()[idx+1])/2)
-                if prev<4 and 4<y_val:
-                    highedges.append((graph.GetX()[idx-1]+graph.GetX()[idx+1])/2)
-                if y_val < true_minimum[1]:
-                    true_minimum = [graph.GetX()[idx],y_val]
-                if y_val<prev and y_val<graph.GetY()[idx+1]:
-                    minimums.append((graph.GetX()[idx],y_val))
-                prev = y_val
+            for idx,coord in enumerate(coords):
+                wc,nll = coord[0],coord[1]
+                if prev>4 and 4>nll:
+                    lowedges.append((wc_values[idx-1]+wc_values[idx])/2)
+                if prev<4 and 4<nll:
+                    highedges.append((wc_values[idx-1]+wc_values[idx])/2)
+                if nll == min(nll_values):
+                    true_minimum = wc
+                prev = nll
             if not len(lowedges) == len(highedges):
                 logging.error("Something is strange! Interval is missing endpoint!")
-
-            #for interval in zip(lowedges,highedges):
-            #    true_min = [-1000,1000]
-            #    for minimum in minimums:
-            #        if minimum[1]<true_min[1] and interval[0]<minimum[0] and minimum[0]<interval[1]:
-            #            true_min = minimum
-            #    true_minimums.append(true_min[0])
-
-            #fit_array.append([op,[list(l) for l in zip(true_minimums,lowedges,highedges)]])
-            fit_array.append([op,true_minimum[0],lowedges,highedges])
+            fit_array.append([op,true_minimum,lowedges,highedges])
 
         for line in fit_array:
             print line
 
         return fit_array
 
-    def BestScanPlot(self):
+    def BestScanPlot(self, basename_float='', basename_freeze=''):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
+        if not basename_float: basename_float='.EFT.SM.Float.Mar8'
+        if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar8'
+        #if not basename_float: basename_float='.EFT.SM.Float.2sig.Feb27'
+        #if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar4.2sig'
+
         # WC, Best Fit Value, Symmetric Error, Lower Asymm Error, Higher Asymm Error
-        fits_float = self.getIntervalFits('.EFT.SM.Float.Jan27.500')
-        fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
+        fits_freeze = self.getIntervalFits(basename_freeze)
+        fits_float = self.getIntervalFits(basename_float)
+        #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':

@@ -92,6 +92,28 @@ class EFT16DModel(PhysicsModel):
                             quartic_args[idx].extend([op1,op2])
                 #if procbin[1]=='C_2lss_m_emu_2b_5j': print lin_term, quartic_terms
 
+                # New method of filling quartic terms to autosplit every ~<1000 characters
+                #quartic_master = []
+                #quartic_final = []
+                #for idx,op1 in enumerate(self.operators):
+                #    for idy,op2 in enumerate(self.operators):
+                #        if (idy >= idx) and (abs(fits[procbin][(op1,op2)]) >= 0.001):
+                #            quartic_master.append('{0}*{1}*{2}'.format(round(fits[procbin][(op1,op2)],4),op1,op2))
+
+                #quartic_master = '+'.join(quartic_master)
+                #print "Master original size:",len(quartic_master)
+                #while len(quartic_master) >= 1000:
+                #    quarter_tmp = quartic_master[:1000]
+                #    quartic_master = quartic_master[1000:]
+                #    quartic_tmp = quartic_split[0].rsplit('+')
+                #    quartic_final.append(quartic_tmp[0])
+                #    quartic_master += quartic_tmp[1]
+                #quartic_final.append(quartic_master)
+                #print "Quartic pieces:",len(quartic_final)
+                #print "Size of pieces:"
+                #for idx in range(len(quartic_final)):
+                #    print len(quartic_final[idx])
+
                 # Compile linear function for combine
                 if lin_term:
                     lin_expr = "expr::{lin_name}('{lin_term}',{lin_args})".format(lin_name=lin_name,lin_term="+".join(lin_term),lin_args=",".join(lin_args))
@@ -102,7 +124,7 @@ class EFT16DModel(PhysicsModel):
                 # Compile quartic functions separately first
                 for idx,fn in enumerate(quartic_terms):
                     if not fn: continue # Skip empty quartic functions
-                    quartic_expr = "expr::{quartic_names}('{quartic_terms}',{quartic_args})".format(quartic_names=quartic_names[idx],quartic_terms="+".join(fn),quartic_args=",".join(list(set(quartic_args[idx]))))
+                    quartic_expr = "expr::{quartic_names}('{quartic_terms}',{quartic_args})".format(quartic_names=quartic_names[idx], quartic_terms="+".join(fn), quartic_args=",".join(list(set(quartic_args[idx]))))
                     quartic_func = self.modelBuilder.factory_(quartic_expr)
                     self.modelBuilder.out._import(quartic_func)
                     fit_terms.append(quartic_names[idx])
