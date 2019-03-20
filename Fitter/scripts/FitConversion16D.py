@@ -14,7 +14,7 @@ operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQ
 
 #Load file
 print "Loading Root file..."
-readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest14.root')
+readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest15.root')
 
 #Crawl through file
 print "Extracting parameterizations..."
@@ -39,7 +39,7 @@ for key in readfile.GetListOfKeys():
         process = process.split('_',1)[0]
 
         #Loop through bins and extract parameterization
-        for bin in range(1,5):
+        for bin in range(1,5): # Doesn't include bin 5
             category_njet = ''
             if "2lss" in category:
                 category_njet = 'C_{0}_{1}{2}j'.format(category, 'ge' if bin==4 else '', bin+3)
