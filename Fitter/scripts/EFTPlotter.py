@@ -443,6 +443,7 @@ class EFTPlot(object):
             sys.exit()
 
         best2DeltaNLL = 1000000
+        ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas('c','c',800,800)
 
         # Get Grid scan and copy to h_contour
@@ -527,8 +528,9 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
 
-    def CorrelationMatrix(self, name='', nuisances=True, freeze=True):
+    def CorrelationMatrix(self, name='', nuisances=True, SMfit=False, freeze=True):
 
+        ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
 
         # Get rooFit object
@@ -539,31 +541,65 @@ class EFTPlot(object):
         rooFit.correlationHist().Draw('colz')
         matrix = canvas.GetPrimitive('correlation_matrix')
 
-        # Change format of plot
-        matrix.SetStats(0)
-        matrix.SetTitle("Correlation Matrix")
-
         # Decide whether or not to keep the nuisance parameters in
         # If not, the number of bins (operators) varies on whether the scan froze the other 14
         if nuisances:
             matrix.SetName("corrMatrix")
         else:
-            matrix.SetName("corrMatrix_noNuisances")
-            nbins = matrix.GetNbinsX()
-            if freeze:
-                matrix.GetYaxis().SetRange(1,2)
-                matrix.GetXaxis().SetRange(nbins-1,nbins)
+            if SMfit:
+                SMmu = ['mu_ttH','mu_ttlnu','mu_ttll','mu_tllq','mu_tHq']
+                muBinsX, muBinsY = [], []
+                for idx,label in enumerate(matrix.GetXaxis().GetLabels()):
+                    if label in SMmu: muBinsX.append(1+idx)
+                for idy,label in enumerate(matrix.GetYaxis().GetLabels()):
+                    if label in SMmu: muBinsY.append(1+idy)
+                newmatrix = ROOT.TH2D("Correlation Matrix","Correlation Matrix",5,0,5,5,0,5)
+                for idx,binx in enumerate(muBinsX):
+                    for idy,biny in enumerate(muBinsY):
+                        newmatrix.SetBinContent(1+idx,5-idy,matrix.GetBinContent(binx,matrix.GetNbinsY()-biny+1))
+                    newmatrix.GetXaxis().SetBinLabel(1+idx,matrix.GetXaxis().GetBinLabel(binx))
+                for idy,biny in enumerate(muBinsY):
+                    newmatrix.GetYaxis().SetBinLabel(5-idy,matrix.GetYaxis().GetBinLabel(matrix.GetNbinsY()-biny+1))
+
+                # Change format of plot
+                newmatrix.SetMaximum(1)
+                newmatrix.SetMinimum(-1.)
+                newmatrix.SetStats(0)
+                newmatrix.SetName("corrMatrixSM")
+                newmatrix.SetTitle("Correlation Matrix")
+
+                canvas.Clear()
+                newmatrix.Draw('colz')
+
+                # Save the plot
+                canvas.Print(newmatrix.GetName()+'.png','png')
+
+                # Save the plot to the histogram file
+                outfile = ROOT.TFile(self.histosFileName,'UPDATE')
+                newmatrix.Write()
+                outfile.Close()
+                    
             else:
-                matrix.GetYaxis().SetRange(1,16)
-                matrix.GetXaxis().SetRange(nbins-15,nbins)
+                matrix.SetName("corrMatrix_noNuisances")
+                nbins = matrix.GetNbinsX()
+                if freeze:
+                    matrix.GetYaxis().SetRange(1,2)
+                    matrix.GetXaxis().SetRange(nbins-1,nbins)
+                else:
+                    matrix.GetYaxis().SetRange(1,16)
+                    matrix.GetXaxis().SetRange(nbins-15,nbins)
 
-        # Save the plot
-        canvas.Print(matrix.GetName()+'.png','png')
+                # Change format of plot
+                matrix.SetStats(0)
+                matrix.SetTitle("Correlation Matrix")
 
-        # Save the plot to the histogram file
-        outfile = ROOT.TFile(self.histosFileName,'UPDATE')
-        matrix.Write()
-        outfile.Close()
+                # Save the plot
+                canvas.Print(matrix.GetName()+'.png','png')
+
+                # Save the plot to the histogram file
+                outfile = ROOT.TFile(self.histosFileName,'UPDATE')
+                matrix.Write()
+                outfile.Close()
 
     def Batch2DPlots(self, histosFileName='.EFT.SM.Float', gridScanName='.EFT.SM.Float.gridScan.ctWctZ', postScanName='.EFT.SM.Float.postScan', operators=['ctW','ctZ'], freeze=False):
         ROOT.gROOT.SetBatch(True)
@@ -576,8 +612,8 @@ class EFTPlot(object):
         self.LLPlot2D(gridScanName,operators,10,True)
         self.LLPlot2D(gridScanName,operators,100,True)
 
-        #self.CorrelationMatrix(postScanName,False,freeze)
-        #self.CorrelationMatrix(postScanName,True,freeze)
+        #self.CorrelationMatrix(postScanName,False,False,freeze)
+        #self.CorrelationMatrix(postScanName,True,False,freeze)
 
         self.ContourPlot(gridScanName,operators)
 

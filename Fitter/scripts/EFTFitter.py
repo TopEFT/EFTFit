@@ -55,7 +55,7 @@ class EFTFit(object):
         ### Multidimensional fit ###
         args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
-        if freeze:      args.extend(['--freezeParameters',','.join[freeze]])
+        if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
         if autoBounds:  args.extend(['--autoBoundsPOIs=*'])
         if other:       args.extend(other)
 
@@ -66,6 +66,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stderr,'err')
         logging.info("Done with SMFit.")
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+        sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         #if os.path.isfile('multidimfit'+name+'.root'):
         #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
