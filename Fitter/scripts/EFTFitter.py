@@ -42,7 +42,7 @@ class EFTFit(object):
             sys.exit()
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
-                '--PO','map=.*/ttll:mu_ttll[1,0,20]','--PO','map=.*/tHq:mu_tHq[1,0,20]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,20]','--PO','map=.*/ttH:mu_ttH[1,0,20]','--PO','map=.*/tllq:mu_tllq[1,0,20]',
+                '--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_tHq[1,0,40]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
                 '-o','SMWorkspace.root']
 
         logging.info(" ".join(args))
@@ -51,7 +51,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
 
-    def SMFit(self, name='.test', freeze=[], autoBounds=True, other=[]):
+    def SMFit(self, name='.test', freeze=[], autoBounds=False, other=[]):
         ### Multidimensional fit ###
         args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
