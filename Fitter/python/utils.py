@@ -4,11 +4,12 @@ import logging
 
 # Match strings using one or more regular expressions
 def regex_match(lst,regex_lst):
-    # NOTE: We don't escape any of the regex special characters!
+    # NOTE: For the regex_lst patterns, we use the raw string to generate the regular expression.
+    #       This means that any regex special characters in the regex_list should be properly
+    #       escaped prior to calling this function.
     # TODO: Add whitelist/blacklist option switch
     matches = []
-    if len(regex_lst) == 0:
-        return lst[:]
+    if len(regex_lst) == 0: return lst[:]
     for s in lst:
         for pat in regex_lst:
             m = re.search(r"%s" % (pat),s)

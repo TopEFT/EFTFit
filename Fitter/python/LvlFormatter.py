@@ -3,6 +3,7 @@ import logging
 # Custom formatter, see: https://stackoverflow.com/a/8349076
 class LvlFormatter(logging.Formatter):
     info_fmt = '[%(levelname)s] %(message)s'
+    war_fmt  = '[%(levelname)s] %(message)s'
     err_fmt  = '[%(levelname)s] %(module)s - line %(lineno)d : %(message)s'
     dbg_fmt  = '[%(levelname)s] %(module)s - line %(lineno)d : %(message)s'
 
@@ -19,6 +20,8 @@ class LvlFormatter(logging.Formatter):
             self._fmt = LvlFormatter.dbg_fmt
         elif record.levelno == logging.INFO:
             self._fmt = LvlFormatter.info_fmt
+        elif record.levelno == logging.WARNING:
+            self._fmt = LvlFormatter.war_fmt
         elif record.levelno == logging.ERROR:
             self._fmt = LvlFormatter.err_fmt
         else:

@@ -1,7 +1,5 @@
 import os
-import re
 import math
-import subprocess
 import logging
 import CombineHarvester.CombineTools.ch as ch
 from utils import regex_match,run_command
@@ -45,7 +43,7 @@ class DatacardReader(object):
             # Replace any dummy systematics in the datacard if needed
             #TODO: Probably want to handle the case were a systematic has been
             #      removed from all processes in all bins, but seems to be harmless
-            tar_str = "%d/%d" % (self.DUMMY_UP,self.DUMMY_DOWN)
+            tar_str = "%d/%d" % (self.DUMMY_DOWN,self.DUMMY_UP)
             rep_str = "-".ljust(len(tar_str))
             run_command(['sed','-i','-e',"s|%s|%s|g" % (tar_str,rep_str),outf])
 
@@ -54,14 +52,14 @@ class DatacardReader(object):
         return self.is_loaded
 
     def getBins(self,keep=[]):
-        # Returns: [str]
+        # Returns: set(str)
         if len(keep):
             return regex_match(self.cb.bin_set(),keep)
         else:
             return self.cb.bin_set()
 
     def getProcs(self,keep=[]):
-        # Returns: [str]
+        # Returns: set(str)
         if len(keep):
             return regex_match(self.cb.process_set(),keep)
         else:
@@ -75,15 +73,33 @@ class DatacardReader(object):
             return self.cb.syst_name_set()
 
     # Super adhoc way to remove a systematic from the datacard
-    def removeSyst(self,b,proc,syst_name):
+    #def removeSyst(self,b,proc,syst_name):
+    #    # Returns: None
+    #    # NOTE: It is very important to call write() and load() on the datacard
+    #    #       after removing a systematic, otherwise the self.cb object will
+    #    #       have dummy values floating around for the removed systematics.
+    #    def f(s):
+    #        m1 = len(regex_match([s.bin()],[b]))
+    #        m2 = len(regex_match([s.process()],[proc]))
+    #        m3 = len(regex_match([s.name()],[syst_name]))
+    #        if m1 and m2 and m3:
+    #            self.logger.info("Removing Systematic: %s - %s - %s",s.name(),s.process(),s.bin())
+    #            s.set_asymm(1)
+    #            s.set_value_u(self.DUMMY_UP)
+    #            s.set_value_d(self.DUMMY_DOWN)
+    #    self.modified_systs = True
+    #    self.cb.ForEachSyst(f)
+
+    # Super adhoc way to remove a systematic from the datacard
+    def removeSyst(self,procs,bins,syst_name):
         # Returns: None
         # NOTE: It is very important to call write() and load() on the datacard
         #       after removing a systematic, otherwise the self.cb object will
         #       have dummy values floating around for the removed systematics.
         def f(s):
-            m1 = len(regex_match([s.bin()],[b]))
-            m2 = len(regex_match([s.process()],[proc]))
-            m3 = len(regex_match([s.name()],[syst_name]))
+            m1 = len(regex_match([s.bin()],regex_lst=bins))
+            m2 = len(regex_match([s.process()],regex_lst=procs))
+            m3 = len(regex_match([s.name()],regex_lst=[syst_name]))
             if m1 and m2 and m3:
                 self.logger.info("Removing Systematic: %s - %s - %s",s.name(),s.process(),s.bin())
                 s.set_asymm(1)
@@ -92,8 +108,27 @@ class DatacardReader(object):
         self.modified_systs = True
         self.cb.ForEachSyst(f)
 
+    # Add new systematic parameter after the fact
+    def addSyst(self,procs,bins,syst_name,val_u,val_d=None,syst_type='lnN'):
+        # procs: List of processes to apply the systematic to
+        # bins: List of bins to apply the systematic to
+        # syst_name: Name of the systematic that will appear in the datacard
+        # val_u: The symm error or the asymm upper error
+        # val_d: The asymm lower error
+        # syst_type: The type of systematic (e.g. log-normal, etc.)
+
+        bin_lst  = self.getBins(keep=bins)
+        proc_lst = self.getProcs(keep=procs)
+
+        self.logger.info("Adding Systematic: %s - %s - %s" % (syst_name,str(bins),str(procs)))
+        if val_d is None:   # Symmetric error
+            self.cb.cp().process(proc_lst).bin(bin_lst).AddSyst(self.cb,syst_name,syst_type,ch.SystMap()(val_u))
+        else: # Asymmetric error
+            self.cb.cp().process(proc_lst).bin(bin_lst).AddSyst(self.cb,syst_name,syst_type,ch.SystMap()(val_d,val_u))
+        self.modified_systs = True  # This is not needed as it is only used to trigger the string replacement of removed systematics
+
     def getMaxBinRate(self,keep=[]):
-        # Returns: [str]
+        # Returns: str
         max_bin = ''
         max_val = 0.0
         for b in self.getBins(keep=['.*']):
@@ -104,25 +139,25 @@ class DatacardReader(object):
         return max_bin
 
     def getBinRate(self,b,keep=[]):
-        # Returns: [float]
+        # Returns: float
         tmp = self.cb.cp()
         tmp.bin([b])
         if len(keep): tmp.process(keep)
         return tmp.GetRate()
 
-    def GetBinUncertainty(self,b,keep=[]):
-        # Returns: [float]
+    def getBinUncertainty(self,b,keep=[]):
+        # Returns: float
         tmp = self.cb.cp()
         tmp.bin([b])
         if len(keep): tmp.process(keep)
         return tmp.GetUncertainty()
 
     def getBinSensitivity(self,b,signals):
-        # Returns: [float]
+        # Returns: float
         bkgs = [x for x in self.getProcs() if x not in signals]
-        signal_rate = self.getBinRate(b,signals)
+        sig_rate = self.getBinRate(b,signals)
         bkg_rate = self.getBinRate(b,bkgs)
-        return signal_rate / math.sqrt(bkg_rate)
+        return sig_rate / math.sqrt(bkg_rate)
 
 if __name__ == "__main__":
     cmssw_base = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/"
