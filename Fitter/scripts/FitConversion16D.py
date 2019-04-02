@@ -3,10 +3,16 @@ import numpy as np
 import itertools
 import os
 import ROOT
+import sys
 ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 
 #Dict that will hold the parameterizations of the cross-sections
 fits = {}
+
+if len(sys.argv) != 2:
+    hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest15.root'
+else:
+    hist_file = sys.argv[1]
 
 #List of operators to extract parameterizations for
 operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
@@ -14,7 +20,7 @@ operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQ
 
 #Load file
 print "Loading Root file..."
-readfile = ROOT.TFile.Open(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest15.root')
+readfile = ROOT.TFile.Open(hist_file)
 
 #Crawl through file
 print "Extracting parameterizations..."
