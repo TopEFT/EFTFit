@@ -44,6 +44,7 @@ class EFTFit(object):
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_tHq[1,0,40]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
                 '--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_ttH[1,0,30]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
+                #'--PO','map=.*/ttll:mu_ttll[1,0,5]','--PO','map=.*/tHq:mu_ttH[1,0,5]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,5]','--PO','map=.*/ttH:mu_ttH[1,0,5]','--PO','map=.*/tllq:mu_tllq[1,0,5]',
                 '-o','SMWorkspace.root']
 
         logging.info(" ".join(args))
@@ -52,7 +53,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
 
-    def SMFit(self, name='.test', freeze=[], autoBounds=False, other=[]):
+    def SMFit(self, name='.test', freeze=[], autoBounds=True, other=[]):
         ### Multidimensional fit ###
         args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
@@ -70,6 +71,27 @@ class EFTFit(object):
         sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         #if os.path.isfile('multidimfit'+name+'.root'):
         #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
+
+    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttlnu'], operators_tracked=['mu_ttH','mu_ttll','mu_tllq'], points=500, freeze=False, other=[]):
+        ### Runs deltaNLL Scan in two operators using CRAB ###
+        logging.info("Doing grid scan...")
+
+        args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
+        args.extend(['--points','{}'.format(points)])
+        if name:              args.extend(['-n','{}'.format(name)])
+        if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
+        if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
+        if freeze:            args.extend(['--freezeParameters',','.join([op for op in ['mu_ttH','mu_ttll','mu_ttlnu','mu_tllq'] if op not in operators_POI])])
+        if other:             args.extend(other)
+        if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        logging.info(' '.join(args))
+
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        logging.info("Done with gridScan.")
+        if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
 
     def makeWorkspace16D(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard and fit parameterization file ###
@@ -264,7 +286,7 @@ class EFTFit(object):
             operators_POI = self.operators
 
         for poi in operators_POI:
-            process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+pois[0]], stdout=sp.PIPE, stderr=sp.PIPE)
+            process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+poi], stdout=sp.PIPE, stderr=sp.PIPE)
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
 

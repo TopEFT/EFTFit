@@ -476,7 +476,184 @@ class EFTPlot(object):
 
         # Set Contours
         c68 = self.ContourHelper.GetContour(h_contour,2.30)
-        c95 = self.ContourHelper.GetContour(h_contour,4.99)
+        c95 = self.ContourHelper.GetContour(h_contour,6.18)
+        c997 = self.ContourHelper.GetContour(h_contour,11.83)
+        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
+        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue-2,3,1)
+
+        # Marker for SM point
+        marker_1 = ROOT.TMarker()
+        marker_1.SetMarkerSize(2.0)
+        marker_1.SetMarkerColor(97)
+        marker_1.SetMarkerStyle(33)
+        marker_2 = ROOT.TMarker()
+        marker_2.SetMarkerSize(1.2)
+        marker_2.SetMarkerColor(89)
+        marker_2.SetMarkerStyle(33)
+
+
+        # Change format of plot
+        h_contour.SetStats(0)
+        h_contour.SetTitle("Significance Contours")
+        h_contour.GetYaxis().SetTitle(operators[1].rstrip('i'))
+        h_contour.GetXaxis().SetTitle(operators[0].rstrip('i'))
+
+        # CMS-required text
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text.SetNDC(1)
+        CMS_text.SetTextSize(0.02)
+        CMS_text.SetTextAlign(30)
+        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.29 fb^{-1}")
+        Lumi_text.SetNDC(1)
+        Lumi_text.SetTextSize(0.02)
+        Lumi_text.SetTextAlign(30)
+
+        # Draw and save plot
+        h_contour.Draw('AXIS')
+        c68.Draw('L SAME')
+        c95.Draw('L SAME')
+        c997.Draw('L SAME')
+        marker_1.DrawMarker(0,0)
+        marker_2.DrawMarker(0,0)
+
+        CMS_text.Draw('same')
+        Lumi_text.Draw('same')
+        canvas.Print('{}{}contour.png'.format(operators[1],operators[0]),'png')
+
+        # Save contour to histogram file
+        outfile = ROOT.TFile(self.histosFileName,'UPDATE')
+        h_contour.Write()
+        outfile.Close()
+
+        ROOT.gStyle.SetPalette(57)
+
+    def SMLLPlot2D(self, name='.test', operators=[], ceiling=1, log=False):
+        if len(operators)!=2:
+            logging.error("Function 'LLPlot2D' requires exactly two operators!")
+            sys.exit()
+
+        ROOT.gROOT.SetBatch(True)
+
+        canvas = ROOT.TCanvas()
+
+        if(0):
+            # Get scan tree
+            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+            limitTree = rootFile.Get('limit')
+
+            # Get coordinates for TH2D
+            histwc1 = []
+            histwc2 = []
+            histnlls = []
+            for entry in range(limitTree.GetEntries()):
+                limitTree.GetEntry(entry)
+                histwc1.append(limitTree.GetLeaf(operators[0]).GetValue(0))
+                histwc2.append(limitTree.GetLeaf(operators[1]).GetValue(0))
+                histnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+
+            # Rezero the nll values and make the TH2D
+            hname = '{}{}less{}'.format(operators[1],operators[0],ceiling)
+            if log:
+                hname += "_log"
+            hist = ROOT.TH2D(hname, hname, 200, 0, 5,
+                                           200, 0, 5)
+            histnlls = [val-min(histnlls) for val in histnlls]
+            hist.Fill(len(histwc1),numpy.asarray(histwc1),numpy.asarray(histwc2),numpy.asarray(histnlls))
+            hist.Draw("prof colz")
+            hist.SetMaximum(ceiling)
+            del graphnlls,graphwcs
+
+        # Open file and draw 2D histogram
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        limitTree = rootFile.Get('limit')
+        hname = '{}{}less{}'.format(operators[1],operators[0],ceiling)
+        if log:
+            hname += "_log"
+
+        limitTree.Draw('2*deltaNLL:{}:{}>>{}(200,0,30,200,0,30)'.format(operators[1],operators[0],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        
+        hist = canvas.GetPrimitive(hname)
+
+        # Draw best fit point from grid scan
+        #limit.Draw(operators[0]+":"+operators[1],'quantileExpected==-1','p same') # Best fit point from grid scan
+        #best_fit = canvas.FindObject('Graph')
+        #best_fit.SetMarkerSize(1)
+        #best_fit.SetMarkerStyle(34)
+        #best_fit.Draw("p same")
+
+        # Change plot formats
+        hist.GetXaxis().SetRangeUser(0,5)
+        hist.GetYaxis().SetRangeUser(0,5)
+        if log:
+            canvas.SetLogz()
+        hist.GetYaxis().SetTitle(operators[1].rstrip('i'))
+        hist.GetXaxis().SetTitle(operators[0].rstrip('i'))
+        hist.SetTitle("2*deltaNLL < {}".format(operators[1],operators[0],ceiling))
+        hist.SetStats(0)
+
+        # CMS-required text
+        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text.SetNDC(1)
+        CMS_text.SetTextSize(0.02)
+        CMS_text.Draw('same')
+        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.29 fb^{-1}")
+        Lumi_text.SetNDC(1)
+        Lumi_text.SetTextSize(0.02)
+        Lumi_text.Draw('same')
+
+        # Save plot
+        canvas.Print(hname+".png",'png')
+
+        # Save to root file
+        # Log settings don't save to the histogram, so redundant to save those
+        if not log:
+            outfile = ROOT.TFile(self.histosFileName,'UPDATE')
+            hist.Write()
+            outfile.Close()
+
+    def SMContourPlot(self, name='.test', operators=[]):
+        if len(operators)!=2:
+            logging.error("Function 'ContourPlot' requires exactly two operators!")
+            sys.exit()
+
+        best2DeltaNLL = 1000000
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas('c','c',800,800)
+
+        # Get Grid scan and copy to h_contour
+        gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        gridTree = gridFile.Get('limit')
+        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(operators[1],operators[0],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1]), '2*deltaNLL<100', 'prof colz')
+        gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,0,30,200,0,30)'.format(operators[1],operators[0]), '', 'prof colz')
+        original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,0,30,200,0,30)
+        #original.Copy(h_contour)
+
+        # Adjust scale so that the best bin has content 0
+        best2DeltaNLL = original.GetMinimum()
+        for xbin in range(original.GetNbinsX()):
+            xcoord = original.GetXaxis().GetBinCenter(xbin)
+            for ybin in range(original.GetNbinsY()):
+                ycoord = original.GetYaxis().GetBinCenter(ybin)
+                if original.GetBinContent(1+xbin,1+ybin)==0:
+                    h_contour.Fill(xcoord,ycoord,1000)
+                if original.GetBinContent(1+xbin,1+ybin)!=0:
+                    h_contour.Fill(xcoord,ycoord,original.GetBinContent(1+xbin,1+ybin)-best2DeltaNLL)
+                #h_contour.SetBinContent(1+xbin,1+ybin,original.GetBinContent(1+xbin,1+ybin)-best2DeltaNLL)
+
+        # Exclude data outside of the contours
+        #h_contour.SetMaximum(11.83)
+        #h_contour.SetContour(200)
+        #h_contour.GetZaxis().SetRangeUser(0,21);
+        h_contour.GetXaxis().SetRangeUser(0,5);
+        h_contour.GetYaxis().SetRangeUser(0,5);
+        #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
+        #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
+
+        # Set Contours
+        c68 = self.ContourHelper.GetContour(h_contour,2.30)
+        c95 = self.ContourHelper.GetContour(h_contour,6.18)
         c997 = self.ContourHelper.GetContour(h_contour,11.83)
         self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
         self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
