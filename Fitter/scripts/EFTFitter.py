@@ -32,7 +32,7 @@ class EFTFit(object):
         ### Pipes Popen streams to logging class ###
         for line in iter(pipe.readline, ''):
             if level=='info': logging.info(line.rstrip('\n'))
-            if level=='error': logging.error(line.rstrip('\n'))
+            if level=='err': logging.error(line.rstrip('\n'))
 
     def makeWorkspaceSM(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard ###
@@ -133,7 +133,7 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in two operators using CRAB ###
         logging.info("Doing grid scan...")
 
-        args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
+        args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
@@ -259,7 +259,7 @@ class EFTFit(object):
         for poi in operators_POI:
             self.gridScan('{}.{}'.format(basename,poi), crab, [poi], [pois for pois in self.operators if pois != poi], points, freeze)
 
-    def batch2DScan(self, basename='.EFT.gridScan', freeze=False, points=50000, allPairs=False):
+    def batch2DScan(self, basename='.EFT.gridScan', freeze=False, points=160000, allPairs=False, other=[]):
         ### For pairs of operators, runs deltaNLL Scan in two operators using CRAB ###
 
         # Use EVERY combination of operators
@@ -269,7 +269,7 @@ class EFTFit(object):
             for pois in itertools.combinations(operators_POI,2):
                 operators_tracked = [op for op in self.operators if op not in pois]
                 #print pois, operators_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
+                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze, other=other)
 
         # Use each operator only once
         if not allPairs:
@@ -278,7 +278,7 @@ class EFTFit(object):
             for pois in operators_POI:
                 operators_tracked = [op for op in self.operators if op not in pois]
                 #print pois, operators_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze)
+                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze, other=other)
 
     def batchResubmit1DScans(self, basename='.EFT.gridScan', operators_POI=[]):
         ### For each operator, attempt to resubmit failed CRAB jobs ###
@@ -287,8 +287,9 @@ class EFTFit(object):
 
         for poi in operators_POI:
             process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+poi], stdout=sp.PIPE, stderr=sp.PIPE)
-            self.log_subprocess_output(process.stdout,'info')
-            self.log_subprocess_output(process.stderr,'err')
+                with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
 
     def batchResubmit2DScans(self, basename='.EFT.gridScan', allPairs=False):
         ### For pairs of operators, attempt to resubmit failed CRAB jobs ###
@@ -308,8 +309,9 @@ class EFTFit(object):
 
             for pois in operators_POI:
                 process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+pois[0]+pois[1]], stdout=sp.PIPE, stderr=sp.PIPE)
-                self.log_subprocess_output(process.stdout,'info')
-                self.log_subprocess_output(process.stderr,'err')
+                with process.stdout,process.stderr:
+                    self.log_subprocess_output(process.stdout,'info')
+                    self.log_subprocess_output(process.stderr,'err')
 
     def batchRetrieve1DScans(self, basename='.test', operators_POI=[]):
         ### For each operator, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
