@@ -251,7 +251,7 @@ class EFTFit(object):
         # Remove the temporary directory and split root files
         sp.call(['rm','-r',taskname+'tmp'])
 
-    def batch1DScan(self, basename='.test', crab=False, operators_POI=[], points=100, freeze=False):
+    def batch1DScan(self, basename='.test', crab=False, operators_POI=[], points=300, freeze=False):
         ### For each operator, run a 1D deltaNLL Scan.
         if not operators_POI:
             operators_POI = self.operators
@@ -287,7 +287,7 @@ class EFTFit(object):
 
         for poi in operators_POI:
             process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+poi], stdout=sp.PIPE, stderr=sp.PIPE)
-                with process.stdout,process.stderr:
+            with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
 

@@ -11,7 +11,6 @@ fits = {}
 
 if len(sys.argv) != 2:
     hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest20.root'
-    #hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/TOP-19-001_unblinded_v1.root'
 else:
     hist_file = sys.argv[1]
 
@@ -33,7 +32,7 @@ for key in readfile.GetListOfKeys():
     category,systematic,process = '','',''
     if(len(histname)==3): [category,systematic,process] = histname
     if(len(histname)==2): [category,process] = histname
-    #For now, treat tllq, ttll, ttlnu as tZq, ttZ, ttW
+    #In case we ever switch to using ttZ,ttW,tZq as proces names
     #process = process.replace('tllq','tZq')
     #process = process.replace('ttll','ttZ')
     #process = process.replace('ttlnu','ttW')
@@ -55,6 +54,7 @@ for key in readfile.GetListOfKeys():
             if "4l" in category:
                 category_njet = 'C_{0}_{1}{2}j'.format(category, 'ge' if bin==4 else '', bin)
             fit = hist.GetBinFit(bin)
+            #Debug
             #if bin==4:
             #    print category_njet,fit.getCoefficient('sm','sm'),fit.getCoefficient('ctW','sm'),fit.getCoefficient('ctW','ctW')
             #print category_njet,fit.getCoefficient('sm','sm')
@@ -73,11 +73,11 @@ for key in readfile.GetListOfKeys():
 #                fits[(process,category_njet)][pair] = round(fit.getCoefficient(pair[0],pair[1])/fit.getCoefficient('sm','sm'),8)
             for op1 in operators:
                 for op2 in operators:
+                    #Debug
                     #if category_njet=='C_2lss_m_ee_2b_ge7j' and op2 == 'sm' and op1 != 'sm': print process,[op1,op2],fit.getCoefficient(op1,op2)
                     #if category_njet=='C_2lss_m_ee_2b_ge7j' and op2 == 'cbW' and op1 != 'sm': print process,[op1,op2],fit.getCoefficient(op1,op2)
                     #if category_njet=='C_2lss_m_ee_2b_ge7j' and op2 == 'cbW' and op1 != 'cbW': print process,[op1,op2],fit.getCoefficient(op1,op2)
                     fits[(process,category_njet)][(op1,op2)] = round(fit.getCoefficient(op1,op2)/fit.getCoefficient('sm','sm'),8)
-                    #fits[(process,category_njet)][(op1,op2)] = round(fit.getCoefficient(op1,op2),8)
 
 #print fits
 print "Saving numpy file {}...".format("16D_Parameterization.npy")
