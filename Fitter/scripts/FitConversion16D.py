@@ -11,6 +11,7 @@ fits = {}
 
 if len(sys.argv) != 2:
     hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest20.root'
+    #hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/TOP-19-001_unblinded_v1.root'
 else:
     hist_file = sys.argv[1]
 

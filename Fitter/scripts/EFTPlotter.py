@@ -363,34 +363,6 @@ class EFTPlot(object):
 
         canvas = ROOT.TCanvas('c','c',800,800)
 
-        if(0):
-            # Get scan tree
-            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-            limitTree = rootFile.Get('limit')
-
-            # Get coordinates for TH2D
-            histwcY = []
-            histwcX = []
-            histnlls = []
-            for entry in range(limitTree.GetEntries()):
-                limitTree.GetEntry(entry)
-                histwcY.append(limitTree.GetLeaf(operators[0]).GetValue(0))
-                histwcX.append(limitTree.GetLeaf(operators[1]).GetValue(0))
-                histnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
-
-            # Rezero the nll values and make the TH2D
-            hname = '{}{}less{}'.format(operators[1],operators[0],ceiling)
-            if log:
-                hname += "_log"
-            hist = ROOT.TH2D(hname, hname, 200, self.op_ranges[operators[0]][0], self.op_ranges[operators[0]][1],
-                                           200, self.op_ranges[operators[1]][0], self.op_ranges[operators[1]][1])
-            histnlls = [val-min(histnlls) for val in histnlls]
-            hist.Fill(len(histwcY),numpy.asarray(histwcY),numpy.asarray(histwcX),numpy.asarray(histnlls))
-            hist.Draw("prof colz")
-            hist.SetMaximum(ceiling)
-            del graphnlls,graphwcs
-            print 'This should not print'
-
         # Open file and draw 2D histogram
         # operators[0] is y-axis variable, operators[1] is x-axis variable
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
@@ -410,6 +382,8 @@ class EFTPlot(object):
         #best_fit.SetMarkerSize(1)
         #best_fit.SetMarkerStyle(34)
         #best_fit.Draw("p same")
+        #dedicatedFit = ROOT.TMarker(0.75,1.23,37)
+        #dedicatedFit.Draw('same')
 
         # Change plot formats
         hist.GetXaxis().SetRangeUser(self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1])
@@ -455,7 +429,8 @@ class EFTPlot(object):
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(operators[1],operators[0],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1]), '2*deltaNLL<100', 'prof colz')
-        gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,{},{},50,{},{})'.format(operators[0],operators[1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1]), '', 'prof colz')
+        minZ = gridTree.GetMinimum('deltaNLL')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(50,{},{},50,{},{})'.format(minZ,operators[0],operators[1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
         h_contour = ROOT.TProfile2D('h_contour','h_contour',50,self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1],50,self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1])
         #original.Copy(h_contour)
@@ -503,7 +478,6 @@ class EFTPlot(object):
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
 
-
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
@@ -550,44 +524,17 @@ class EFTPlot(object):
 
         ROOT.gROOT.SetBatch(True)
 
-        canvas = ROOT.TCanvas()
-
-        if(0):
-            # Get scan tree
-            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-            limitTree = rootFile.Get('limit')
-
-            # Get coordinates for TH2D
-            histwcY = []
-            histwcX = []
-            histnlls = []
-            for entry in range(limitTree.GetEntries()):
-                limitTree.GetEntry(entry)
-                histwcY.append(limitTree.GetLeaf(operators[0]).GetValue(0))
-                histwcX.append(limitTree.GetLeaf(operators[1]).GetValue(0))
-                histnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
-
-            # Rezero the nll values and make the TH2D
-            hname = '{}{}less{}'.format(operators[1],operators[0],ceiling)
-            if log:
-                hname += "_log"
-            hist = ROOT.TH2D(hname, hname, 200, 0, 5,
-                                           200, 0, 5)
-            histnlls = [val-min(histnlls) for val in histnlls]
-            hist.Fill(len(histwcY),numpy.asarray(histwcY),numpy.asarray(histwcX),numpy.asarray(histnlls))
-            hist.Draw("prof colz")
-            hist.SetMaximum(ceiling)
-            del graphnlls,graphwcs
-            print "This shouldn't print out"
+        canvas = ROOT.TCanvas('c','c',800,800)
 
         # Open file and draw 2D histogram
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
-        hname = '{}{}less{}'.format(operators[1],operators[0],ceiling)
+        hname = '{}{}less{}'.format(operators[0],operators[1],ceiling)
         if log:
             hname += "_log"
+        minZ = limitTree.GetMinimum('deltaNLL')
 
-        limitTree.Draw('2*deltaNLL:{}:{}>>{}(200,0,30,200,0,30)'.format(operators[1],operators[0],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,30,200,0,30)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
         
         hist = canvas.GetPrimitive(hname)
 
@@ -599,13 +546,13 @@ class EFTPlot(object):
         #best_fit.Draw("p same")
 
         # Change plot formats
-        hist.GetXaxis().SetRangeUser(0,5)
-        hist.GetYaxis().SetRangeUser(0,5)
+        #hist.GetXaxis().SetRangeUser(0,5)
+        #hist.GetYaxis().SetRangeUser(0,5)
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(operators[1].rstrip('i'))
-        hist.GetXaxis().SetTitle(operators[0].rstrip('i'))
-        hist.SetTitle("2*deltaNLL < {}".format(operators[1],operators[0],ceiling))
+        hist.GetYaxis().SetTitle(operators[0].rstrip('i'))
+        hist.GetXaxis().SetTitle(operators[1].rstrip('i'))
+        hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
         # CMS-required text
@@ -632,19 +579,20 @@ class EFTPlot(object):
         if len(operators)!=2:
             logging.error("Function 'ContourPlot' requires exactly two operators!")
             sys.exit()
-
+            
         best2DeltaNLL = 1000000
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas('c','c',800,800)
 
         # Get Grid scan and copy to h_contour
+        # operators[0] is y-axis variable, operators[1] is x-axis variable
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
-        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(operators[1],operators[0],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1]), '2*deltaNLL<100', 'prof colz')
-        gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,0,30,200,0,30)'.format(operators[1],operators[0]), '', 'prof colz')
+        minZ = gridTree.GetMinimum('deltaNLL')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,operators[0],operators[1]), '', 'prof colz')
+        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(operators[0],operators[1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,0,30,200,0,30)
-        #original.Copy(h_contour)
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,0,15,200,0,15)
 
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
@@ -684,13 +632,22 @@ class EFTPlot(object):
         marker_2.SetMarkerSize(1.2)
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
-
+        
+        # Misc Marker -- use as needed
+        dedicatedFit = ROOT.TGraphAsymmErrors(1)
+        dedicatedFit.SetPoint(0,0.75,1.23)
+        dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31)
+        #dedicatedFit = ROOT.TMarker(0.75,1.23,33)
+        dedicatedFit.SetMarkerSize(2)
+        dedicatedFit.SetMarkerStyle(6)
 
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
-        h_contour.GetYaxis().SetTitle(operators[1].rstrip('i'))
-        h_contour.GetXaxis().SetTitle(operators[0].rstrip('i'))
+        #h_contour.GetYaxis().SetTitle(operators[0].rstrip('i'))
+        #h_contour.GetXaxis().SetTitle(operators[1].rstrip('i'))
+        h_contour.GetYaxis().SetTitle("mu_ttW")
+        h_contour.GetXaxis().SetTitle("mu_ttH/tHq")
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -707,12 +664,13 @@ class EFTPlot(object):
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
-        marker_1.DrawMarker(0,0)
-        marker_2.DrawMarker(0,0)
+        #marker_1.DrawMarker(1,1)
+        #marker_2.DrawMarker(1,1)
+        dedicatedFit.Draw('same')
 
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
-        canvas.Print('{}{}contour.png'.format(operators[1],operators[0]),'png')
+        canvas.Print('{}{}contour.png'.format(operators[0],operators[1]),'png')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')

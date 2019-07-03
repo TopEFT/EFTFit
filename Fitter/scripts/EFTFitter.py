@@ -43,6 +43,7 @@ class EFTFit(object):
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_tHq[1,0,40]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
+                #'--PO','map=.*/ttll:mu_ttll[1,0,15]','--PO','map=.*/tHq:mu_ttH[1,0,15]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,15]','--PO','map=.*/ttH:mu_ttH[1,0,15]','--PO','map=.*/tllq:mu_tllq[1,0,15]',
                 '--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_ttH[1,0,30]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,5]','--PO','map=.*/tHq:mu_ttH[1,0,5]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,5]','--PO','map=.*/ttH:mu_ttH[1,0,5]','--PO','map=.*/tllq:mu_tllq[1,0,5]',
                 '-o','SMWorkspace.root']
@@ -55,7 +56,8 @@ class EFTFit(object):
 
     def SMFit(self, name='.test', freeze=[], autoBounds=True, other=[]):
         ### Multidimensional fit ###
-        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminDefaultMinimizerStrategy=2']
+        #args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
         if autoBounds:  args.extend(['--autoBoundsPOIs=*'])
@@ -72,11 +74,12 @@ class EFTFit(object):
         #if os.path.isfile('multidimfit'+name+'.root'):
         #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
-    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttlnu'], operators_tracked=['mu_ttH','mu_ttll','mu_tllq'], points=500, freeze=False, other=[]):
+    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttlnu','mu_ttH'], operators_tracked=['mu_ttll','mu_tllq'], points=40000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two operators using CRAB ###
+        ### Can be used to do 1D scans as well ###
         logging.info("Doing grid scan...")
 
-        args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
+        args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
