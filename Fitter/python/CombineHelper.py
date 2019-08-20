@@ -36,7 +36,10 @@ class OptionsBase(object):
                             # options for inherited classes
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        # No data members are defined for the base class
+        self.__protected = [
+            '__protected',
+            'logger'
+        ]
 
     # Modify class instance data members
     def setOptions(self,extend=False,**kwargs):
@@ -45,7 +48,7 @@ class OptionsBase(object):
             if not self.hasOption(k):
                 self.logger.error("Unknown option: %s",k)
                 raise RuntimeError
-            elif k in self.PROTECTED:
+            elif k in self.__protected:
                 self.logger.error("Tried to set protected option: %s",k)
                 raise RuntimeError
             elif type(v) != type(self.__dict__[k]) and self.__dict__[k] is not None:
@@ -82,7 +85,7 @@ class OptionsBase(object):
         to_print = []
         colw = 0
         for k in self.__dict__.keys():
-            if k in self.PROTECTED: continue
+            if k in self.__protected: continue
             if rgx_lst and len(regex_match([k],rgx_lst)) == 0: continue
             colw = max(colw,len(k))
             to_print.append(k)
@@ -136,7 +139,6 @@ class HelperOptions(OptionsBase):
         self.sm_signals        = []
         self.other_options     = []         # A list of additional options. These should be fully
                                             # formed options e.g. '--cminDefaultMinimizerStrategy=2'
-
         # FitDiagnostic Options
         self.prefit_value = 0.0     # The prefit value of the POI used
 
@@ -144,7 +146,7 @@ class HelperOptions(OptionsBase):
 
         # MultiDimFit Options
         self.float_other_pois = False   # Whether or not the other POIs should be floating or fixed
-        self.fast_scan        = False   # Whetheror not to do a fast scan, evaluating the likelihood without profiling it
+        self.fast_scan        = False   # Whether or not to do a fast scan, evaluating the likelihood without profiling it
         self.robust_hesse     = False   # Use a more robust calculation of the hessian/covariance matrix
 
         self.algo = FitAlgo.NONE
@@ -243,7 +245,7 @@ class CombineHelper(object):
         self.logger.info("Copying output to: %s",tar_dir)
         rel_path = os.path.relpath(tar_dir,CONST.USER_DIR)
         if rel_path.split('/')[0] == '..':
-            self.logger.error("Invalid target directory. The target directory must be a sub-directory of the user: %s",USER_DIR)
+            self.logger.error("Invalid target directory. The target directory must be a sub-directory of the user: %s",CONST.USER_DIR)
             return
         self.chdir(self.output_dir)
         to_copy = []
@@ -268,7 +270,7 @@ class CombineHelper(object):
             shutil.copy(f,dst)
 
     # Modify an existing datacard, save it, then re-load it
-    def modifyDatacard(self,new_card,remove_systs=[],add_systs=[]):
+    def modifyDatacard(self,new_card,remove_systs=[],add_systs=[],filter_bins=[]):
         self.loadDatacard() # Try to load the default datacard (if we already loaded a card this does nothing)
         if not self.dc_reader.hasCard():
             self.logger.error("Unable to modify datacard. No card has been loaded!")
@@ -276,6 +278,7 @@ class CombineHelper(object):
         old_card = self.ops.getOption('datacard_file')
         self.logger.info("Modifying datacard %s...",old_card)
         self.chdir(self.output_dir)
+        if filter_bins: self.dc_reader.filterBins(bins=filter_bins)
         for syst in remove_systs:
             procs = syst.getOption('procs')
             bins  = syst.getOption('bins')
@@ -290,8 +293,11 @@ class CombineHelper(object):
             syst_type = syst.getOption('syst_type')
             self.dc_reader.addSyst(procs=procs,bins=bins,syst_name=syst_name,val_u=val_u,val_d=val_d,syst_type=syst_type)
         self.logger.info("Creating new datacard: %s",new_card)
-        self.dc_reader.write(new_card)
         self.setOptions(datacard_file=new_card)
+        self.dc_reader.write(new_card)
+        self.loadDatacard(force=True)
+        # Write/Load a second time to remove empty systematics from the datacard
+        self.dc_reader.write(new_card)
         self.loadDatacard(force=True)
 
     # Run combine using the configured options
@@ -326,9 +332,9 @@ class CombineHelper(object):
 
         self.logger.info("Creating datacard %s...",card_file)
         self.chdir(self.output_dir)
-
         self.dc_maker.outf = card_file
         fpath = os.path.join(CONST.TOPEFT_DATA_DIR,hist_file)
+        self.logger.info("Using Histogram File: %s" % (fpath))
         self.dc_maker.make(fpath,fake_data)
         self.loadDatacard()
 
@@ -469,7 +475,7 @@ class CombineHelper(object):
         args.extend(['-v','%d' % (verb),'-m','%d' % (mass)])
         if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
-        if auto_pois: args.extend(['--autoBoundsPOIs',','.join(auto_pois)])
+        if auto_pois: args.extend(['--autoBoundsPOIs=%s' % (','.join(auto_pois))])
         if other_ops: args.extend([x for x in other_ops])
         if self.ops.getOption('robust_fit'): args.extend(['--robustFit','1'])
         self.logger.info("Initial Fits command: %s", ' '.join(args))
@@ -481,7 +487,7 @@ class CombineHelper(object):
         args.extend(['-v','%d' % (verb),'-m','%d' % (mass)])
         if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
-        if auto_pois: args.extend(['--autoBoundsPOIs',','.join(auto_pois)])
+        if auto_pois: args.extend(['--autoBoundsPOIs=%s' % (','.join(auto_pois))])
         if other_ops: args.extend([x for x in other_ops])
         if self.ops.getOption('robust_fit'): args.extend(['--robustFit','1'])
         self.logger.info("Do Fits command: %s", ' '.join(args))

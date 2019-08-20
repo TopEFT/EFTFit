@@ -330,8 +330,33 @@ public:
             return;
         }
 
-        uint i; // <- why is this out here?
-        for (i = 0; i < this->errSize(); i++) {
+        std::vector<std::string> added_names = added_fit->getNames();
+        if (this->names.size() != added_names.size()) {
+            std::cout << "[ERROR] WCFit mismatch in names! (addFit)" << std::endl;
+            return;
+        }
+
+        int name_idx;
+        bool is_bad = false;
+        for (uint i = 0; i < this->size(); i++) {
+            name_idx = this->pairs.at(i).first;
+            if (this->names.at(name_idx) != added_names.at(name_idx)) {
+                std::cout << "[ERROR] WCFit mismatch in names! (addFit), Pair[0] " << i << ": " << this->names.at(name_idx) << " --> " added_names.at(name_idx) << std::endl;
+                is_bad = true;
+            }
+            name_idx = this->pairs.at(i).second;
+            if (this->names.at(name_idx) != added_names.at(name_idx)) {
+                std::cout << "[ERROR] WCFit mismatch in names! (addFit), Pair[1] " << i << ": " << this->names.at(name_idx) << " --> " added_names.at(name_idx) << std::endl;
+                is_bad = true;
+            }
+        }
+
+        if (is_bad) {
+            // Don't try to merge the two fits
+            return;
+        }
+
+        for (uint i = 0; i < this->errSize(); i++) {
             if (i < this->size()) {
                 this->coeffs.at(i) += added_fit.getCoefficient(i);
             }
