@@ -73,24 +73,6 @@ class DatacardReader(object):
             return self.cb.syst_name_set()
 
     # Super adhoc way to remove a systematic from the datacard
-    #def removeSyst(self,b,proc,syst_name):
-    #    # Returns: None
-    #    # NOTE: It is very important to call write() and load() on the datacard
-    #    #       after removing a systematic, otherwise the self.cb object will
-    #    #       have dummy values floating around for the removed systematics.
-    #    def f(s):
-    #        m1 = len(regex_match([s.bin()],[b]))
-    #        m2 = len(regex_match([s.process()],[proc]))
-    #        m3 = len(regex_match([s.name()],[syst_name]))
-    #        if m1 and m2 and m3:
-    #            self.logger.info("Removing Systematic: %s - %s - %s",s.name(),s.process(),s.bin())
-    #            s.set_asymm(1)
-    #            s.set_value_u(self.DUMMY_UP)
-    #            s.set_value_d(self.DUMMY_DOWN)
-    #    self.modified_systs = True
-    #    self.cb.ForEachSyst(f)
-
-    # Super adhoc way to remove a systematic from the datacard
     def removeSyst(self,procs,bins,syst_name):
         # Returns: None
         # NOTE: It is very important to call write() and load() on the datacard
@@ -101,12 +83,20 @@ class DatacardReader(object):
             m2 = len(regex_match([s.process()],regex_lst=procs))
             m3 = len(regex_match([s.name()],regex_lst=[syst_name]))
             if m1 and m2 and m3:
-                self.logger.info("Removing Systematic: %s - %s - %s",s.name(),s.process(),s.bin())
+                self.logger.info("Removing Systematic: %s - %s - %s",s.name().ljust(10),s.process().ljust(5),s.bin())
                 s.set_asymm(1)
                 s.set_value_u(self.DUMMY_UP)
                 s.set_value_d(self.DUMMY_DOWN)
         self.modified_systs = True
         self.cb.ForEachSyst(f)
+
+    # Filter out entire bins from the datacard
+    def filterBins(self,bins):
+        bin_str = [str(x).ljust(10) for x in bins]
+        bin_str = '[' + ', '.join(bin_str) + ']'
+        self.logger.info("Keeping bins that match any of: %s",bin_str)
+        bin_lst = self.getBins(keep=bins)
+        self.cb.bin(bin_lst)
 
     # Add new systematic parameter after the fact
     def addSyst(self,procs,bins,syst_name,val_u,val_d=None,syst_type='lnN'):
@@ -116,16 +106,25 @@ class DatacardReader(object):
         # val_u: The symm error or the asymm upper error
         # val_d: The asymm lower error
         # syst_type: The type of systematic (e.g. log-normal, etc.)
+        colw = 10
+
+        syst_str = syst_name.ljust(10)
+
+        bin_str = [str(x).ljust(10) for x in bins]
+        bin_str = '[' + ', '.join(bin_str) + ']'
+
+        proc_str = [str(x).ljust(5) for x in procs]
+        proc_str = '[' + ', '.join(proc_str) + ']'
 
         bin_lst  = self.getBins(keep=bins)
         proc_lst = self.getProcs(keep=procs)
 
-        self.logger.info("Adding Systematic: %s - %s - %s" % (syst_name,str(bins),str(procs)))
+        self.logger.info("Adding Systematic: %s - %s - %s",syst_str,proc_str,bin_str)
         if val_d is None:   # Symmetric error
             self.cb.cp().process(proc_lst).bin(bin_lst).AddSyst(self.cb,syst_name,syst_type,ch.SystMap()(val_u))
         else: # Asymmetric error
             self.cb.cp().process(proc_lst).bin(bin_lst).AddSyst(self.cb,syst_name,syst_type,ch.SystMap()(val_d,val_u))
-        self.modified_systs = True  # This is not needed as it is only used to trigger the string replacement of removed systematics
+        self.modified_systs = True  # This is not really needed as it is only used to trigger the string replacement of removed systematics
 
     def getMaxBinRate(self,keep=[]):
         # Returns: str

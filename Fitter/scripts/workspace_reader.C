@@ -299,9 +299,9 @@ void workspace_reader() {
 
     gStyle->SetOptStat(0);
 
-    plot_maker.makeCorrelationPlot("fr_prefit_corr",fr_prefit);
-    plot_maker.makeCorrelationPlot("fr_postfit_corr",fr_full);
-    plot_maker.makeCorrelationPlot("fr_stats_corr",fr_stat);
+    //plot_maker.makeCorrelationPlot("fr_prefit_corr",fr_prefit);
+    //plot_maker.makeCorrelationPlot("fr_postfit_corr",fr_full);
+    //plot_maker.makeCorrelationPlot("fr_stats_corr",fr_stat);
 
     RooArgSet pars_init  = fr_full->floatParsInit();
     RooArgSet pars_final = fr_full->floatParsFinal();
@@ -330,7 +330,7 @@ void workspace_reader() {
     plot_maker.noratio = true;
     plot_maker.isfakedata = true;
     plot_maker.splitunc = false;
-    plot_maker.nodata = false;
+    plot_maker.nodata = true;
 
     ws->loadSnapshot("prefit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_prefit_merged");
@@ -348,7 +348,7 @@ void workspace_reader() {
     ws->loadSnapshot("postfit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_postfit_merged");
     //plot_maker.makeYieldsPlot(data_all,yields_all       ,yield_procs,"yields_postfit_all");
-    plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
+    //plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz    ,yield_procs,"yields_postfit_3l_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz,yield_procs,"yields_postfit_3l_non_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_4l        ,yield_procs,"yields_postfit_4l");
