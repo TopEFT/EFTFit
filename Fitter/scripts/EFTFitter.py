@@ -27,6 +27,11 @@ class EFTFit(object):
                             'cQei':(-16,16),'cQlMi':(-17,17),
                             'cpQ3':(-20,12),'cbW':(-10,10)
                          }
+        # Systematics names except for FR stats. Only used for debug
+        self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUF','MUR','PDF','PSISR','PU',
+                            'QCDscale_V','QCDscale_VV','QCDscale_VVV','QCDscale_tHq','QCDscale_ttG','QCDscale_ttH','QCDscale_ttbar',
+                            'hf','hfstats1','hfstats2','lf','lfstats1','lfstats2','lumi_13TeV_2017','pdf_gg','pdf_ggttH','pdf_qgtHq','pdf_qq',
+                           ]
 
     def log_subprocess_output(self,pipe,level):
         ### Pipes Popen streams to logging class ###
@@ -42,10 +47,16 @@ class EFTFit(object):
             sys.exit()
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
-                #'--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_tHq[1,0,40]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
+                #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1,0,3]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,3]','--PO','map=.*/ttH:mu_ttH[1,0,3]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
+                #'--PO','map=.*/ttll:mu_ttll[1,0,3]','--PO','map=.*/tHq:mu_ttH[1]','--PO','map=.*/ttlnu:mu_ttlnu[1]','--PO','map=.*/ttH:mu_ttH[1]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
+                #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1]','--PO','map=.*/ttlnu:mu_ttlnu[1]','--PO','map=.*/ttH:mu_ttH[1]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
+                #'--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_ttH[1,0,30]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
+
+                #'--PO','map=.*/ttll:mu_ttll[1,0,100]','--PO','map=.*/tHq:mu_ttH[1,0,100]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,100]','--PO','map=.*/ttH:mu_ttH[1,0,100]','--PO','map=.*/tllq:mu_tllq[1,0,100]',
+                #'--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_ttH[1,0,30]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,15]','--PO','map=.*/tHq:mu_ttH[1,0,15]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,15]','--PO','map=.*/ttH:mu_ttH[1,0,15]','--PO','map=.*/tllq:mu_tllq[1,0,15]',
-                '--PO','map=.*/ttll:mu_ttll[1,0,30]','--PO','map=.*/tHq:mu_ttH[1,0,30]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,30]','--PO','map=.*/ttH:mu_ttH[1,0,30]','--PO','map=.*/tllq:mu_tllq[1,0,30]',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,5]','--PO','map=.*/tHq:mu_ttH[1,0,5]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,5]','--PO','map=.*/ttH:mu_ttH[1,0,5]','--PO','map=.*/tllq:mu_tllq[1,0,5]',
+                '--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1]','--PO','map=.*/ttlnu:mu_ttlnu[1]','--PO','map=.*/ttH:mu_ttH[1]','--PO','map=.*/tllq:mu_tllq[1]',
                 '-o','SMWorkspace.root']
 
         logging.info(" ".join(args))
@@ -54,13 +65,15 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
 
-    def SMFit(self, name='.test', freeze=[], autoBounds=True, other=[]):
+    def SMFit(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
         ### Multidimensional fit ###
         #args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
-        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        #args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
-        if autoBounds:  args.extend(['--autoBoundsPOIs=*'])
+        if autoMaxPOIs:  args.extend(['--autoMaxPOIs=*'])
+        #if autoMaxPOIs:  args.extend(['--autoBounds=mu_tllq'])
         if other:       args.extend(other)
 
         logging.info(" ".join(args))
@@ -74,7 +87,7 @@ class EFTFit(object):
         #if os.path.isfile('multidimfit'+name+'.root'):
         #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
-    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttlnu','mu_ttH'], operators_tracked=['mu_ttll','mu_tllq'], points=40000, freeze=False, other=[]):
+    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttll','mu_tllq'], operators_tracked=['mu_ttlnu','mu_ttH'], points=40000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two operators using CRAB ###
         ### Can be used to do 1D scans as well ###
         logging.info("Doing grid scan...")
@@ -84,6 +97,7 @@ class EFTFit(object):
         if name:              args.extend(['-n','{}'.format(name)])
         if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
         if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
+        #if freeze:            args.extend(['--freezeParameters',','.join(['CERR1','CERR2'])])
         if freeze:            args.extend(['--freezeParameters',','.join([op for op in ['mu_ttH','mu_ttll','mu_ttlnu','mu_tllq'] if op not in operators_POI])])
         if other:             args.extend(other)
         if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])

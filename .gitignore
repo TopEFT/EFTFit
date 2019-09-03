@@ -6,3 +6,4 @@
 **/fit_files/*.root
 **/test/*/
 **/test/crab*.sh
+**/test/*.txt

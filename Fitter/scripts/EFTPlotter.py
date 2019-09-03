@@ -516,6 +516,91 @@ class EFTPlot(object):
         outfile.Close()
 
         ROOT.gStyle.SetPalette(57)
+        
+    def SMLLPlot1D(self, name='.test', operator='', log=False):
+        if not operator:
+            logging.error("No operator specified!")
+            sys.exit()
+
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas('c','c',800,800)
+
+        # Get scan tree
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        limitTree = rootFile.Get('limit')
+
+        # Get coordinates for TGraph
+        graphwcs = []
+        graphnlls = []
+        for entry in range(limitTree.GetEntries()):
+            limitTree.GetEntry(entry)
+            graphwcs.append(limitTree.GetLeaf(operator).GetValue(0))
+            graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+
+        # Rezero the y axis and make the tgraphs
+        graphnlls = [val-min(graphnlls) for val in graphnlls]
+        graph = ROOT.TGraph(len(graphwcs),numpy.asarray(graphwcs),numpy.asarray(graphnlls))
+        graph.Draw("AP")
+        del graphnlls,graphwcs
+
+        # Squeeze X down to whatever range captures the float points
+        xmin = 0
+        xmax = 3
+        #for idx in range(graph.GetN()):
+        #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
+        #        xmin = graph.GetX()[idx]
+        #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] > xmax:
+        #        xmax = graph.GetX()[idx]
+        graph.GetXaxis().SetRangeUser(xmin,xmax)
+        graph.GetYaxis().SetRangeUser(-0.1,10)
+
+        #Change markers from invisible dots to nice triangles
+        graph.SetTitle("")
+        graph.SetMarkerStyle(26)
+        graph.SetMarkerSize(1)
+        graph.SetMinimum(-0.1)
+
+        #Add 1-sigma and 2-sigma lines. (Vertical lines were too hard, sadly)
+        canvas.SetGrid(1)
+
+        line68 = ROOT.TLine(xmin,1,xmax,1)
+        line68.Draw('same')
+        line68.SetLineColor(ROOT.kYellow+1)
+        line68.SetLineWidth(3)
+        line68.SetLineStyle(7)
+
+        line95 = ROOT.TLine(xmin,4,xmax,4)
+        line95.Draw('same')
+        line95.SetLineColor(ROOT.kCyan-2)
+        line95.SetLineWidth(3)
+        line95.SetLineStyle(7)
+
+        # Labels
+        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(operator))
+        Title.SetNDC(1)
+        Title.SetTextAlign(20)
+        Title.Draw('same')
+        graph.GetXaxis().SetTitle(operator)
+
+        # CMS-required text
+        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text.SetNDC(1)
+        CMS_text.SetTextSize(0.02)
+        CMS_text.Draw('same')
+        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.29 fb^{-1}")
+        Lumi_text.SetNDC(1)
+        Lumi_text.SetTextSize(0.02)
+        Lumi_text.Draw('same')
+
+        #Check log option, then save as image
+        if log:
+            graph.SetMinimum(0.1)
+            graph.SetLogz()
+            canvas.Print('{}{}_1DNLL_log.png'.format(operator,name),'png')
+        else:
+            canvas.Print('{}{}_1DNLL.png'.format(operator,name),'png')
+
+        rootFile.Close()
 
     def SMLLPlot2D(self, name='.test', operators=[], ceiling=1, log=False):
         if len(operators)!=2:
@@ -529,13 +614,14 @@ class EFTPlot(object):
         # Open file and draw 2D histogram
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
-        hname = '{}{}less{}'.format(operators[0],operators[1],ceiling)
+        hname = '{}{}_{}_less{}'.format(operators[0],operators[1],name,ceiling)
         if log:
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,30,200,0,30)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
-        
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,15,200,0,15)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(50,-5,5,50,-5,5)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')        
+
         hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
@@ -548,6 +634,8 @@ class EFTPlot(object):
         # Change plot formats
         #hist.GetXaxis().SetRangeUser(0,5)
         #hist.GetYaxis().SetRangeUser(0,5)
+        #hist.GetXaxis().SetRangeUser(-5,5)
+        #hist.GetYaxis().SetRangeUser(-5,5)
         if log:
             canvas.SetLogz()
         hist.GetYaxis().SetTitle(operators[0].rstrip('i'))
@@ -646,8 +734,8 @@ class EFTPlot(object):
         h_contour.SetTitle("Significance Contours")
         #h_contour.GetYaxis().SetTitle(operators[0].rstrip('i'))
         #h_contour.GetXaxis().SetTitle(operators[1].rstrip('i'))
-        h_contour.GetYaxis().SetTitle("mu_ttW")
-        h_contour.GetXaxis().SetTitle("mu_ttH/tHq")
+        h_contour.GetYaxis().SetTitle(operators[0])
+        h_contour.GetXaxis().SetTitle(operators[1])
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -698,19 +786,19 @@ class EFTPlot(object):
             matrix.SetName("corrMatrix")
         else:
             if SMfit:
-                SMmu = ['mu_ttH','mu_ttlnu','mu_ttll','mu_tllq','mu_tHq']
+                SMmu = ['mu_ttH','mu_ttlnu','mu_ttll','mu_tllq']
                 muBinsX, muBinsY = [], []
                 for idx,label in enumerate(matrix.GetXaxis().GetLabels()):
                     if label in SMmu: muBinsX.append(1+idx)
                 for idy,label in enumerate(matrix.GetYaxis().GetLabels()):
                     if label in SMmu: muBinsY.append(1+idy)
-                newmatrix = ROOT.TH2D("Correlation Matrix","Correlation Matrix",5,0,5,5,0,5)
+                newmatrix = ROOT.TH2D("Correlation Matrix","Correlation Matrix",4,0,4,4,0,4)
                 for idx,binx in enumerate(muBinsX):
                     for idy,biny in enumerate(muBinsY):
-                        newmatrix.SetBinContent(1+idx,5-idy,matrix.GetBinContent(binx,matrix.GetNbinsY()-biny+1))
+                        newmatrix.SetBinContent(1+idx,4-idy,matrix.GetBinContent(binx,matrix.GetNbinsY()-biny+1))
                     newmatrix.GetXaxis().SetBinLabel(1+idx,matrix.GetXaxis().GetBinLabel(binx))
                 for idy,biny in enumerate(muBinsY):
-                    newmatrix.GetYaxis().SetBinLabel(5-idy,matrix.GetYaxis().GetBinLabel(matrix.GetNbinsY()-biny+1))
+                    newmatrix.GetYaxis().SetBinLabel(4-idy,matrix.GetYaxis().GetBinLabel(matrix.GetNbinsY()-biny+1))
 
                 # Change format of plot
                 newmatrix.SetMaximum(1)
