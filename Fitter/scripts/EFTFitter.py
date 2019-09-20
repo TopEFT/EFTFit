@@ -67,8 +67,6 @@ class EFTFit(object):
 
     def SMFit(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
         ### Multidimensional fit ###
-        #args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
-        #args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
@@ -87,7 +85,7 @@ class EFTFit(object):
         #if os.path.isfile('multidimfit'+name+'.root'):
         #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
-    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttll','mu_tllq'], operators_tracked=['mu_ttlnu','mu_ttH'], points=40000, freeze=False, other=[]):
+    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttll'], operators_tracked=['mu_ttlnu','mu_ttH','mu_tllq'], points=300, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two operators using CRAB ###
         ### Can be used to do 1D scans as well ###
         logging.info("Doing grid scan...")
@@ -95,11 +93,11 @@ class EFTFit(object):
         args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
+        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
         if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
-        #if freeze:            args.extend(['--freezeParameters',','.join(['CERR1','CERR2'])])
-        if freeze:            args.extend(['--freezeParameters',','.join([op for op in ['mu_ttH','mu_ttll','mu_ttlnu','mu_tllq'] if op not in operators_POI])])
+        if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
+        # Common 'other' uses: --setParameterRanges param=min,max  --floatOtherPOIs=1or0
         if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
         logging.info(' '.join(args))
 
@@ -129,10 +127,10 @@ class EFTFit(object):
         ### Multidimensional fit ###
         args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
+        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
         args.extend(['--trackParameters',','.join([op for op in self.operators if op not in operators_POI])])
         if startValuesString: args.extend(['--setParameters',startValuesString])
-        if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
+        if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if autoBounds:        args.extend(['--autoBoundsPOIs=*'])
         if other:             args.extend(other)
 
@@ -153,9 +151,9 @@ class EFTFit(object):
         args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['--redefineSignalPOIs',','.join(operators_POI)])
+        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
         if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
-        if freeze:            args.extend(['--freezeParameters',','.join([op for op in self.operators if op not in operators_POI])])
+        if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
         if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
         logging.info(' '.join(args))

@@ -544,8 +544,8 @@ class EFTPlot(object):
         del graphnlls,graphwcs
 
         # Squeeze X down to whatever range captures the float points
-        xmin = 0
-        xmax = 3
+        xmin = limitTree.GetMinimum(operator)
+        xmax = limitTree.GetMaximum(operator)
         #for idx in range(graph.GetN()):
         #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
         #        xmin = graph.GetX()[idx]
@@ -618,9 +618,13 @@ class EFTPlot(object):
         if log:
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
+        ymin = limitTree.GetMinimum(operators[0])
+        ymax = limitTree.GetMaximum(operators[0])
+        xmin = limitTree.GetMinimum(operators[1])
+        xmax = limitTree.GetMaximum(operators[1])
 
         #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,15,200,0,15)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(50,-5,5,50,-5,5)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')        
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,operators[0],operators[1],hname,xmin,xmax,ymin,ymax), '2*deltaNLL<{}'.format(ceiling), 'prof colz')        
 
         hist = canvas.GetPrimitive(hname)
 
@@ -633,13 +637,13 @@ class EFTPlot(object):
 
         # Change plot formats
         #hist.GetXaxis().SetRangeUser(0,5)
-        #hist.GetYaxis().SetRangeUser(0,5)
+        #hist.GetYaxis().SetRangeUser(0,3)
         #hist.GetXaxis().SetRangeUser(-5,5)
         #hist.GetYaxis().SetRangeUser(-5,5)
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(operators[0].rstrip('i'))
-        hist.GetXaxis().SetTitle(operators[1].rstrip('i'))
+        hist.GetYaxis().SetTitle(operators[0])
+        hist.GetXaxis().SetTitle(operators[1])
         hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
