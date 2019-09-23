@@ -65,7 +65,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
 
-    def SMFit(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
+    def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
         ### Multidimensional fit ###
         args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
@@ -152,6 +152,7 @@ class EFTFit(object):
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         if os.path.isfile('multidimfit'+name+'.root'):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
+        self.printBestFits(name)
 
     def gridScan(self, name='.test', crab=False, scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB ###
