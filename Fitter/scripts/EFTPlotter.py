@@ -12,9 +12,9 @@ class EFTPlot(object):
         self.logger = logging.getLogger(__name__)
         self.ContourHelper = ContourHelper()
 
-        self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        self.operators_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.op_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
+        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
                             'cpt':(-40,30), 'ctp':(-35,65),
                             'ctli':(-20,20),'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
@@ -29,10 +29,13 @@ class EFTPlot(object):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
         self.histosFileName = 'Histos{}.root'.format(name)
 
-    def LLPlot1D(self, name='.test', frozen=False, operator='', log=False):
-        if not operator:
-            logging.error("No operator specified!")
-            sys.exit()
+    def LLPlot1DEFT(self, name='.test', frozen=False, wc='', log=False):
+        if not wc:
+            logging.error("No wc specified!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
         canvas = ROOT.TCanvas()
 
@@ -45,7 +48,7 @@ class EFTPlot(object):
         graphnlls = []
         for entry in range(limitTree.GetEntries()):
             limitTree.GetEntry(entry)
-            graphwcs.append(limitTree.GetLeaf(operator).GetValue(0))
+            graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
             graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
         # Rezero the y axis and make the tgraphs
@@ -55,8 +58,8 @@ class EFTPlot(object):
         del graphnlls,graphwcs
 
         # Squeeze X down to whatever range captures the float points
-        xmin = self.op_ranges[operator][1]
-        xmax = self.op_ranges[operator][0]
+        xmin = self.wc_ranges[wc][1]
+        xmax = self.wc_ranges[wc][0]
         for idx in range(graph1.GetN()):
             if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
                 xmin = graph.GetX()[idx]
@@ -66,7 +69,7 @@ class EFTPlot(object):
         graph.GetYaxis().SetRangeUser(-0.1,10)
 
         #Change markers from invisible dots to nice triangles
-        graph.SetTitle(operator.rstrip('i'))
+        graph.SetTitle(wc.rstrip('i'))
         graph.SetMarkerStyle(26)
         graph.SetMarkerSize(1)
         graph.SetMinimum(-0.1)
@@ -87,11 +90,11 @@ class EFTPlot(object):
         line95.SetLineStyle(7)
 
         # Labels
-        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(operator))
+        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         Title.Draw('same')
-        multigraph.GetXaxis().SetTitle(operator)
+        multigraph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
@@ -107,16 +110,22 @@ class EFTPlot(object):
         if log:
             graph.SetMinimum(0.1)
             graph.SetLogz()
-            canvas.Print('{}1DNLL_log.png'.format(operator,'freeze' if frozen else 'float'),'png')
+            canvas.Print('{}1DNLL_log.png'.format(wc,'freeze' if frozen else 'float'),'png')
         else:
-            canvas.Print('{}1DNLL.png'.format(operator,'freeze' if frozen else 'float'),'png')
+            canvas.Print('{}1DNLL.png'.format(wc,'freeze' if frozen else 'float'),'png')
 
         rootFile.Close()
 
-    def OverlayLLPlot1D(self, name1='.test', name2='.test', operator='', log=False):
-        if not operator:
-            logging.error("No operator specified!")
-            sys.exit()
+    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
+        if not wc:
+            logging.error("No wc specified!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name1)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name1))
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name2)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name2))
+            return
 
         ROOT.gROOT.SetBatch(True)
 
@@ -136,11 +145,11 @@ class EFTPlot(object):
         graph2nlls = []
         for entry in range(limitTree1.GetEntries()):
             limitTree1.GetEntry(entry)
-            graph1wcs.append(limitTree1.GetLeaf(operator).GetValue(0))
+            graph1wcs.append(limitTree1.GetLeaf(wc).GetValue(0))
             graph1nlls.append(2*limitTree1.GetLeaf('deltaNLL').GetValue(0))
         for entry in range(limitTree2.GetEntries()):
             limitTree2.GetEntry(entry)
-            graph2wcs.append(limitTree2.GetLeaf(operator).GetValue(0))
+            graph2wcs.append(limitTree2.GetLeaf(wc).GetValue(0))
             graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
 
         # Rezero the y axis and make the tgraphs
@@ -157,8 +166,8 @@ class EFTPlot(object):
         multigraph.Draw("AP")
 
         # Squeeze X down to whatever range captures the float points
-        xmin = self.op_ranges[operator][1]
-        xmax = self.op_ranges[operator][0]
+        xmin = self.wc_ranges[wc][1]
+        xmax = self.wc_ranges[wc][0]
         for idx in range(graph1.GetN()):
             if graph1.GetY()[idx] < 10 and graph1.GetX()[idx] < xmin:
                 xmin = graph1.GetX()[idx]
@@ -192,11 +201,11 @@ class EFTPlot(object):
         line95.SetLineStyle(7)
 
         # Labels
-        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(operator))
+        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         Title.Draw('same')
-        multigraph.GetXaxis().SetTitle(operator)
+        multigraph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -214,17 +223,23 @@ class EFTPlot(object):
         if log:
             multigraph.SetMinimum(0.1)
             multigraph.SetLogz()
-            canvas.Print('Overlay{}1DNLL_log.png'.format(operator),'png')
+            canvas.Print('Overlay{}1DNLL_log.png'.format(wc),'png')
         else:
-            canvas.Print('Overlay{}1DNLL.png'.format(operator),'png')
+            canvas.Print('Overlay{}1DNLL.png'.format(wc),'png')
 
         rootFile1.Close()
         rootFile2.Close()
 
-    def OverlayZoomLLPlot1D(self, name1='.test', name2='.test', operator='', log=False):
-        if not operator:
-            logging.error("No operator specified!")
-            sys.exit()
+    def OverlayZoomLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
+        if not wc:
+            logging.error("No wc specified!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name1)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name1))
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name2)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name2))
+            return
 
         ROOT.gROOT.SetBatch(True)
 
@@ -244,11 +259,11 @@ class EFTPlot(object):
         graph2nlls = []
         for entry in range(limitTree1.GetEntries()):
             limitTree1.GetEntry(entry)
-            graph1wcs.append(limitTree1.GetLeaf(operator).GetValue(0))
+            graph1wcs.append(limitTree1.GetLeaf(wc).GetValue(0))
             graph1nlls.append(2*limitTree1.GetLeaf('deltaNLL').GetValue(0))
         for entry in range(limitTree2.GetEntries()):
             limitTree2.GetEntry(entry)
-            graph2wcs.append(limitTree2.GetLeaf(operator).GetValue(0))
+            graph2wcs.append(limitTree2.GetLeaf(wc).GetValue(0))
             graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
 
         # Rezero the y axis and make the tgraphs
@@ -265,7 +280,7 @@ class EFTPlot(object):
         multigraph.Draw("AP")
 
         # Squeeze X down to 20 pts around 0.
-        width = self.op_ranges[operator][1]-self.op_ranges[operator][0]
+        width = self.wc_ranges[wc][1]-self.wc_ranges[wc][0]
         xmin = -float(width)/50
         xmax = float(width)/50
         ymax = max(graph1.Eval(xmin),graph1.Eval(xmax),graph2.Eval(xmin),graph2.Eval(xmax))
@@ -298,11 +313,11 @@ class EFTPlot(object):
         line95.SetLineStyle(7)
 
         # Labels
-        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(operator))
+        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         Title.Draw('same')
-        multigraph.GetXaxis().SetTitle(operator)
+        multigraph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -320,64 +335,67 @@ class EFTPlot(object):
         if log:
             multigraph.SetMinimum(0.1)
             multigraph.SetLogz()
-            canvas.Print('OverlayZoom{}1DNLL_log.png'.format(operator),'png')
+            canvas.Print('OverlayZoom{}1DNLL_log.png'.format(wc),'png')
         else:
-            canvas.Print('OverlayZoom{}1DNLL.png'.format(operator),'png')
+            canvas.Print('OverlayZoom{}1DNLL.png'.format(wc),'png')
 
         rootFile1.Close()
         rootFile2.Close()
 
-    def BatchLLPlot1D(self, basename='.test', frozen=False, operators=[], log=False):
-        if not operators:
-            operators = self.operators
+    def BatchLLPlot1DEFT(self, basename='.test', frozen=False, wcs=[], log=False):
+        if not wcs:
+            wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
-        for op in operators:
-            self.LLPlot1D(basename+'.'+op, frozen, op, log)
+        for wc in wcs:
+            self.LLPlot1DEFT(basename+'.'+wc, frozen, wc, log)
 
-    def BatchOverlayLLPlot1D(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', operators=[], log=False):
-        if not operators:
-            operators = self.operators
-
-        ROOT.gROOT.SetBatch(True)
-
-        for op in operators:
-            self.OverlayLLPlot1D(basename1+'.'+op, basename2+'.'+op, op, log)
-
-    def BatchOverlayZoomLLPlot1D(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', operators=[], log=False):
-        if not operators:
-            operators = self.operators
+    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
+        if not wcs:
+            wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
-        for op in operators:
-            self.OverlayZoomLLPlot1D(basename1+'.'+op, basename2+'.'+op, op, log)
+        for wc in wcs:
+            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
 
-    def LLPlot2D(self, name='.test', operators=[], ceiling=1, log=False):
-        if len(operators)!=2:
-            logging.error("Function 'LLPlot2D' requires exactly two operators!")
-            sys.exit()
+    def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
+        if not wcs:
+            wcs = self.wcs
+
+        ROOT.gROOT.SetBatch(True)
+
+        for wc in wcs:
+            self.OverlayZoomLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
+
+    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False):
+        if len(wcs)!=2:
+            logging.error("Function 'LLPlot2D' requires exactly two wcs!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
         ROOT.gROOT.SetBatch(True)
 
         canvas = ROOT.TCanvas('c','c',800,800)
 
         # Open file and draw 2D histogram
-        # operators[0] is y-axis variable, operators[1] is x-axis variable
+        # wcs[0] is y-axis variable, wcs[1] is x-axis variable
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
-        hname = '{}{}less{}'.format(operators[0],operators[1],ceiling)
+        hname = '{}{}less{}'.format(wcs[0],wcs[1],ceiling)
         if log:
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,operators[0],operators[1],hname,self.op_ranges[operators[1]][0]*2,self.op_ranges[operators[1]][1]*2,self.op_ranges[operators[0]][0]*2,self.op_ranges[operators[0]][1]*2), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],hname,self.wc_ranges[wcs[1]][0]*2,self.wc_ranges[wcs[1]][1]*2,self.wc_ranges[wcs[0]][0]*2,self.wc_ranges[wcs[0]][1]*2), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
         
         hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
-        #limit.Draw(operators[0]+":"+operators[1],'quantileExpected==-1','p same') # Best fit point from grid scan
+        #limit.Draw(wcs[0]+":"+wcs[1],'quantileExpected==-1','p same') # Best fit point from grid scan
         #best_fit = canvas.FindObject('Graph')
         #best_fit.SetMarkerSize(1)
         #best_fit.SetMarkerStyle(34)
@@ -386,12 +404,12 @@ class EFTPlot(object):
         #dedicatedFit.Draw('same')
 
         # Change plot formats
-        hist.GetXaxis().SetRangeUser(self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1])
-        hist.GetYaxis().SetRangeUser(self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1])
+        hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])
+        hist.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(operators[0].rstrip('i'))
-        hist.GetXaxis().SetTitle(operators[1].rstrip('i'))
+        hist.GetYaxis().SetTitle(wcs[0].rstrip('i'))
+        hist.GetXaxis().SetTitle(wcs[1].rstrip('i'))
         hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
@@ -415,24 +433,27 @@ class EFTPlot(object):
             hist.Write()
             outfile.Close()
 
-    def ContourPlot(self, name='.test', operators=[]):
-        if len(operators)!=2:
-            logging.error("Function 'ContourPlot' requires exactly two operators!")
-            sys.exit()
+    def ContourPlotEFT(self, name='.test', wcs=[]):
+        if len(wcs)!=2:
+            logging.error("Function 'ContourPlot' requires exactly two wcs!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
         best2DeltaNLL = 1000000
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas('c','c',800,800)
 
         # Get Grid scan and copy to h_contour
-        # operators[0] is y-axis variable, operators[1] is x-axis variable
+        # wcs[0] is y-axis variable, wcs[1] is x-axis variable
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
-        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(operators[1],operators[0],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1]), '2*deltaNLL<100', 'prof colz')
+        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*deltaNLL<100', 'prof colz')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(50,{},{},50,{},{})'.format(minZ,operators[0],operators[1],self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1],self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(50,{},{},50,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',50,self.op_ranges[operators[1]][0],self.op_ranges[operators[1]][1],50,self.op_ranges[operators[0]][0],self.op_ranges[operators[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',50,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],50,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -481,8 +502,8 @@ class EFTPlot(object):
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
-        h_contour.GetYaxis().SetTitle(operators[0].rstrip('i'))
-        h_contour.GetXaxis().SetTitle(operators[1].rstrip('i'))
+        h_contour.GetYaxis().SetTitle(wcs[0].rstrip('i'))
+        h_contour.GetXaxis().SetTitle(wcs[1].rstrip('i'))
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -508,7 +529,7 @@ class EFTPlot(object):
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
         canvas.SetGrid()
-        canvas.Print('{}{}contour.png'.format(operators[0],operators[1]),'png')
+        canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -517,10 +538,13 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
         
-    def SMLLPlot1D(self, name='.test', operator='', log=False):
-        if not operator:
-            logging.error("No operator specified!")
-            sys.exit()
+    def LLPlot1DSM(self, name='.test', param='', log=False):
+        if not param:
+            logging.error("No parameter specified!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas('c','c',800,800)
@@ -530,22 +554,22 @@ class EFTPlot(object):
         limitTree = rootFile.Get('limit')
 
         # Get coordinates for TGraph
-        graphwcs = []
+        graphparamvals = []
         graphnlls = []
         for entry in range(limitTree.GetEntries()):
             limitTree.GetEntry(entry)
-            graphwcs.append(limitTree.GetLeaf(operator).GetValue(0))
+            graphparamvals.append(limitTree.GetLeaf(param).GetValue(0))
             graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
         # Rezero the y axis and make the tgraphs
         graphnlls = [val-min(graphnlls) for val in graphnlls]
-        graph = ROOT.TGraph(len(graphwcs),numpy.asarray(graphwcs),numpy.asarray(graphnlls))
+        graph = ROOT.TGraph(len(graphparamvals),numpy.asarray(graphparamvals),numpy.asarray(graphnlls))
         graph.Draw("AP")
-        del graphnlls,graphwcs
+        del graphnlls,graphparamvals
 
         # Squeeze X down to whatever range captures the float points
-        xmin = limitTree.GetMinimum(operator)
-        xmax = limitTree.GetMaximum(operator)
+        xmin = limitTree.GetMinimum(param)
+        xmax = limitTree.GetMaximum(param)
         #for idx in range(graph.GetN()):
         #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
         #        xmin = graph.GetX()[idx]
@@ -576,11 +600,11 @@ class EFTPlot(object):
         line95.SetLineStyle(7)
 
         # Labels
-        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(operator))
+        Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(param))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         Title.Draw('same')
-        graph.GetXaxis().SetTitle(operator)
+        graph.GetXaxis().SetTitle(param)
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
@@ -596,16 +620,19 @@ class EFTPlot(object):
         if log:
             graph.SetMinimum(0.1)
             graph.SetLogz()
-            canvas.Print('{}{}_1DNLL_log.png'.format(operator,name),'png')
+            canvas.Print('{}{}_1DNLL_log.png'.format(param,name),'png')
         else:
-            canvas.Print('{}{}_1DNLL.png'.format(operator,name),'png')
+            canvas.Print('{}{}_1DNLL.png'.format(param,name),'png')
 
         rootFile.Close()
 
-    def SMLLPlot2D(self, name='.test', operators=[], ceiling=1, log=False):
-        if len(operators)!=2:
-            logging.error("Function 'LLPlot2D' requires exactly two operators!")
-            sys.exit()
+    def LLPlot2DSM(self, name='.test', params=[], ceiling=1, log=False):
+        if len(params)!=2:
+            logging.error("Function 'LLPlot2D' requires exactly two parameters!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
         ROOT.gROOT.SetBatch(True)
 
@@ -614,22 +641,22 @@ class EFTPlot(object):
         # Open file and draw 2D histogram
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
-        hname = '{}{}_{}_less{}'.format(operators[0],operators[1],name,ceiling)
+        hname = '{}{}_{}_less{}'.format(params[0],params[1],name,ceiling)
         if log:
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
-        ymin = limitTree.GetMinimum(operators[0])
-        ymax = limitTree.GetMaximum(operators[0])
-        xmin = limitTree.GetMinimum(operators[1])
-        xmax = limitTree.GetMaximum(operators[1])
+        ymin = limitTree.GetMinimum(params[0])
+        ymax = limitTree.GetMaximum(params[0])
+        xmin = limitTree.GetMinimum(params[1])
+        xmax = limitTree.GetMaximum(params[1])
 
-        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,15,200,0,15)'.format(minZ,operators[0],operators[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,operators[0],operators[1],hname,xmin,xmax,ymin,ymax), '2*deltaNLL<{}'.format(ceiling), 'prof colz')        
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,0,15,200,0,15)'.format(minZ,params[0],params[1],hname), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,params[0],params[1],hname,xmin,xmax,ymin,ymax), '2*deltaNLL<{}'.format(ceiling), 'prof colz')        
 
         hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
-        #limit.Draw(operators[0]+":"+operators[1],'quantileExpected==-1','p same') # Best fit point from grid scan
+        #limit.Draw(params[0]+":"+params[1],'quantileExpected==-1','p same') # Best fit point from grid scan
         #best_fit = canvas.FindObject('Graph')
         #best_fit.SetMarkerSize(1)
         #best_fit.SetMarkerStyle(34)
@@ -642,8 +669,8 @@ class EFTPlot(object):
         #hist.GetYaxis().SetRangeUser(-5,5)
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(operators[0])
-        hist.GetXaxis().SetTitle(operators[1])
+        hist.GetYaxis().SetTitle(params[0])
+        hist.GetXaxis().SetTitle(params[1])
         hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
@@ -667,22 +694,22 @@ class EFTPlot(object):
             hist.Write()
             outfile.Close()
 
-    def SMContourPlot(self, name='.test', operators=[]):
-        if len(operators)!=2:
-            logging.error("Function 'ContourPlot' requires exactly two operators!")
-            sys.exit()
+    def ContourPlotSM(self, name='.test', params=[]):
+        if len(params)!=2:
+            logging.error("Function 'ContourPlot' requires exactly two parameters!")
+            return
             
         best2DeltaNLL = 1000000
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas('c','c',800,800)
 
         # Get Grid scan and copy to h_contour
-        # operators[0] is y-axis variable, operators[1] is x-axis variable
+        # params[0] is y-axis variable, params[1] is x-axis variable
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,operators[0],operators[1]), '', 'prof colz')
-        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(operators[0],operators[1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,params[0],params[1]), '', 'prof colz')
+        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(params[0],params[1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
         h_contour = ROOT.TProfile2D('h_contour','h_contour',200,0,15,200,0,15)
 
@@ -736,10 +763,8 @@ class EFTPlot(object):
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
-        #h_contour.GetYaxis().SetTitle(operators[0].rstrip('i'))
-        #h_contour.GetXaxis().SetTitle(operators[1].rstrip('i'))
-        h_contour.GetYaxis().SetTitle(operators[0])
-        h_contour.GetXaxis().SetTitle(operators[1])
+        h_contour.GetYaxis().SetTitle(params[0])
+        h_contour.GetXaxis().SetTitle(params[1])
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -762,7 +787,7 @@ class EFTPlot(object):
 
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
-        canvas.Print('{}{}contour.png'.format(operators[0],operators[1]),'png')
+        canvas.Print('{}{}contour.png'.format(params[0],params[1]),'png')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -785,7 +810,7 @@ class EFTPlot(object):
         matrix = canvas.GetPrimitive('correlation_matrix')
 
         # Decide whether or not to keep the nuisance parameters in
-        # If not, the number of bins (operators) varies on whether the scan froze the other 14
+        # If not, the number of bins (parameters) varies on whether the scan froze the others
         if nuisances:
             matrix.SetName("corrMatrix")
         else:
@@ -844,37 +869,35 @@ class EFTPlot(object):
                 matrix.Write()
                 outfile.Close()
 
-    #def Batch2DPlots(self, histosFileName='.EFT.SM.Float', gridScanName='.EFT.SM.Float.gridScan.ctWctZ', postScanName='.EFT.SM.Float.postScan', operators=['ctW','ctZ'], freeze=False):
-    def Batch2DPlots(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', operators=['ctZ','ctW']):
+    def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW']):
         ROOT.gROOT.SetBatch(True)
         self.ResetHistoFile(gridScanName)
 
-        #self.LLPlot2D(gridScanName,operators,1,False)
-        #self.LLPlot2D(gridScanName,operators,10,False)
-        self.LLPlot2D(gridScanName,operators,100,False)
-        self.LLPlot2D(gridScanName,operators,100000,False)
+        #self.LLPlot2DEFT(gridScanName,wcs,1,False)
+        #self.LLPlot2DEFT(gridScanName,wcs,10,False)
+        self.LLPlot2DEFT(gridScanName,wcs,100,False)
+        self.LLPlot2DEFT(gridScanName,wcs,100000,False)
         # Log Plots
-        #self.LLPlot2D(gridScanName,operators,1,True)
-        #self.LLPlot2D(gridScanName,operators,10,True)
-        #self.LLPlot2D(gridScanName,operators,100,True)
+        #self.LLPlot2DEFT(gridScanName,wcs,1,True)
+        #self.LLPlot2DEFT(gridScanName,wcs,10,True)
+        #self.LLPlot2DEFT(gridScanName,wcs,100,True)
 
         #self.CorrelationMatrix(postScanName,False,False,freeze)
         #self.CorrelationMatrix(postScanName,True,False,freeze)
 
-        self.ContourPlot(gridScanName,operators)
+        self.ContourPlotEFT(gridScanName,wcs)
 
-    #def BatchBatch2DPlots(self, basenamegrid='.EFT.SM.Float.gridScan', basenamefit='.EFT.SM.Float.postScanFit', freeze=False):
-    def BatchBatch2DPlots(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False):
+    def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False):
         ROOT.gROOT.SetBatch(True)
         
-        operators_pairs = self.operators_pairs
+        wcs_pairs = self.wcs_pairs
         if allpairs:
-            operators_pairs = itertools.combinations(operators_POI,2)
+            wcs_pairs = itertools.combinations(self.wcs,2)
 
-        for pair in operators_pairs:
+        for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
-            self.Batch2DPlots('{}.{}{}'.format(basenamegrid,pair[0],pair[1]), operators=pair)
+            self.Batch2DPlotsEFT('{}.{}{}'.format(basenamegrid,pair[0],pair[1]), wcs=pair)
 
             if not os.path.isdir('Histos{}'.format(basenamegrid)):
                 sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
@@ -885,21 +908,22 @@ class EFTPlot(object):
                 if filename.endswith('.png'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
-    def getIntervalFits(self, basename='.EFT.SM.Float', operators=[]):
-        ### Return a table of operators, their best fits, and their uncertainties ###
+    def getIntervalFits(self, basename='.EFT.SM.Float', params=[]):
+        ### Return a table of parameters, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
-        if not operators:
-            operators = self.operators
+        if not parameters:
+            parameters = self.parameters
+            
 
         ROOT.gROOT.SetBatch(True)
 
         fit_array = [] # List of [WC, WC value of minimum, [2sig lowedges], [2sig highedges]]
 
-        for op in operators:
+        for param in parameters:
 
             # Get scan TTree
-            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,op))
-            fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,op))
+            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,param))
+            fit_file = ROOT.TFile.open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,param))
             limit_tree = fit_file.Get('limit')
 
             # Extract points
@@ -907,7 +931,7 @@ class EFTPlot(object):
             nll_values = []
             for entry in range(limit_tree.GetEntries()):
                 limit_tree.GetEntry(entry)
-                wc_values.append(limit_tree.GetLeaf(op).GetValue(0))
+                wc_values.append(limit_tree.GetLeaf(param).GetValue(0))
                 nll_values.append(2*limit_tree.GetLeaf('deltaNLL').GetValue(0))
 
             # Rezero deltanll values
@@ -949,7 +973,7 @@ class EFTPlot(object):
                 prevnll = nll
             if not len(lowedges) == len(highedges):
                 logging.error("Something is strange! Interval is missing endpoint!")
-            fit_array.append([op,true_minimum,lowedges,highedges])
+            fit_array.append([param,true_minimum,lowedges,highedges])
 
         for line in fit_array:
             print line
@@ -1120,6 +1144,7 @@ class EFTPlot(object):
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
+        ### Preferably this is not used in favor of the BestIntervalPlot, as we do not necessarily trust the simultaneous fit ###
         ROOT.gROOT.SetBatch(True)
 
         # WC, Best Fit Value, Symmetric Error, Lower Asymm Error, Higher Asymm Error
@@ -1302,3 +1327,4 @@ if __name__ == "__main__":
     #plotter.LLPlot1D('.EFT.SM.Float.ctW','ctW')
     #plotter.OverlayLLPlot1D('.EFT.SM.Float.ctW','.EFT.SM.Freeze.ctW','ctW')
     #plotter.BatchOverlayLLPlot1D()
+        

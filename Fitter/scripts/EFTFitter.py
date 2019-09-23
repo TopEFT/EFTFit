@@ -10,15 +10,15 @@ class EFTFit(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        # Operator lists for easy use
+        # WCs lists for easy use
         # Full list of opeators
-        self.operators = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        # Default pair of operators for 2D scans
-        self.operators_POI = ['ctW','ctZ']
-        # Default operators to keep track of during 2D scans
-        self.operators_tracked = ['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        # Scan ranges of the operators
-        self.op_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
+        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        # Default pair of wcs for 2D scans
+        self.scan_wcs = ['ctW','ctZ']
+        # Default wcs to keep track of during 2D scans
+        self.wcs_tracked = ['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        # Scan ranges of the wcs
+        self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
                             'cpt':(-40,30), 'ctp':(-35,65),
                             'ctli':(-20,20),'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
@@ -82,22 +82,21 @@ class EFTFit(object):
         logging.info("Done with SMFit.")
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
-        #if os.path.isfile('multidimfit'+name+'.root'):
-        #    sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
+        self.printBestFitsSM(name)
 
-    def SMGridScan(self, name='.test', crab=False, operators_POI=['mu_ttll'], operators_tracked=['mu_ttlnu','mu_ttH','mu_tllq'], points=300, freeze=False, other=[]):
-        ### Runs deltaNLL Scan in two operators using CRAB ###
-        ### Can be used to do 1D scans as well ###
+    def gridScanSM(self, name='.test', crab=False, scan_params=['mu_ttll'], params_tracked=['mu_ttlnu','mu_ttH','mu_tllq'], points=300, freeze=False, other=[]):
+        ### Runs deltaNLL Scan in a parameter using CRAB ###
+        ### Can be used to do 2D scans as well ###
         logging.info("Doing grid scan...")
 
         args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
-        if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
+        if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
-        # Common 'other' uses: --setParameterRanges param=min,max  --floatOtherPOIs=1or0
+        # Common 'other' uses: --setParameterRanges param=min,max
         if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
         logging.info(' '.join(args))
 
@@ -107,8 +106,18 @@ class EFTFit(object):
             self.log_subprocess_output(process.stderr,'err')
         logging.info("Done with gridScan.")
         if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+        
+    def batch1DScanSM(self, basename='.test', crab=False, scan_params=[], points=300, freeze=False):
+        ### For each SM signal strength, run a 1D deltaNLL Scan.
+        if not scan_params:
+            scan_params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
-    def makeWorkspace16D(self, datacard='EFT_MultiDim_Datacard.txt'):
+        for param in scan_params:
+            self.GridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)])
+            
+            
+
+    def makeWorkspaceEFT(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard and fit parameterization file ###
         logging.info("Creating workspace")
         if not os.path.isfile(datacard):
@@ -123,12 +132,12 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
         
-    def bestFit(self, name='.test', operators_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
+    def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
         args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
-        args.extend(['--trackParameters',','.join([op for op in self.operators if op not in operators_POI])])
+        if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
+        args.extend(['--trackParameters',','.join([wc for wc in self.wcs if wc not in scan_params])])
         if startValuesString: args.extend(['--setParameters',startValuesString])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if autoBounds:        args.extend(['--autoBoundsPOIs=*'])
@@ -144,15 +153,15 @@ class EFTFit(object):
         if os.path.isfile('multidimfit'+name+'.root'):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
 
-    def gridScan(self, name='.test', crab=False, operators_POI=['ctW','ctZ'], operators_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
-        ### Runs deltaNLL Scan in two operators using CRAB ###
+    def gridScan(self, name='.test', crab=False, scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
+        ### Runs deltaNLL Scan in two parameters using CRAB ###
         logging.info("Doing grid scan...")
 
         args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
-        if operators_POI:     args.extend(['-P','-P '.join(operators_POI)]) # Preserves constraints
-        if operators_tracked: args.extend(['--trackParameters',','.join(operators_tracked)])
+        if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
         if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
@@ -165,8 +174,8 @@ class EFTFit(object):
         logging.info("Done with gridScan.")
         if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
 
-    def getBestValues2D(self, name, operators_POI=[], operators_tracked=[]):
-        ### Gets values of operators for grid scan point with best deltaNLL ###
+    def getBestValues2D(self, name, scan_params=[], params_tracked=[]):
+        ### Gets values of parameters for grid scan point with best deltaNLL ###
   
         bestDeltaNLL=1000000;
         bestEntry=-1;
@@ -189,27 +198,27 @@ class EFTFit(object):
 
         limitTree.GetEntry(bestEntry)
         startValues = []
-        for op in operators_POI:
-            value = limitTree.GetLeaf(op).GetValue(0)
-            startValues.append('{}={}'.format(op,value))
-        for op in operators_tracked:
-            value = limitTree.GetLeaf('trackedParam_'+op).GetValue(0)
-            startValues.append('{}={}'.format(op,value))
+        for param in scan_params:
+            value = limitTree.GetLeaf(param).GetValue(0)
+            startValues.append('{}={}'.format(param,value))
+        for param in params_tracked:
+            value = limitTree.GetLeaf('trackedParam_'+param).GetValue(0)
+            startValues.append('{}={}'.format(param,value))
         return ','.join(startValues)
 
-    def getBestValues1D(self, basename, operators=[]):
-        ### Gets values of operators for grid scan point with best deltaNLL ###
-        if not operators:
-            operators = self.operators
+    def getBestValues1DEFT(self, basename, wcs=[]):
+        ### Gets values of WCs for grid scan point with best deltaNLL ###
+        if not wcs:
+            wcs = self.wcs
 
         startValues = []
 
-        for op in operators:
+        for wc in wcs:
   
             bestDeltaNLL=1000000;
             bestEntry=-1;
 
-            fitFile = '../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,op)
+            fitFile = '../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,wc)
             logging.info("Obtaining best value from {}".format(fitFile))
 
             if not os.path.isfile(fitFile):
@@ -227,8 +236,8 @@ class EFTFit(object):
 
             limitTree.GetEntry(bestEntry)
 
-            value = limitTree.GetLeaf(op).GetValue(0)
-            startValues.append('{}={}'.format(op,value))
+            value = limitTree.GetLeaf(wc).GetValue(0)
+            startValues.append('{}={}'.format(wc,value))
 
         return ','.join(startValues)
 
@@ -266,149 +275,181 @@ class EFTFit(object):
         # Remove the temporary directory and split root files
         sp.call(['rm','-r',taskname+'tmp'])
 
-    def batch1DScan(self, basename='.test', crab=False, operators_POI=[], points=300, freeze=False):
-        ### For each operator, run a 1D deltaNLL Scan.
-        if not operators_POI:
-            operators_POI = self.operators
+    def batch1DScanEFT(self, basename='.test', crab=False, scan_wcs=[], points=300, freeze=False):
+        ### For each wc, run a 1D deltaNLL Scan.
+        if not scan_wcs:
+            scan_wcs = self.wcs
 
-        for poi in operators_POI:
-            self.gridScan('{}.{}'.format(basename,poi), crab, [poi], [pois for pois in self.operators if pois != poi], points, freeze)
+        for param in scan_wcs:
+            self.gridScan('{}.{}'.format(basename,wc), crab, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze)
 
-    def batch2DScan(self, basename='.EFT.gridScan', freeze=False, points=160000, allPairs=False, other=[]):
-        ### For pairs of operators, runs deltaNLL Scan in two operators using CRAB ###
+    def batch2DScanEFT(self, basename='.EFT.gridScan', freeze=False, points=160000, allPairs=False, other=[]):
+        ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB ###
 
-        # Use EVERY combination of operators
+        # Use EVERY combination of wcs
         if allPairs:
-            operators_POI = self.operators
+            scan_wcs = self.wcs
 
-            for pois in itertools.combinations(operators_POI,2):
-                operators_tracked = [op for op in self.operators if op not in pois]
-                #print pois, operators_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze, other=other)
+            for wcs in itertools.combinations(scan_wcs,2):
+                wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
+                #print pois, wcs_tracked
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_wcs=list(wcs), wcs_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
-        # Use each operator only once
+        # Use each wc only once
         if not allPairs:
-            operators_POI = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
 
-            for pois in operators_POI:
-                operators_tracked = [op for op in self.operators if op not in pois]
-                #print pois, operators_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,pois[0],pois[1]), crab=True, operators_POI=list(pois), operators_tracked=operators_tracked, points=points, freeze=freeze, other=other)
+            for wcs in scan_wcs:
+                wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
+                #print pois, wcs_tracked
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_wcs=list(wcs), wcs_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
-    def batchResubmit1DScans(self, basename='.EFT.gridScan', operators_POI=[]):
-        ### For each operator, attempt to resubmit failed CRAB jobs ###
-        if not operators_POI:
-            operators_POI = self.operators
+    def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
+        ### For each wc, attempt to resubmit failed CRAB jobs ###
+        if not scan_wcs:
+            scan_wcs = self.wcs
 
-        for poi in operators_POI:
-            process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+poi], stdout=sp.PIPE, stderr=sp.PIPE)
+        for wc in scan_wcs:
+            process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+wc], stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
 
-    def batchResubmit2DScans(self, basename='.EFT.gridScan', allPairs=False):
-        ### For pairs of operators, attempt to resubmit failed CRAB jobs ###
+    def batchResubmit2DScansEFT(self, basename='.EFT.gridScan', allPairs=False):
+        ### For pairs of wcs, attempt to resubmit failed CRAB jobs ###
 
-        # Use EVERY combination of operators
+        # Use EVERY combination of wcs
         if allPairs:
-            operators_POI = self.operators
+            scan_wcs = self.wcs
 
-            for pois in itertools.combinations(operators_POI,2):
-                process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+pois[0]+pois[1]], stdout=sp.PIPE, stderr=sp.PIPE)
+            for wcs in itertools.combinations(scan_wcs,2):
+                process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+wcs[0]+wcs[1]], stdout=sp.PIPE, stderr=sp.PIPE)
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
 
-        # Use each operator only once
+        # Use each wc only once
         if not allPairs:
-            operators_POI = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
 
-            for pois in operators_POI:
-                process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+pois[0]+pois[1]], stdout=sp.PIPE, stderr=sp.PIPE)
+            for wcs in scan_wcs:
+                process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+wcs[0]+wcs[1]], stdout=sp.PIPE, stderr=sp.PIPE)
                 with process.stdout,process.stderr:
                     self.log_subprocess_output(process.stdout,'info')
                     self.log_subprocess_output(process.stderr,'err')
 
-    def batchRetrieve1DScans(self, basename='.test', operators_POI=[]):
-        ### For each operator, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
-        if not operators_POI:
-            operators_POI = self.operators
+    def batchRetrieve1DScansEFT(self, basename='.test', scan_wcs=[]):
+        ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
+        if not scan_wcs:
+            scan_wcs = self.wcs
 
-        for poi in operators_POI:
-            self.retrieveGridScan('{}.{}'.format(basename,poi))
+        for wc in scan_wcs:
+            self.retrieveGridScan('{}.{}'.format(basename,wc))
 
-    def batchRetrieve2DScans(self, basename='.EFT.gridScan', allPairs=False):
-        ### For pairs of operators, retrieves finished grid jobs, extracts, and hadd's into a single file ###
+    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', allPairs=False):
+        ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
 
-        # Use EVERY combination of operators
+        # Use EVERY combination of wcs
         if allPairs:
-            operators_POI = self.operators
-            for pois in itertools.combinations(operators_POI,2):
-                self.retrieveGridScan('{}.{}{}'.format(basename,pois[0],pois[1]))
+            scan_wcs = self.wcs
+            for wcs in itertools.combinations(scan_wcs,2):
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]))
 
-        # Use each operator only once
+        # Use each wc only once
         if not allPairs:
-            operators_POI = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-            for pois in operators_POI:
-                self.retrieveGridScan('{}.{}{}'.format(basename,pois[0],pois[1]))
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            for wcs in scan_wcs:
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]))
 
-    def batchBestFit(self, basenamegrid='.EFT.gridScan', basenamefit='.EFT.gridScan', operators_POI=[], freeze=False):
-        ### For each combination of operators, do a best fit using the new start point ###
-        if not operators_POI:
-            operators_POI = self.operators
+    def batch1DBestFitEFT(self, basename='.EFT.SM.Float', wcs=[]):
+        ### For each wc, run a 1D fit with others frozen. Use start point from 1D scan with other floating. ###
+        if not wcs:
+            wcs = self.wcs
 
-        for pois in itertools.combinations(operators_POI,2):
-            operators_tracked = [op for op in self.operators if op not in pois]
-            startValuesString = self.getBestValues2D(name='{}.{}{}'.format(basenamegrid,pois[0],pois[1]), operators_POI=pois, operators_tracked=operators_tracked)
-            self.bestFit(name='{}.{}{}'.format(basenamefit,pois[0],pois[1]), operators_POI=pois, startValuesString=startValuesString, freeze=freeze)
-
-    def batch1DBestFit(self, basename='.EFT.SM.Float', operators=[]):
-        ### For each operator, run a 1D fit with others frozen. Use start point from 1D scan with other floating. ###
-        if not operators:
-            operators = self.operators
-
-        for op in operators:
-            logging.info("Fitting for operator {}.".format(op))
-            start_point = self.getBestValues1D(basename,[op])
+        for wc in wcs:
+            logging.info("Fitting for wc {}.".format(wc))
+            start_point = self.getBestValues1DEFT(basename,[wc])
             logging.info("Start value: {}".format(start_point))
-            self.bestFit('{}.BestFit.{}'.format(basename,op), [op], start_point, True)
+            self.bestFit('{}.BestFit.{}'.format(basename,wc), [wc], start_point, True)
+            
+    def batch2DBestFitEFT(self, basenamegrid='.EFT.gridScan', basenamefit='.EFT.gridScan', wcs_POI=[], freeze=False):
+        ### For each combination of wcs, do a best fit using the new start point ###
+        if not wcs_POI:
+            wcs_POI = self.wcs
 
-    def comparefits(self,basename='.EFT.SM.Float'):
-        ### Compare results of different 1D scans ###
+        for pois in itertools.combinations(wcs_POI,2):
+            wcs_tracked = [wc for wc in self.wcs if wc not in pois]
+            startValuesString = self.getBestValues2D(name='{}.{}{}'.format(basenamegrid,pois[0],pois[1]), scan_params=pois, params_tracked=wcs_tracked)
+            self.bestFit(name='{}.{}{}'.format(basenamefit,pois[0],pois[1]), params_POI=pois, startValuesString=startValuesString, freeze=freeze)
+
+    def compareFitsEFT(self,basename='.EFT.SM.Float'):
+        ### Compare results of different 1D EFT scans ###
         tfiles = {}
         limits = {}
         bestFits = {} # Nested dict; bestFit of key1 according to key2
-        for poi in self.operators:
-            tfiles[poi] = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(basename+'.'+poi))
-            limits[poi] = tfiles[poi].Get('limit')
-            bestFits[poi] = {}
-        for limitpoi in self.operators:
-            limit = limits[limitpoi]
+        # First get all scan files
+        for wc in self.wcs:
+            tfiles[wc] = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(basename+'.'+wc))
+            limits[wc] = tfiles[wc].Get('limit')
+            bestFits[wc] = {}
+        # Get best fits
+        for poiwc in self.wcs:
+            limit = limits[poiwc]
+            # First get POI best fit
             bestNLL = (-1,1000000)
             for entry in range(limit.GetEntries()):
                 limit.GetEntry(entry)
                 currentNLL = limit.GetLeaf('deltaNLL').GetValue(0)
                 if bestNLL[1] > currentNLL: bestNLL = (entry,currentNLL)
-            print "Best entry for {} is {}.".format(limitpoi,bestNLL[0])
+            print "Best entry for {} is {}.".format(poiwc,bestNLL[0])
             limit.GetEntry(bestNLL[0])
-            bestFits[limitpoi][limitpoi] = limit.GetLeaf(limitpoi).GetValue(0)
-            trackedpois = list(self.operators)
-            trackedpois.remove(limitpoi)
-            for poi in trackedpois:
-                bestFits[poi][limitpoi] = limit.GetLeaf('trackedParam_'+poi).GetValue(0)
+            bestFits[poiwc][poiwc] = limit.GetLeaf(poiwc).GetValue(0)
+            # Second get corresponding fits for the other wcs
+            trackedwcs = list(self.wcs)
+            trackedwcs.remove(poiwc)
+            for trackedwc in trackedwcs:
+                bestFits[trackedwc][poiwc] = limit.GetLeaf('trackedParam_'+wc).GetValue(0)
 
-        for poi in self.operators:
-            trackedpois = list(self.operators)
-            trackedpois.remove(poi)
-            print("Best value of {}: {}".format(poi,bestFits[poi][poi]))
-            for trackedpoi in trackedpois:
-                print("Value according to {}: {}".format(trackedpoi,bestFits[poi][trackedpoi]))
-                #print("Diff according to {}: {}".format(trackedpoi,bestFits[poi][poi]-bestFits[poi][trackedpoi]))
+        # Print full set of results
+        for poiwc in self.wcs:
+            trackedwcs = list(self.wcs)
+            trackedwcs.remove(poiwc)
+            print("Best value of {}: {}".format(poiwc,bestFits[poiwc][poiwc]))
+            for trackedwc in trackedwcs:
+                print("Value according to {}: {}".format(trackedwc,bestFits[poiwc][trackedwc]))
             
+    def printBestFitsSM(self, name='.EFT.SM.Float'):
+        ### Print a table of SM signal strengths, their best fits, and their uncertainties ###
+        params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
-    def printBestFits(self, basename='.EFT.SM.Float', operators=[], simultaneous=True):
-        ### Print a table of operators, their best fits, and their uncertainties ###
-        if not operators:
-            operators = self.operators
+        fit_array = []
+
+        logging.info("Obtaining result of fit: multidimfit{}.root".format(name))
+        fit_file = ROOT.TFile.Open('../fit_files/multidimfit{}.root'.format(name))
+        fit = fit_file.Get('fit_mdf')
+
+        for param in params:
+            roorealvar = fit.floatParsFinal().find(param)
+
+            value = round(roorealvar.getVal(),2)
+            err_sym =  round(roorealvar.getError(),2)
+            err_low = round(roorealvar.getErrorLo(),2)
+            err_high = round(roorealvar.getErrorHi(),2)
+
+            fit_array.append((param,value,err_sym,err_low,err_high))
+
+        logging.info("Quick result:")
+        for row in fit_array:
+            print row[0],"+/-",row[1]
+            logging.debug(row[0],"+/-",row[1])
+        logging.info("Param, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
+        for row in fit_array:
+            print ', '.join([str(ele) for ele in row])
+            logging.debug(row)
+
+    def printBestFitsEFT(self, basename='.EFT.SM.Float', wcs=[], simultaneous=True):
+        ### Print a table of wcs, their best fits, and their uncertainties ###
+        if not wcs:
+            wcs = self.wcs
 
         fit_array = []
 
@@ -417,56 +458,59 @@ class EFTFit(object):
             fit_file = ROOT.TFile.Open('../fit_files/multidimfit{}.root'.format(basename))
             fit = fit_file.Get('fit_mdf')
 
-            for op in operators:
-                roorealvar = fit.floatParsFinal().find(op)
+            for wc in wcs:
+                roorealvar = fit.floatParsFinal().find(wc)
 
                 value = round(roorealvar.getVal(),6)
                 err_sym =  round(roorealvar.getError(),6)
                 err_low = round(roorealvar.getErrorLo(),6)
                 err_high = round(roorealvar.getErrorHi(),6)
 
-                fit_array.append((op,value,err_sym,err_low,err_high))
+                fit_array.append((wc,value,err_sym,err_low,err_high))
         else:
-            for op in operators:
-                logging.info("Obtaining result of fit: multidimfit{}.{}.root".format(basename,op))
-                fit_file = ROOT.TFile.Open('../fit_files/multidimfit{}.{}.root'.format(basename,op))
+            for wc in wcs:
+                logging.info("Obtaining result of fit: multidimfit{}.{}.root".format(basename,wc))
+                fit_file = ROOT.TFile.Open('../fit_files/multidimfit{}.{}.root'.format(basename,wc))
                 fit = fit_file.Get('fit_mdf')
 
-                roorealvar = fit.floatParsFinal().find(op)
+                roorealvar = fit.floatParsFinal().find(wc)
 
                 value = round(roorealvar.getVal(),6)
                 err_sym =  round(roorealvar.getError(),6)
                 err_low = round(roorealvar.getErrorLo(),6)
                 err_high = round(roorealvar.getErrorHi(),6)
 
-                fit_array.append((op,value,err_sym,err_low,err_high))
+                fit_array.append((wc,value,err_sym,err_low,err_high))
 
+        logging.info("Quick result:")
+        for row in fit_array:
+            print row[0],"+/-",row[1]
+            logging.debug(row[0],"+/-",row[1])
         logging.info("WC, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
+        for row in fit_array:
+            print ', '.join([str(ele) for ele in row])
+            logging.debug(row)
 
-        for var in fit_array:
-            print var
-            logging.debug(var)
-
-    def printIntervalFits(self, basename='.EFT.SM.Float', operators=[]):
-        ### Print a table of operators, their best fits, and their uncertainties ###
+    def printIntervalFitsEFT(self, basename='.EFT.SM.Float', wcs=[]):
+        ### Print a table of wcs, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
-        if not operators:
-            operators = self.operators
+        if not wcs:
+            wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
         fit_array = []
 
         canvas = ROOT.TCanvas()
-        for op in operators:
+        for wc in wcs:
 
             canvas.Clear()
 
-            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,op))
-            fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,op))
+            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,wc))
+            fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,wc))
             limit_tree = fit_file.Get('limit')
 
-            limit_tree.Draw('2*deltaNLL:{}>>{}1DNLL(50,{},{})'.format(op,op,self.op_ranges[op][0],self.op_ranges[op][1]),'2*deltaNLL>-1','same')
+            limit_tree.Draw('2*deltaNLL:{}>>{}1DNLL(50,{},{})'.format(wc,wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1]),'2*deltaNLL>-1','same')
             graph = canvas.GetPrimitive('Graph')
             #graph.SetName("Graph")
 
@@ -502,7 +546,7 @@ class EFTFit(object):
                         true_min = minimum
                 true_minimums.append(true_min[0])
 
-            fit_array.append([op,[list(l) for l in zip(true_minimums,lowedges,highedges)]])
+            fit_array.append([wc,[list(l) for l in zip(true_minimums,lowedges,highedges)]])
 
         for line in fit_array:
             print line              
@@ -534,13 +578,13 @@ if __name__ == "__main__":
     fitter = EFTFit()
 
     #Example of a workflow:
-    #fitter.makeWorkspace16D('EFT_MultiDim_Datacard.txt')
-    #fitter.bestFit(name='.EFT.SM.Float.preScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
-    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked, points=50000, freeze=False)
+    #fitter.makeWorkspaceEFT('EFT_MultiDim_Datacard.txt')
+    #fitter.bestFit(name='.EFT.SM.Float.preScan', scan_params=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
+    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, scan_wcs=fitter.scan_params, params_tracked=fitter.wcs_tracked, points=50000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
-    #startValuesString = fitter.getBestValues2D(name='.EFT.SM.Float.gridScan.ctWctZ', operators_POI=fitter.operators_POI, operators_tracked=fitter.operators_tracked)
-    #startValuesString = fitter.getBestValues1D(basename='.EFT.SM.Float.gridScan', operators=fitter.operators)
-    #fitter.bestFit(name='.EFT.SM.Float.postScan', operators_POI=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], startValuesString=startValuesString, freeze=False, autoBounds=True)
+    #startValuesString = fitter.getBestValues2D(name='.EFT.SM.Float.gridScan.ctWctZ', scan_params=fitter.scan_wcs, params_tracked=fitter.wcs_tracked)
+    #startValuesString = fitter.getBestValues1DEFT(basename='.EFT.SM.Float.gridScan', wcs=fitter.operators)
+    #fitter.bestFit(name='.EFT.SM.Float.postScan', scan_params=fitter.wcs, startValuesString=startValuesString, freeze=False, autoBounds=True)
 
     #logging.info("Logger shutting down!")
     #logging.shutdown()
