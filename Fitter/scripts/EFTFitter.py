@@ -44,7 +44,7 @@ class EFTFit(object):
         logging.info("Creating workspace")
         if not os.path.isfile(datacard):
             logging.error("Datacard does not exist!")
-            sys.exit()
+            return
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
                 #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1,0,3]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,3]','--PO','map=.*/ttH:mu_ttH[1,0,3]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
@@ -113,7 +113,7 @@ class EFTFit(object):
             scan_params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
         for param in scan_params:
-            self.GridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)])
+            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)])
             
             
 
