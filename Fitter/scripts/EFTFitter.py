@@ -12,17 +12,17 @@ class EFTFit(object):
 
         # WCs lists for easy use
         # Full list of opeators
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Default wcs to keep track of during 2D scans
-        self.wcs_tracked = ['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs_tracked = ['ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         # Scan ranges of the wcs
         self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
                             'cpt':(-40,30), 'ctp':(-35,65),
                             'ctli':(-20,20),'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),   'cpQM':(-30,50),  
+                                            'cpQM':(-30,50),  
                             'ctlTi':(-4,4),'ctei':(-20,20),
                             'cQei':(-16,16),'cQlMi':(-17,17),
                             'cpQ3':(-20,12),'cbW':(-10,10)
@@ -154,7 +154,7 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFits(name)
 
-    def gridScan(self, name='.test', crab=False, scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
+    def gridScan(self, name='.test', crab=False, scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB ###
         logging.info("Doing grid scan...")
 
@@ -298,7 +298,7 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
 
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
@@ -330,7 +330,7 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
 
             for wcs in scan_wcs:
                 process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+wcs[0]+wcs[1]], stdout=sp.PIPE, stderr=sp.PIPE)
@@ -357,7 +357,7 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]))
 
@@ -580,7 +580,7 @@ if __name__ == "__main__":
 
     #Example of a workflow:
     #fitter.makeWorkspaceEFT('EFT_MultiDim_Datacard.txt')
-    #fitter.bestFit(name='.EFT.SM.Float.preScan', scan_params=['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
+    #fitter.bestFit(name='.EFT.SM.Float.preScan', scan_params=['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
     #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, scan_wcs=fitter.scan_params, params_tracked=fitter.wcs_tracked, points=50000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
     #startValuesString = fitter.getBestValues2D(name='.EFT.SM.Float.gridScan.ctWctZ', scan_params=fitter.scan_wcs, params_tracked=fitter.wcs_tracked)

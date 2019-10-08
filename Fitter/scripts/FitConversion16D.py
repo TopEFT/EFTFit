@@ -10,14 +10,14 @@ ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 fits = {}
 
 if len(sys.argv) != 2:
-    hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest23_v2.root'
+    hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/anatest23_v3_MergedLepFl.root'
     #hist_file = os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/TOP-19-001_unblinded_v1.root'
 else:
     hist_file = sys.argv[1]
 
 #List of operators to extract parameterizations for
-operators = ['sm']+['ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-#operators = ['sm']+['ctW'] #Debug, but unnecessary
+operators = ['sm']+['ctW','ctp','cpQM','ctZ','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+#operators = ['sm']+['ctW'] #Debug
 
 #Load file
 print "Loading Root file..."
@@ -33,7 +33,7 @@ for key in readfile.GetListOfKeys():
     category,systematic,process = '','',''
     if(len(histname)==3): [category,systematic,process] = histname
     if(len(histname)==2): [category,process] = histname
-    #In case we ever switch to using ttZ,ttW,tZq as proces names
+    #In case we ever switch to using ttZ,ttW,tZq as process names
     #process = process.replace('tllq','tZq')
     #process = process.replace('ttll','ttZ')
     #process = process.replace('ttlnu','ttW')
