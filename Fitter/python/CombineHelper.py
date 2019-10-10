@@ -125,7 +125,7 @@ class HelperOptions(OptionsBase):
         self.datacard_file   = self.original_card                   # The name of the (potentially modified) datacard
         self.conversion_file = '16D_Parameterization.npy'           # The EFT 16D WC parameterization mapping
         self.ws_file         = '16D.root'                           # The name of the workspace root file
-        self.model           = 'EFTFit.Fitter.EFT16DModel:eft16D'   # The model used to make the RooWorkspace
+        self.model           = 'EFTFit.Fitter.EFT16DModel:eft16D'   # The physics model used to make the RooWorkspace
         self.ws_type         = WorkspaceType.EFT
         self.method          = CombineMethod.NONE
         self.name            = 'EFT'
@@ -350,8 +350,23 @@ class CombineHelper(object):
         self.logger.info("FitConversion command: %s",' '.join(args))
         run_command(args)
 
-    # Create a RooWorkspace and save it to a root file
     def make_workspace(self):
+        '''
+            Description:
+                Create a RooWorkspace and save it to a root file
+            Can directly modify:
+                None
+            Can indirectly modify:
+                self.dc_maker.hp.operators_fakedata --> DatacardMaker.setOperators()
+                self.poi_ranges --> self.setPOIRange()
+            Depends on:
+                self.ops.ws_file: The name of the output file
+                self.ops.datacard_file: The name of the input datacard file
+                self.ops.model: The physics model to use
+                self.ops.phys_ops: The physics options relevant to the physics model to use
+                self.ops.ws_type: Modifies the fitting behavior to either fit for signal strengths
+                    (WorkspaceType.SM) or to fit for EFT WC values (WorkspaceType.EFT) 
+        '''
         self.logger.info("Making workspace file...")
         self.chdir(self.output_dir)
 
@@ -450,8 +465,24 @@ class CombineHelper(object):
         self.logger.info("Combine command: %s", ' '.join(args))
         run_command(args)
 
-    # Run CombineTools using the Impacts method to generate impact plots
     def make_impact_plots(self):
+        '''
+            Description:
+                Run CombineTools using the Impacts method to generate impact plots
+            Can directly modify:
+                None
+            Can indirectly modify:
+                None
+            Depends on:
+                self.ops.ws_file: The name of the input dataset file
+                self.ops.ws_type: Used to modify the output name
+                self.ops.method: The method option (-M) to use for the combineTool, should be "Impacts"
+                self.ops.verbosity: The verbosity setting (-v) for the combineTool
+                self.ops.mass: The mass option (-m) of combineTool, this only modifies the name of the outputs
+                self.ops.name: Currently unused
+                self.ops.freeze_parameters: Passed to the '--freezeParameters' option of combineTool
+                self.ops.redefine_pois: Passed to the '--redefineSignalPOIs' option of combineTool
+        '''
         self.logger.info("Making impact plots...")
         self.chdir(self.output_dir)
 

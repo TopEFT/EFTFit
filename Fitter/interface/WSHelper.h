@@ -14,6 +14,7 @@
 #include "RooAddition.h"
 #include "RooRealVar.h"
 
+// Helper class for working with and manipulating RooWorkspace objects
 class WSHelper {
     private:
         typedef std::vector<TString> vTStr;
@@ -22,40 +23,39 @@ class WSHelper {
     public:
         WSHelper();
         ~WSHelper();
-        std::vector<RooCatType*> getTypes(RooWorkspace* ws,TString name="CMS_channel");
-        std::vector<RooAbsReal*> getExpCatFuncs(RooWorkspace* ws,RooCatType* cat_type);
-        std::vector<RooAbsReal*> getExpCatFuncs(RooWorkspace* ws,std::vector<RooCatType*> cat_types);
-        std::vector<RooAbsPdf*> getPdfs(RooWorkspace* ws, bool bkg_only=0, bool nuis_pdfs=0, bool others=0, bool all=0);
-        std::vector<RooAbsData*> getObsData(
-            RooWorkspace* ws,
-            TString n1,
-            TString n2,
-            std::vector<RooCatType*> cat_types
-        );
-        double sumObsDataByCats(
-            RooWorkspace* ws,
+        RooArgSet getPOIs(RooWorkspace* ws);
+        RooArgSet getNuisances(RooWorkspace* ws);
+        std::vector<TString> getProcesses(RooWorkspace* ws);
+        std::vector<RooCatType*>    getTypes(RooWorkspace* ws,TString name="CMS_channel");
+        std::vector<RooAbsReal*>    getExpCatFuncs(RooWorkspace* ws,RooCatType* cat_type);
+        std::vector<RooAbsReal*>    getExpCatFuncs(RooWorkspace* ws,std::vector<RooCatType*> cat_types);
+        std::vector<RooAbsPdf*>     getPdfs(RooWorkspace* ws,
+                                        bool bkg_only=0,
+                                        bool nuis_pdfs=0,
+                                        bool other_pdfs=0,
+                                        bool all_pdfs=0);
+        std::vector<RooAbsData*>    getObsData(RooWorkspace* ws,
+                                        TString n1,
+                                        TString n2,
+                                        std::vector<RooCatType*> cat_types);
+        std::vector<RooAddition*>   getSummedCats(std::vector<RooAbsReal*> funcs,
+                                        std::vector<RooCatType*> cat_types,
+                                        vTStr procs={},
+                                        TString override="");
+        std::vector<pTStrDbl>       mergeDataBins(std::vector<RooAbsData*> datasets,
+                                        TString merge_name,
+                                        std::vector<RooCatType*> cats,
+                                        vTStr sub_cats);
+        std::vector<RooAddition*>   mergeSubCats(std::vector<RooAbsReal*> funcs,
+                                        TString merge_name,
+                                        vTStr procs,
+                                        vTStr sub_cats);
+        double sumObsDataByCats(RooWorkspace* ws,
             TString n1, TString n2,
-            std::vector<RooCatType*> cat_types
-        );
-        std::vector<RooAddition*> getSummedCats(
-            std::vector<RooAbsReal*> funcs,
-            std::vector<RooCatType*> cat_types,
-            vTStr procs={},
-            TString override=""
-        );
-        std::vector<pTStrDbl> mergeDataBins(
-            std::vector<RooAbsData*> datasets,
-            TString merge_name,
-            std::vector<RooCatType*> cats,
-            vTStr sub_cats
-        );
-        std::vector<RooAddition*> mergeSubCats(
-            std::vector<RooAbsReal*> funcs,
-            TString merge_name,
-            vTStr procs,
-            vTStr sub_cats
-        );
+            std::vector<RooCatType*> cat_types);
         void printSnapshot(RooWorkspace* ws,TString name);
+        std::vector<RooAddition*> toRooAdd(std::vector<RooAbsReal*> funcs);
+        std::vector<TString> toCatStr(std::vector<RooCatType*> cats);
 
         // Define the templated member functions inline
 
@@ -97,7 +97,7 @@ class WSHelper {
             return ret;
         }
         // Filters the collection by comparing to list of patterns
-        // Note: Works with any objects which have a GetName() member function
+        // Note: Works with any objects T which have a GetName() member function
         template<typename T>
         std::vector<T> filter(std::vector<T> vec,std::vector<TRegexp> pats,bool mode=0) {
             // mode = 0 --> whitelist mode
@@ -199,6 +199,45 @@ class WSHelper {
 WSHelper::WSHelper() {}
 WSHelper::~WSHelper() {}
 
+// Returns all POIs from the workspace as a RooArgSet
+RooArgSet WSHelper::getPOIs(RooWorkspace* ws) {
+    RooStats::ModelConfig* mc_s = dynamic_cast<RooStats::ModelConfig *>(ws->genobj("ModelConfig"));
+    RooArgSet pois(*mc_s->GetParametersOfInterest());
+    return pois;
+}
+
+RooArgSet WSHelper::getNuisances(RooWorkspace* ws) {
+    RooStats::ModelConfig* mc_s = dynamic_cast<RooStats::ModelConfig *>(ws->genobj("ModelConfig"));
+    RooArgSet nuis(*mc_s->GetNuisanceParameters());
+    return nuis;
+}
+
+// Returns all processes from the workspace (not in any particular order)
+std::vector<TString> WSHelper::getProcesses(RooWorkspace* ws) {
+    std::vector<RooCatType*> all_cats = this->getTypes(ws,"CMS_channel");
+    std::vector<RooAbsReal*> all_exp = this->getExpCatFuncs(ws,all_cats);
+
+    std::set<std::string> set_procs;
+    std::vector<TString> procs;
+
+    TString search = "_proc_";
+    for (auto f: all_exp) {
+        TString name = f->GetName();
+        Ssiz_t idx = name.Index(search);
+        if (idx == TString::kNPOS) {
+            continue;
+        }
+        name = name(idx+search.Length(),name.Length());
+        std::string p = name.Data();
+        if (!set_procs.count(p)) {
+            procs.push_back(name);
+        }
+        set_procs.insert(p);
+    }
+
+    return procs;
+}
+
 // Returns all type states for the specified category in the workspace
 std::vector<RooCatType*> WSHelper::getTypes(RooWorkspace* ws,TString name="CMS_channel") {
     std::vector<RooCatType*> r;
@@ -239,7 +278,12 @@ std::vector<RooAbsReal*> WSHelper::getExpCatFuncs(RooWorkspace* ws,std::vector<R
 }
 
 // Return specified ws pdf objects in a std::vector container
-std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws, bool bkg_only=0, bool nuis_pdfs=0, bool others=0, bool all=0) {
+std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws,
+    bool bkg_pdfs=0,
+    bool nuis_pdfs=0,
+    bool other_pdfs=0,//others
+    bool all_pdfs=0
+) {
     // Note: All filter options result in mutually exlusive sets (only exception being the 'all' option)
     // 0 0 0 1 --> all pdfs
     // 0 0 1 0 --> other pdfs
@@ -257,7 +301,7 @@ std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws, bool bkg_only=0, boo
         tmp.push_back(pdf);
     }
 
-    if (all) {
+    if (all_pdfs) {
         return tmp;
     }
 
@@ -266,14 +310,14 @@ std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws, bool bkg_only=0, boo
     std::vector<TRegexp> bkg_re {"_bonly$","_bonly_"};
     std::vector<TRegexp> nuis_re {"_nuis$"};
 
-    tmp = this->filter(tmp,others_re,others);   // Note: No negation on the bool here
-    if (others) {
+    tmp = this->filter(tmp,others_re,other_pdfs);   // Note: No negation on the bool here
+    if (other_pdfs) {
         // All 'other' type pdfs will fail the bkg/nuis filters --> Don't bother checking them
         return tmp;
     }
 
-    // Note: bkg_only and nuis_pdfs filters >both< get applied (i.e. logical AND)!
-    tmp = this->filter(tmp,bkg_re,!bkg_only);
+    // Note: bkg_pdfs and nuis_pdfs filters >both< get applied (i.e. logical AND)!
+    tmp = this->filter(tmp,bkg_re,!bkg_pdfs);
     tmp = this->filter(tmp,nuis_re,!nuis_pdfs);
 
     return tmp;
@@ -421,6 +465,20 @@ std::vector<RooAddition*> WSHelper::mergeSubCats(
         }
     }
     return merged_subcats;
+}
+
+// Type casts a bunch of RooAbsReal* objects to RooAddition* objects
+std::vector<RooAddition*> WSHelper::toRooAdd(std::vector<RooAbsReal*> funcs) {
+    std::vector<RooAddition*> r;
+    for (auto f: funcs) r.push_back((RooAddition*)f);
+    return r;
+}
+
+// Converts the RooCatType* objects to vector of strings
+std::vector<TString> WSHelper::toCatStr(std::vector<RooCatType*> cats) {
+    std::vector<TString> r;
+    for (auto c: cats) r.push_back(c->GetName());
+    return r;
 }
 
 void WSHelper::printSnapshot(RooWorkspace* ws, TString name) {
