@@ -115,7 +115,10 @@ class EFTFit(object):
         for param in scan_params:
             self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)])
             
-            
+    def batchRetrieve1DScansSM(self, basename='.test'):
+        ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
+        for param in ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']:
+            self.retrieveGridScan('{}.{}'.format(basename,param))
 
     def makeWorkspaceEFT(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard and fit parameterization file ###
@@ -439,13 +442,10 @@ class EFTFit(object):
             fit_array.append((param,value,err_sym,err_low,err_high))
 
         logging.info("Quick result:")
-        for row in fit_array:
-            print row[0],"+/-",row[1]
-            logging.debug(row[0],"+/-",row[1])
         logging.info("Param, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
         for row in fit_array:
-            print ', '.join([str(ele) for ele in row])
-            logging.debug(row)
+            print row[0],row[1],"+/-",row[2]," ",row[3],"+{}".format(row[4])
+            logging.debug("{} {} +/- {}".format(row[0],row[1],row[2]))
 
     def printBestFitsEFT(self, basename='.EFT.SM.Float', wcs=[], simultaneous=True):
         ### Print a table of wcs, their best fits, and their uncertainties ###
