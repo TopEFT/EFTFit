@@ -730,6 +730,7 @@ class EFTPlot(object):
         #h_contour.SetContour(200)
         #h_contour.GetZaxis().SetRangeUser(0,21);
         h_contour.GetXaxis().SetRangeUser(0,3);
+        #h_contour.GetXaxis().SetRangeUser(0,5);
         h_contour.GetYaxis().SetRangeUser(0,3);
         #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
@@ -754,23 +755,23 @@ class EFTPlot(object):
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
-        #simulFit = ROOT.TMarker(0.72,1.17,20) # tllq,ttll
-        simulFit = ROOT.TMarker(2.41,0.73,20) # ttH,ttlnu
+        simulFit = ROOT.TMarker(0.68,1.18,20) # tllq,ttll
+        #simulFit = ROOT.TMarker(2.4,0.73,20) # ttH,ttlnu
         # Central Fit Marker -- use as needed
         centralFit = ROOT.TGraphAsymmErrors(1)
-        #centralFit.SetPoint(0,0.42,1.22) # tllq,ttll
-        #centralFit.SetPointError(0,0.5,0.69,0.22,0.3) # tllq,ttll
-        centralFit.SetPoint(0,2.32,0.85) # ttH,ttlnu
-        centralFit.SetPointError(0,0.69,0.88,0.34,0.41) # ttH,ttlnu
+        centralFit.SetPoint(0,0.47,1.27) # tllq,ttll
+        centralFit.SetPointError(0,0.54,0.76,0.24,0.31) # tllq,ttll
+        #centralFit.SetPoint(0,2.41,0.88) # ttH,ttlnu
+        #centralFit.SetPointError(0,0.71,0.85,0.36,0.43) # ttH,ttlnu
         centralFit.SetMarkerSize(2)
         centralFit.SetMarkerStyle(6)
         centralFit.SetLineColor(2)
         # Dedicated Fit Marker -- use as needed
         dedicatedFit = ROOT.TGraphAsymmErrors(1)
-        #dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
-        #dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
-        dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
-        dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
+        dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
+        dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
+        #dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
+        #dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
         dedicatedFit.SetMarkerSize(2)
         dedicatedFit.SetMarkerStyle(6)
         dedicatedFit.SetLineColor(8)
