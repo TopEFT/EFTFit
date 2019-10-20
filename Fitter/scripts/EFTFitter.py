@@ -107,18 +107,21 @@ class EFTFit(object):
         logging.info("Done with gridScan.")
         if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         
-    def batch1DScanSM(self, basename='.test', crab=False, scan_params=[], points=300, freeze=False):
+    def batch1DScanSM(self, basename='.test', crab=False, scan_params=[], points=300, freeze=False, other=[]):
         ### For each SM signal strength, run a 1D deltaNLL Scan.
         if not scan_params:
             scan_params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
         for param in scan_params:
-            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)])
+            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)]+other)
             
     def batchRetrieve1DScansSM(self, basename='.test'):
         ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
         for param in ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']:
             self.retrieveGridScan('{}.{}'.format(basename,param))
+            
+            
+            
 
     def makeWorkspaceEFT(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard and fit parameterization file ###

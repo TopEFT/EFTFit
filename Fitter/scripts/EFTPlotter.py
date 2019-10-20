@@ -12,6 +12,7 @@ class EFTPlot(object):
         self.logger = logging.getLogger(__name__)
         self.ContourHelper = ContourHelper()
 
+        self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
@@ -625,6 +626,15 @@ class EFTPlot(object):
             canvas.Print('{}{}_1DNLL.png'.format(param,name),'png')
 
         rootFile.Close()
+        
+    def BatchLLPlot1DSM(self, basename='.test', frozen=False, scan_params=[], log=False):
+        if not scan_params:
+            scan_params = self.SMMus
+
+        ROOT.gROOT.SetBatch(True)
+
+        for param in scan_params:
+            self.LLPlot1DSM(basename+'.'+param, param, log)
 
     def LLPlot2DSM(self, name='.test', params=[], ceiling=1, log=False):
         if len(params)!=2:
@@ -755,14 +765,14 @@ class EFTPlot(object):
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
-        simulFit = ROOT.TMarker(0.68,1.18,20) # tllq,ttll
-        #simulFit = ROOT.TMarker(2.4,0.73,20) # ttH,ttlnu
+        simulFit = ROOT.TMarker(0.9,1.12,20) # tllq,ttll
+        #simulFit = ROOT.TMarker(2.63,0.67,20) # ttH,ttlnu
         # Central Fit Marker -- use as needed
         centralFit = ROOT.TGraphAsymmErrors(1)
-        centralFit.SetPoint(0,0.47,1.27) # tllq,ttll
-        centralFit.SetPointError(0,0.54,0.76,0.24,0.31) # tllq,ttll
-        #centralFit.SetPoint(0,2.41,0.88) # ttH,ttlnu
-        #centralFit.SetPointError(0,0.71,0.85,0.36,0.43) # ttH,ttlnu
+        centralFit.SetPoint(0,0.63,1.25) # tllq,ttll
+        centralFit.SetPointError(0,0.56,0.82,0.24,0.31) # tllq,ttll
+        #centralFit.SetPoint(0,2.66,0.85) # ttH,ttlnu
+        #centralFit.SetPointError(0,0.72,0.9,0.36,0.44) # ttH,ttlnu
         centralFit.SetMarkerSize(2)
         centralFit.SetMarkerStyle(6)
         centralFit.SetLineColor(2)
