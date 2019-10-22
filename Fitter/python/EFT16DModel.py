@@ -8,27 +8,27 @@ from HiggsAnalysis.CombinedLimit.PhysicsModel import PhysicsModel
 #Based on 'Quadratic' model from HiggsAnalysis.CombinedLimit.QuadraticScaling
 
 class EFT16DModel(PhysicsModel):
-    """Apply process scaling due to EFT operators.
+    """Apply process scaling due to EFT Wilson Coefficients (WCs).
 
     This class takes a dictionary of quadratic fits describing how processes are
     scaled as a function of an EFT operator's Wilson coefficient and adds it to
     the workspace. For an example coefficient x, dictionary values should have
     the form `(a, b, c)` where `xsec_NP(x) / xsec_SM = a + bx + cx^2`.
 
-    To produce an example dictionary, for coefficient `cuW`:
+    To produce an example dictionary, for coefficient `ctW`:
     >>> import numpy as np
-    >>> scales = {'cuW': {'ttZ': (1, 0.322778, 653.371), 'ttW': (1, 1.20998, 205.528)}}
+    >>> scales = {'ctW': {'ttZ': (1, 0.322778, 653.371), 'ttW': (1, 1.20998, 205.528)}}
     >>> np.save('scales.npy', scales)
 
-    Example for running:
-    text2workspace.py ttV.txt -P HiggsAnalysis.CombinedLimit.EFT:quad --PO scaling=scales.npy --PO process=ttZ --PO process=ttW --PO coefficient=cuW -o cuW.root
-    combine -M MultiDimFit cuW.root --setParameterRanges=-4,4
+    Oversimplified example for running with override options:
+    text2workspace.py EFT_MultiDim_Datacard.txt -P HiggsAnalysis.CombinedLimit.EFT:quad --PO scaling=scales.npy --PO process=ttZ --PO process=ttW --PO coefficient=cuW -o cuW.root
+    combine -M MultiDimFit ctW.root --setParameterRanges=-4,4
     """
 
     def setPhysicsOptions(self, options):
         self.fits = None # File containing WC parameterizations of each process+bin *with events*!
-        self.operators = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
-        self.op_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
+        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
+        self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
                             'cpt':(-40,30), 'ctp':(-35,65),
                             'ctli':(-20,20),'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
@@ -37,16 +37,16 @@ class EFT16DModel(PhysicsModel):
                             'cQei':(-16,16),'cQlMi':(-17,17),
                             'cpQ3':(-20,12),'cbW':(-10,10)
                          }
-        operators_override = [] # Operators specified by arguments
+        wcs_override = [] # WCs specified by arguments
         self.procbins = [] # Process+bin combinations (tuple) that we have events for
         procbin_override = [] # Process+bin combinations (tuple) specified by arguments
 
         for option, value in [x.split('=') for x in options]:
-            if option == 'fits':
+            if option == 'fits': # .npy fit file created with FitConversion16D.py
                 self.fits = value
-            elif option == 'operators':
-                operators_override = value.split(',')
-            elif option == 'procbins':
+            elif option == 'wcs': # Override to fit only a subset of WCs
+                wcs_override = value.split(',')
+            elif option == 'procbins': # Override to fit only a subset of proc+category combinations
                 procbin_override = value.split(',')
             else:
                 print "Unknown option",option
@@ -55,7 +55,7 @@ class EFT16DModel(PhysicsModel):
         #Otherwise, use all of the process+bin combinations that we have fits for.
         fits = np.load(self.fits)[()]
         self.procbins.extend(fits.keys())
-        if len(operators_override)>0: self.operators = np.intersect1d(self.operators,operators_override)
+        if len(wcs_override)>0: self.wcs = np.intersect1d(self.wcs,wcs_override)
         if len(procbin_override)>0: self.procbins = np.intersect1d(self.procbins,procbins_override)
         
 
@@ -73,30 +73,30 @@ class EFT16DModel(PhysicsModel):
                 constant = '{}'.format(fits[procbin][('sm','sm')]) # constant term (should be 1)
                 lin_name = procbin_name+"_L" # Name of linear function
                 lin_term = [] # Linear term
-                lin_args = [] # List of operators in linear term
-                quartic_names = [procbin_name+"_Q"+str(idx) for idx,op in enumerate(self.operators)] # Names of quadratic functions
-                quartic_terms = [[] for op in self.operators] # Quartic terms, but split into chunks
-                quartic_args = [[] for op in self.operators] # List of operators in quartic terms
+                lin_args = [] # List of wcs in linear term
+                quartic_names = [procbin_name+"_Q"+str(idx) for idx,wc in enumerate(self.wcs)] # Names of quadratic functions
+                quartic_terms = [[] for wc in self.wcs] # Quartic terms, but split into chunks
+                quartic_args = [[] for wc in self.wcs] # List of wcs in quartic terms
                 fit_terms = [constant] # List of fit terms
 
                 # Fill function pieces
-                for idx,op1 in enumerate(self.operators):
-                    if abs(fits[procbin][('sm',op1)]) >= 0.001:
-                        lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',op1)],4),op1))
-                        lin_args.append(op1)
-                    for idy,op2 in enumerate(self.operators):
-                        if (idy >= idx) and (abs(fits[procbin][(op1,op2)]) >= 0.001):
-                            quartic_terms[idx].append('{0}*{1}*{2}'.format(round(fits[procbin][(op1,op2)],4),op1,op2))
-                            quartic_args[idx].extend([op1,op2])
+                for idx,wc1 in enumerate(self.wcs):
+                    if abs(fits[procbin][('sm',wc1)]) >= 0.001:
+                        lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
+                        lin_args.append(wc1)
+                    for idy,wc2 in enumerate(self.wcs):
+                        if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
+                            quartic_terms[idx].append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
+                            quartic_args[idx].extend([wc1,wc2])
                 #if procbin[1]=='C_2lss_m_emu_2b_5j': print lin_term, quartic_terms
 
                 # New method of filling quartic terms to autosplit every ~<1000 characters
                 #quartic_master = []
                 #quartic_final = []
-                #for idx,op1 in enumerate(self.operators):
-                #    for idy,op2 in enumerate(self.operators):
-                #        if (idy >= idx) and (abs(fits[procbin][(op1,op2)]) >= 0.001):
-                #            quartic_master.append('{0}*{1}*{2}'.format(round(fits[procbin][(op1,op2)],4),op1,op2))
+                #for idx,wc1 in enumerate(self.wcs):
+                #    for idy,wc2 in enumerate(self.wcs):
+                #        if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
+                #            quartic_master.append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
 
                 #quartic_master = '+'.join(quartic_master)
                 #print "Master original size:",len(quartic_master)
@@ -141,10 +141,10 @@ class EFT16DModel(PhysicsModel):
 
     def doParametersOfInterest(self):
         # user can call combine with `--setPhysicsModelParameterRanges` to set to sensible ranges
-        for op in self.operators:
-            self.modelBuilder.doVar('{0}[0, {1}, {2}]'.format(op,self.op_ranges[op][0],self.op_ranges[op][1]))
-        print "Operators to fit for: "+",".join(self.operators)
-        self.modelBuilder.doSet('POI', ','.join(self.operators))
+        for wc in self.wcs:
+            self.modelBuilder.doVar('{0}[0, {1}, {2}]'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1]))
+        print "WCs to fit for: "+",".join(self.wcs)
+        self.modelBuilder.doSet('POI', ','.join(self.wcs))
         #self.modelBuilder.doSet('POI', 'ctW,ctZ')
         self.setup()
 
