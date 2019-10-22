@@ -330,38 +330,17 @@ public:
             return;
         }
 
-        std::vector<std::string> added_names = added_fit->getNames();
-        if (this->names.size() != added_names.size()) {
-            std::cout << "[ERROR] WCFit mismatch in names! (addFit)" << std::endl;
-            return;
-        }
-
-        int name_idx;
-        bool is_bad = false;
-        for (uint i = 0; i < this->size(); i++) {
-            name_idx = this->pairs.at(i).first;
-            if (this->names.at(name_idx) != added_names.at(name_idx)) {
-                std::cout << "[ERROR] WCFit mismatch in names! (addFit), Pair[0] " << i << ": " << this->names.at(name_idx) << " --> " added_names.at(name_idx) << std::endl;
-                is_bad = true;
-            }
-            name_idx = this->pairs.at(i).second;
-            if (this->names.at(name_idx) != added_names.at(name_idx)) {
-                std::cout << "[ERROR] WCFit mismatch in names! (addFit), Pair[1] " << i << ": " << this->names.at(name_idx) << " --> " added_names.at(name_idx) << std::endl;
-                is_bad = true;
-            }
-        }
-
-        if (is_bad) {
-            // Don't try to merge the two fits
-            return;
-        }
-
+        /*
         for (uint i = 0; i < this->errSize(); i++) {
             if (i < this->size()) {
                 this->coeffs.at(i) += added_fit.getCoefficient(i);
             }
             // It is *very* important that we keep track of the err fit coeffs separately, since Sum(f^2) != (Sum(f))^2
             this->err_coeffs.at(i) += added_fit.getErrorCoefficient(i);
+        }
+        */
+        for (uint i = 0; i < this->size(); i++) {
+            this->coeffs.at(i) += added_fit.getCoefficient(i);
         }
     }
 
@@ -459,7 +438,8 @@ public:
             return;
         }
 
-        int new_idx1,new_idx2,i,j;
+        //int new_idx1,new_idx2,i,j;
+        int new_idx1,i;
         std::pair<int,int> idx_pair1,idx_pair2;
 
         this->names.push_back(new_name);
@@ -469,13 +449,15 @@ public:
             idx_pair1 = std::make_pair(new_idx1,i);
             this->pairs.push_back(idx_pair1);
             this->coeffs.push_back(0.0);   // Extending makes no assumptions about the fit coefficients
-            new_idx2 = this->pairs.size() - 1;
+            //new_idx2 = this->pairs.size() - 1;
             // Extend the err_pairs and err_coeffs vectors
+            /*
             for (j = 0; j <= new_idx2; j++) {
                 idx_pair2 = std::make_pair(new_idx2,j);
                 this->err_pairs.push_back(idx_pair2);
                 this->err_coeffs.push_back(0.0);
             }
+            */
         }
     }
 
@@ -521,13 +503,17 @@ public:
         TDecompSVD svd(A);
         bool ok;
         const TVectorD c_x = svd.Solve(b,ok);    // Solve for the fit parameters
-
+        /*
         for (uint i = 0; i < this->errSize(); i++) {
             if (i < this->size()) {
                 this->coeffs.at(i) = c_x(i);
             }
             idx_pair = this->err_pairs.at(i);
             this->err_coeffs.at(i) = (idx_pair.first == idx_pair.second) ? c_x(idx_pair.first)*c_x(idx_pair.second) : 2*c_x(idx_pair.first)*c_x(idx_pair.second);
+        }
+        */
+        for (uint i = 0; i < this->size(); i++) {
+            this->coeffs.at(i) = c_x(i);
         }
     }
 };

@@ -27,6 +27,9 @@ class TH1EFT : public TH1D
         using TH1D::GetBinContent;  // Bring the TH1D GetBinContent fcts into scope
         using TH1D::Scale;          // Bring the TH1D Scale fcts into scope (likely not needed)
 
+        // TObject* Clone(const char* newname=0); UNFINISHED!!! I think I want to do this via Copy instead
+        // void Copy(); UNFINISHED!!!!
+
         Int_t Fill(Double_t x, Double_t w, WCFit fit);
         WCFit GetBinFit(Int_t bin);
         WCFit GetSumFit();
@@ -167,10 +170,11 @@ Double_t TH1EFT::GetBinContent(Int_t bin, WCPoint wc_pt)
 
     return scale_value;
 }
-
+/*
 void TH1EFT::Scale(WCPoint wc_pt)
 {
-    //TH1EFT* new_hist = (TH1EFT*)this->Clone("clone");
+    // Warning: calling GetEntries after a call to this function will return a 
+    // non-zero value, even if the histogram was never filled.
     
     for (Int_t i = 1; i <= this->GetNbinsX(); i++) {
         Double_t new_content = this->GetBinContent(i,wc_pt);
@@ -180,7 +184,26 @@ void TH1EFT::Scale(WCPoint wc_pt)
     }
     
 }
-
+*/
+// evalPointError disabled:
+void TH1EFT::Scale(WCPoint wc_pt)
+{
+    // Warning: calling GetEntries after a call to this function will return a 
+    // non-zero value, even if the histogram was never filled.
+    
+    for (Int_t i = 1; i <= this->GetNbinsX(); i++) {
+        Double_t old_content = this->GetBinContent(i);
+        Double_t new_content = this->GetBinContent(i,wc_pt);
+        Double_t old_error = this->GetBinError(i);
+        this->SetBinContent(i,new_content);
+        if (old_content) {
+            this->SetBinError(i,old_error*new_content/old_content);
+        } else {
+            this->SetBinError(i,0.0);
+        }
+    }
+    
+}
 // Uniformly scale all fits by amt
 void TH1EFT::ScaleFits(double amt)
 {
