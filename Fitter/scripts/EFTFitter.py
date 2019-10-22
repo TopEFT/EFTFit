@@ -113,7 +113,10 @@ class EFTFit(object):
             scan_params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
         for param in scan_params:
-            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,3'.format(param)]+other)
+            scanmax = 3
+            if param=='mu_ttH': scanmax = 6
+            if param=='mu_tllq': scanmax = 4            
+            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,{}'.format(param,scanmax)]+other)
             
     def batchRetrieve1DScansSM(self, basename='.test'):
         ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
