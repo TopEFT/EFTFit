@@ -452,9 +452,9 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*deltaNLL<100', 'prof colz')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(50,{},{},50,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',50,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],50,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -739,8 +739,8 @@ class EFTPlot(object):
         #h_contour.SetMaximum(11.83)
         #h_contour.SetContour(200)
         #h_contour.GetZaxis().SetRangeUser(0,21);
-        h_contour.GetXaxis().SetRangeUser(0,3);
-        #h_contour.GetXaxis().SetRangeUser(0,5);
+        #h_contour.GetXaxis().SetRangeUser(0,3);
+        h_contour.GetXaxis().SetRangeUser(0,7);
         h_contour.GetYaxis().SetRangeUser(0,3);
         #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
@@ -765,23 +765,23 @@ class EFTPlot(object):
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
-        simulFit = ROOT.TMarker(0.9,1.12,20) # tllq,ttll
-        #simulFit = ROOT.TMarker(2.63,0.67,20) # ttH,ttlnu
+        #simulFit = ROOT.TMarker(0.95,1.12,20) # tllq,ttll
+        simulFit = ROOT.TMarker(2.64,0.69,20) # ttH,ttlnu
         # Central Fit Marker -- use as needed
         centralFit = ROOT.TGraphAsymmErrors(1)
-        centralFit.SetPoint(0,0.63,1.25) # tllq,ttll
-        centralFit.SetPointError(0,0.56,0.82,0.24,0.31) # tllq,ttll
-        #centralFit.SetPoint(0,2.66,0.85) # ttH,ttlnu
-        #centralFit.SetPointError(0,0.72,0.9,0.36,0.44) # ttH,ttlnu
+        #centralFit.SetPoint(0,0.58,1.26) # tllq,ttll
+        #centralFit.SetPointError(0,0.54,0.63,0.23,0.31) # tllq,ttll
+        centralFit.SetPoint(0,2.64,0.87) # ttH,ttlnu
+        centralFit.SetPointError(0,0.74,0.91,0.36,0.44) # ttH,ttlnu
         centralFit.SetMarkerSize(2)
         centralFit.SetMarkerStyle(6)
         centralFit.SetLineColor(2)
         # Dedicated Fit Marker -- use as needed
         dedicatedFit = ROOT.TGraphAsymmErrors(1)
-        dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
-        dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
-        #dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
-        #dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
+        #dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
+        #dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
+        dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
+        dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
         dedicatedFit.SetMarkerSize(2)
         dedicatedFit.SetMarkerStyle(6)
         dedicatedFit.SetLineColor(8)
@@ -939,19 +939,19 @@ class EFTPlot(object):
     def getIntervalFits(self, basename='.EFT.SM.Float', params=[]):
         ### Return a table of parameters, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
-        if not parameters:
-            parameters = self.parameters
+        if not params:
+            params = self.wcs
             
 
         ROOT.gROOT.SetBatch(True)
 
         fit_array = [] # List of [WC, WC value of minimum, [2sig lowedges], [2sig highedges]]
 
-        for param in parameters:
+        for param in params:
 
             # Get scan TTree
             logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,param))
-            fit_file = ROOT.TFile.open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,param))
+            fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,param))
             limit_tree = fit_file.Get('limit')
 
             # Extract points
@@ -973,11 +973,17 @@ class EFTPlot(object):
             coords = zip(wc_values,nll_values)
             coords.sort(key = lambda t: t[0])
             wc_values, nll_values = zip(*coords)
+            wc_values = numpy.asarray(wc_values)
+            nll_values = numpy.asarray(nll_values)
 
             # Prep a spline to get the exact crossings of the 1,2 sigma levels
             graph = ROOT.TGraph()
-            graph = ROOT.TGraph(coords.size(), wcvalues, nll_values)
+            graph = ROOT.TGraph(len(coords), wc_values, nll_values)
             spline = ROOT.TSpline3("spline3", graph)
+            
+            #f1 = ROOT.TF1('f1','poln')
+            #graph.Fit('poln','N')
+            #fitfunc = graph.GetFunction('poln')
 
             # Extract 2-sig certainty intervals and save WC value of minumum
             lowedges=[]
@@ -988,11 +994,17 @@ class EFTPlot(object):
                 wc,nll = coord[0],coord[1]
                 # Did we cross a low edge?
                 if prevnll>4 and 4>nll:
-                    cross = spline.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
+                    #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
+                    interval = prevnll-nll
+                    linPctInterp = (prevnll-4)/interval
+                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     lowedges.append(cross)
                 # Did we cross a high edge?
                 if prevnll<4 and 4<nll:
-                    cross = spline.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
+                    #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
+                    interval = nll-prevnll
+                    linPctInterp = (4-prevnll)/interval
+                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     highedges.append(cross)
                 # Is this the best fit?
                 if nll == min(nll_values):

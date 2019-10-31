@@ -290,7 +290,7 @@ class EFTFit(object):
         if not scan_wcs:
             scan_wcs = self.wcs
 
-        for param in scan_wcs:
+        for wc in scan_wcs:
             self.gridScan('{}.{}'.format(basename,wc), crab, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze)
 
     def batch2DScanEFT(self, basename='.EFT.gridScan', freeze=False, points=160000, allPairs=False, other=[]):
@@ -303,7 +303,7 @@ class EFTFit(object):
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_wcs=list(wcs), wcs_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
         # Use each wc only once
         if not allPairs:
@@ -312,7 +312,7 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_wcs=list(wcs), wcs_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
     def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
         ### For each wc, attempt to resubmit failed CRAB jobs ###
