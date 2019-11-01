@@ -6,6 +6,8 @@ import ROOT
 import itertools
 import getpass
 
+# Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
+
 class EFTFit(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -84,7 +86,7 @@ class EFTFit(object):
         sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFitsSM(name)
 
-    def gridScanSM(self, name='.test', crab=False, scan_params=['mu_ttll'], params_tracked=['mu_ttlnu','mu_ttH','mu_tllq'], points=300, freeze=False, other=[]):
+    def gridScanSM(self, name='.test', batch='', scan_params=['mu_ttll'], params_tracked=['mu_ttlnu','mu_ttH','mu_tllq'], points=300, freeze=False, other=[]):
         ### Runs deltaNLL Scan in a parameter using CRAB ###
         ### Can be used to do 2D scans as well ###
         logging.info("Doing grid scan...")
@@ -97,17 +99,20 @@ class EFTFit(object):
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
         # Common 'other' uses: --setParameterRanges param=min,max
-        if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        if batch=='condor':    args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','2000'])
         logging.info(' '.join(args))
 
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
-        logging.info("Done with gridScan.")
-        if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
-        
-    def batch1DScanSM(self, basename='.test', crab=False, scan_params=[], points=300, freeze=False, other=[]):
+            logging.info("Done with gridScan batch submission.")
+        if not batch:
+            sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+            logging.info("Done with gridScan.")
+
+    def batch1DScanSM(self, basename='.test', batch='', scan_params=[], points=300, freeze=False, other=[]):
         ### For each SM signal strength, run a 1D deltaNLL Scan.
         if not scan_params:
             scan_params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
@@ -116,10 +121,10 @@ class EFTFit(object):
             scanmax = 3
             if param=='mu_ttH': scanmax = 6
             if param=='mu_tllq': scanmax = 4            
-            self.gridScanSM('{}.{}'.format(basename,param), crab, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,{}'.format(param,scanmax)]+other)
+            self.gridScanSM('{}.{}'.format(basename,param), batch, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,{}'.format(param,scanmax)]+other)
             
     def batchRetrieve1DScansSM(self, basename='.test'):
-        ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
+        ### For each wc, retrieves finished 1D deltaNLL crab jobs, extracts, and hadd's into a single file ###
         for param in ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']:
             self.retrieveGridScan('{}.{}'.format(basename,param))
             
@@ -163,8 +168,8 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFits(name)
 
-    def gridScan(self, name='.test', crab=False, scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
-        ### Runs deltaNLL Scan in two parameters using CRAB ###
+    def gridScan(self, name='.test', batch='', scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
+        ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
         args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
@@ -174,15 +179,18 @@ class EFTFit(object):
         if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
-        if crab:              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','2000'])
         logging.info(' '.join(args))
 
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
-        logging.info("Done with gridScan.")
-        if not crab: sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+            logging.info("Done with gridScan batch submission.")
+        if not batch:
+            sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+            logging.info("Done with gridScan.")
 
     def getBestValues2D(self, name, scan_params=[], params_tracked=[]):
         ### Gets values of parameters for grid scan point with best deltaNLL ###
@@ -285,16 +293,16 @@ class EFTFit(object):
         # Remove the temporary directory and split root files
         sp.call(['rm','-r',taskname+'tmp'])
 
-    def batch1DScanEFT(self, basename='.test', crab=False, scan_wcs=[], points=300, freeze=False):
+    def batch1DScanEFT(self, basename='.test', batch='crab', scan_wcs=[], points=300, freeze=False):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
 
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), crab, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze)
+            self.gridScan('{}.{}'.format(basename,wc), batch, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze)
 
-    def batch2DScanEFT(self, basename='.EFT.gridScan', freeze=False, points=160000, allPairs=False, other=[]):
-        ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB ###
+    def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=160000, allPairs=False, other=[]):
+        ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
 
         # Use EVERY combination of wcs
         if allPairs:
@@ -303,7 +311,7 @@ class EFTFit(object):
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
         # Use each wc only once
         if not allPairs:
@@ -312,7 +320,7 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), crab=True, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
     def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
         ### For each wc, attempt to resubmit failed CRAB jobs ###
@@ -587,7 +595,7 @@ if __name__ == "__main__":
     #Example of a workflow:
     #fitter.makeWorkspaceEFT('EFT_MultiDim_Datacard.txt')
     #fitter.bestFit(name='.EFT.SM.Float.preScan', scan_params=['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], freeze=False, autoBounds=True)
-    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', crab=True, scan_wcs=fitter.scan_params, params_tracked=fitter.wcs_tracked, points=50000, freeze=False)
+    #fitter.gridScan(name='.EFT.SM.Float.gridScan.ctWctZ', batch='crab', scan_wcs=fitter.scan_params, params_tracked=fitter.wcs_tracked, points=50000, freeze=False)
     #fitter.retrieveGridScan(name='.EFT.SM.Float.gridScan.ctWctZ')
     #startValuesString = fitter.getBestValues2D(name='.EFT.SM.Float.gridScan.ctWctZ', scan_params=fitter.scan_wcs, params_tracked=fitter.wcs_tracked)
     #startValuesString = fitter.getBestValues1DEFT(basename='.EFT.SM.Float.gridScan', wcs=fitter.operators)
