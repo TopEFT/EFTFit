@@ -396,6 +396,15 @@ class EFTPlot(object):
         hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
+        for entry in range(limitTree.GetEntries()):
+            limitTree.GetEntry(entry)
+            currentnll = limitTree.GetLeaf('deltaNLL').GetValue(0)
+            if currentnll == minZ:
+                minentry = entry
+        limitTree.GetEntry(minentry)
+        xmin=limitTree.GetLeaf(wcs[1]).GetValue(0)
+        ymin=limitTree.GetLeaf(wcs[0]).GetValue(0)
+        print("Minimum: {}={}, {}={}".format(wcs[1],xmin,wcs[0],ymin))
         #limit.Draw(wcs[0]+":"+wcs[1],'quantileExpected==-1','p same') # Best fit point from grid scan
         #best_fit = canvas.FindObject('Graph')
         #best_fit.SetMarkerSize(1)
@@ -739,9 +748,9 @@ class EFTPlot(object):
         #h_contour.SetMaximum(11.83)
         #h_contour.SetContour(200)
         #h_contour.GetZaxis().SetRangeUser(0,21);
-        #h_contour.GetXaxis().SetRangeUser(0,3);
-        h_contour.GetXaxis().SetRangeUser(0,7);
-        h_contour.GetYaxis().SetRangeUser(0,3);
+        #h_contour.GetXaxis().SetRangeUser(0,6); # ttH
+        h_contour.GetXaxis().SetRangeUser(0,4); # tllq
+        h_contour.GetYaxis().SetRangeUser(0,3); # tll, tllnu
         #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
 
@@ -765,23 +774,23 @@ class EFTPlot(object):
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
-        #simulFit = ROOT.TMarker(0.95,1.12,20) # tllq,ttll
-        simulFit = ROOT.TMarker(2.64,0.69,20) # ttH,ttlnu
+        simulFit = ROOT.TMarker(0.96,1.11,20) # tllq,ttll
+        #simulFit = ROOT.TMarker(2.58,0.70,20) # ttH,ttlnu
         # Central Fit Marker -- use as needed
         centralFit = ROOT.TGraphAsymmErrors(1)
-        #centralFit.SetPoint(0,0.58,1.26) # tllq,ttll
-        #centralFit.SetPointError(0,0.54,0.63,0.23,0.31) # tllq,ttll
-        centralFit.SetPoint(0,2.64,0.87) # ttH,ttlnu
-        centralFit.SetPointError(0,0.74,0.91,0.36,0.44) # ttH,ttlnu
+        centralFit.SetPoint(0,0.58,1.24) # tllq,ttll
+        centralFit.SetPointError(0,0.54,0.61,0.24,0.31) # tllq,ttll
+        #centralFit.SetPoint(0,2.56,0.84) # ttH,ttlnu
+        #centralFit.SetPointError(0,0.72,0.87,0.36,0.43) # ttH,ttlnu
         centralFit.SetMarkerSize(2)
         centralFit.SetMarkerStyle(6)
         centralFit.SetLineColor(2)
         # Dedicated Fit Marker -- use as needed
         dedicatedFit = ROOT.TGraphAsymmErrors(1)
-        #dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
-        #dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
-        dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
-        dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
+        dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
+        dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
+        #dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
+        #dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
         dedicatedFit.SetMarkerSize(2)
         dedicatedFit.SetMarkerStyle(6)
         dedicatedFit.SetLineColor(8)
@@ -1050,6 +1059,11 @@ class EFTPlot(object):
                 line[1] = line[1]/2
                 line[2] = [val/2 for val in line[2]]
                 line[3] = [val/2 for val in line[3]]
+            if line[0]=='cpQM':
+                line[0] = 'cpQM#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
             #if line[0]=='ctG':
@@ -1067,6 +1081,11 @@ class EFTPlot(object):
                 line[1] = line[1]/2
                 line[2] = [val/2 for val in line[2]]
                 line[3] = [val/2 for val in line[3]]
+            if line[0]=='cpQM':
+                line[0] = 'cpQM#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
         y_float = [n*4+3 for n in range(0,15)]
@@ -1074,8 +1093,10 @@ class EFTPlot(object):
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
+        #canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
+        #h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1088,6 +1109,7 @@ class EFTPlot(object):
             y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,fits_float[idy][0].rstrip('i')))
             y_labels[idy].SetTextAlign(20)
             y_labels[idy].SetTextSize(0.03)
+            if fits_float[idy][0]=='cpQM#divide2': y_labels[idy].SetTextSize(0.025)
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
@@ -1110,12 +1132,28 @@ class EFTPlot(object):
             for imin,imax in zip(fittuple[2],fittuple[3]):
                 xmin = imin
                 xmax = imax
+                # If a segment ends below the left edge
+                if xmax < h_fit.GetXaxis().GetXmin():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
+                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins above the right edge
+                if xmin > h_fit.GetXaxis().GetXmax():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
+                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins below the left edge
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
                     min_label.SetTextColor(1)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
+                # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
@@ -1132,12 +1170,28 @@ class EFTPlot(object):
             for imin,imax in zip(fittuple[2],fittuple[3]):
                 xmin = imin
                 xmax = imax
+                # If a segment ends below the left edge
+                if xmax < h_fit.GetXaxis().GetXmin():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
+                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins above the right edge
+                if xmin > h_fit.GetXaxis().GetXmax():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
+                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins below the left edge
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
                     min_label.SetTextColor(2)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
+                # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
