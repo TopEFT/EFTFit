@@ -13,16 +13,16 @@ class EFTPlot(object):
         self.ContourHelper = ContourHelper()
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
-        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.wc_ranges = {  'ctW':(-6,6),   'ctZ':(-7,7),
-                            'cpt':(-40,30), 'ctp':(-35,65),
-                            'ctli':(-20,20),'ctlSi':(-22,22),
+        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
+                            'cpt':(-40,30),  'ctp':(-35,65),
+                            'ctli':(-20,20), 'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                                            'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),'ctei':(-20,20),
-                            'cQei':(-16,16),'cQlMi':(-17,17),
-                            'cpQ3':(-20,12),'cbW':(-10,10)
+                            'ctG':(-3,3),    'cpQM':(-30,50),  
+                            'ctlTi':(-4,4),  'ctei':(-20,20),
+                            'cQei':(-16,16), 'cQlMi':(-17,17),
+                            'cpQ3':(-20,12), 'cbW':(-10,10)
                          }
         self.histosFileName = 'Histos.root'
 
@@ -1044,11 +1044,11 @@ class EFTPlot(object):
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
 
         for idx,line in enumerate(fits_float):
-            #if line[0]=='ctG':
-            #    line[0] = 'ctG#times10'
-            #    line[1] = line[1]*10
-            #    line[2] = [val*10 for val in line[2]]
-            #    line[3] = [val*10 for val in line[3]]
+            if line[0]=='ctG':
+                line[0] = 'ctG#times10'
+                line[1] = line[1]*10
+                line[2] = [val*10 for val in line[2]]
+                line[3] = [val*10 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1066,11 +1066,11 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
-            #if line[0]=='ctG':
-            #    line[0] = 'ctG#times10'
-            #    line[1] = line[1]*10
-            #    line[2] = [val*10 for val in line[2]]
-            #    line[3] = [val*10 for val in line[3]]
+            if line[0]=='ctG':
+                line[0] = 'ctG#times10'
+                line[1] = line[1]*10
+                line[2] = [val*10 for val in line[2]]
+                line[3] = [val*10 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1088,8 +1088,8 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
-        y_float = [n*4+3 for n in range(0,15)]
-        y_freeze = [n*4+2 for n in range(0,15)]
+        y_float = [n*4+3 for n in range(0,16)]
+        y_freeze = [n*4+2 for n in range(0,16)]
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
@@ -1100,7 +1100,7 @@ class EFTPlot(object):
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
-        h_fit.GetYaxis().SetNdivisions(15,False)
+        h_fit.GetYaxis().SetNdivisions(16,False)
         h_fit.GetYaxis().SetLabelSize(0)
 
         # Add y-axis labels
@@ -1113,13 +1113,13 @@ class EFTPlot(object):
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
-        graph_float = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
+        graph_float = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(1)
 
         graph_freeze = ROOT.TGraph()
-        graph_freeze = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
+        graph_freeze = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(2)
@@ -1247,7 +1247,7 @@ class EFTPlot(object):
             ('ctZ', 0.001943, 10.497099, -3.072483, 3.093559),
             ('ctp', 0.000558, 2.153222, -2.153222, 2.153222),
             ('cpQM', 0.000139, 1.147733, -1.147733, 1.147733),
-            #('ctG#times10', -4.3e-04, 01.49153, -01.49153, 01.49153),
+            ('ctG#times10', -4.3e-04, 01.49153, -01.49153, 01.49153),
             ('cbW', 0.0, 13.188208, -13.188208, 13.188208),
             ('cpQ3', -0.000237, 1.284475, -1.284475, 1.284475),
             ('cptb', 0.0, 53.786793, -53.786793, 53.786793),
@@ -1266,7 +1266,7 @@ class EFTPlot(object):
             ('ctZ', 0.001882, 2.732047, -1.259174, 1.26976),
             ('ctp', 0.010915, 2.809417, -3.5235, 4.18801),
             ('cpQM', 0.003549, 1.386955, -1.779072, 1.688684),
-            #('ctG#times10', 00.00868, 01.72676, -04.75713, 02.8743),
+            ('ctG#times10', 00.00868, 01.72676, -04.75713, 02.8743),
             ('cbW', -0.00522, 3.477419, -2.071278, 2.081717),
             ('cpQ3', 0.003113, 1.42997, -2.489773, 1.473674),
             ('cptb', -0.012994, 14.945221, -8.696135, 8.672515),
@@ -1292,7 +1292,7 @@ class EFTPlot(object):
         h_fit.SetStats(0)
         #h_fit.GetXaxis().SetTickLength(0.1)
         h_fit.GetYaxis().SetTickLength(0)
-        h_fit.GetYaxis().SetNdivisions(15,False)
+        h_fit.GetYaxis().SetNdivisions(16,False)
         h_fit.GetYaxis().SetLabelSize(0)
 
         # Add y-axis labels
@@ -1303,12 +1303,12 @@ class EFTPlot(object):
             y_labels[idy].SetTextSize(0.03)
 
         # Set the best fit points
-        graph_float = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
+        graph_float = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(2)
 
-        graph_freeze = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
+        graph_freeze = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(4)
