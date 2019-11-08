@@ -4,6 +4,7 @@ import logging
 import subprocess as sp
 import ROOT
 import itertools
+import glob
 import getpass
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
@@ -69,7 +70,8 @@ class EFTFit(object):
 
     def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
         ### Multidimensional fit ###
-        args=['combine','-d','SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
         if autoMaxPOIs:  args.extend(['--autoMaxPOIs=*'])
@@ -91,7 +93,8 @@ class EFTFit(object):
         ### Can be used to do 2D scans as well ###
         logging.info("Doing grid scan...")
 
-        args = ['combineTool.py','-d','SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
@@ -123,10 +126,10 @@ class EFTFit(object):
             if param=='mu_tllq': scanmax = 4            
             self.gridScanSM('{}.{}'.format(basename,param), batch, [param], self.systematics+[params for params in scan_params if params != param], points, freeze, ['--setParameterRanges','{}=0,{}'.format(param,scanmax)]+other)
             
-    def batchRetrieve1DScansSM(self, basename='.test'):
+    def batchRetrieve1DScansSM(self, basename='.test', batch='crab'):
         ### For each wc, retrieves finished 1D deltaNLL crab jobs, extracts, and hadd's into a single file ###
         for param in ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']:
-            self.retrieveGridScan('{}.{}'.format(basename,param))
+            self.retrieveGridScan('{}.{}'.format(basename,param),batch)
             
             
             
@@ -148,7 +151,8 @@ class EFTFit(object):
         
     def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
-        args=['combine','-d','16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/16DWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
         args.extend(['--trackParameters',','.join([wc for wc in self.wcs if wc not in scan_params])])
@@ -168,11 +172,12 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFits(name)
 
-    def gridScan(self, name='.test', batch='', scan_params=['ctW','ctZ'], params_tracked=['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'], points=5000, freeze=False, other=[]):
+    def gridScan(self, name='.test', batch='', scan_params=['ctW','ctZ'], params_tracked=[], points=5000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
-        args = ['combineTool.py','-d','16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/16DWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
@@ -180,14 +185,34 @@ class EFTFit(object):
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
-        if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','2000'])
+        if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','2000','--dry-run'])
         logging.info(' '.join(args))
 
+        # Run the combineTool.py command
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
-            logging.info("Done with gridScan batch submission.")
+
+        # Condor needs executable permissions on the .sh file, so we used --dry-run
+        # Add the permission and complete the submission.
+        if batch=='condor':
+            if os.path.exists('condor{}'.format(name)):
+                logging.error("Directory condor{} already exists!".format(name))
+                logging.error("Aborting submission.")
+                #return
+            sp.Popen(['mkdir','condor{}'.format(name)])
+            sp.Popen(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
+            logging.info('Now submitting condor jobs.')
+            condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
+            with condorsub.stdout,condorsub.stderr:
+                self.log_subprocess_output(condorsub.stdout,'info')
+                self.log_subprocess_output(condorsub.stderr,'err')
+            #sp.Popen(['mv','condor_{}.sh'.format(name.replace('.','')),'condor{}'.format(name)])
+            #sp.Popen(['mv','condor_{}.sub'.format(name.replace('.','')),'condor{}'.format(name)])
+            
+        if batch: logging.info("Done with gridScan batch submission.")
+            
         if not batch:
             sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
             logging.info("Done with gridScan.")
@@ -260,46 +285,64 @@ class EFTFit(object):
         return ','.join(startValues)
 
 
-    def retrieveGridScan(self, name='.test', user=getpass.getuser()):
+    def retrieveGridScan(self, name='.test', batch='crab', user=getpass.getuser()):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
         taskname = name.replace('.','')
         logging.info("Retrieving gridScan files. Task name: "+taskname)
 
-        # Find crab output files (defaults to user's hadoop directory)
-        hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
-        (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
-        if not tarfiles[2]:
-            logging.error("No files found in store!")
-            sys.exit()
 
-        # Make a temporary folder to hold the extracted root files
-        if not os.path.isdir(taskname+'tmp'):
-            sp.call(['mkdir',taskname+'tmp'])
-        else:
-            logging.error("Directory {}tmp/ already exists! Please rename this directory.".format(taskname))
-            sys.exit()
+        if batch=='crab':
+            # Find crab output files (defaults to user's hadoop directory)
+            hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
+            if not tarfiles[2]:
+                logging.error("No files found in store!")
+                sys.exit()
 
-        # Extract the root files
-        for tarfile in tarfiles[2]:
-            if tarfile.endswith('.tar'):
-                print tarfiles[0]+'/'+tarfile
-                sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
-        haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
-        process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
-        with process.stdout,process.stderr:
-            self.log_subprocess_output(process.stdout,'info')
-            self.log_subprocess_output(process.stderr,'err')
+            # Make a temporary folder to hold the extracted root files
+            if not os.path.isdir(taskname+'tmp'):
+                sp.call(['mkdir',taskname+'tmp'])
+            else:
+                logging.error("Directory {}tmp/ already exists! Please rename this directory.".format(taskname))
+                return
 
-        # Remove the temporary directory and split root files
-        sp.call(['rm','-r',taskname+'tmp'])
+            # Extract the root files
+            for tarfile in tarfiles[2]:
+                if tarfile.endswith('.tar'):
+                    print tarfiles[0]+'/'+tarfile
+                    sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
+            haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
+            process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
+            with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', scan_wcs=[], points=300, freeze=False):
+            # Remove the temporary directory and split root files
+            sp.call(['rm','-r',taskname+'tmp'])
+            
+        elif batch=='condor':
+            if not glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
+                logging.info("No files to hadd. Returning.")
+                return
+            haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
+            process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
+            with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
+            for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
+                os.remove(rootfile)
+            if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
+                os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
+            if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
+                os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
+
+    def batch1DScanEFT(self, basename='.test', batch='crab', scan_wcs=[], points=300, freeze=False, other=[]):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
 
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), batch, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze)
+            self.gridScan('{}.{}'.format(basename,wc), batch, [wc], [wcs for wcs in self.wcs if wcs != wc], points, freeze, other)
 
     def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=160000, allPairs=False, other=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
@@ -355,28 +398,28 @@ class EFTFit(object):
                     self.log_subprocess_output(process.stdout,'info')
                     self.log_subprocess_output(process.stderr,'err')
 
-    def batchRetrieve1DScansEFT(self, basename='.test', scan_wcs=[]):
+    def batchRetrieve1DScansEFT(self, basename='.test', batch='crab', scan_wcs=[]):
         ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
         if not scan_wcs:
             scan_wcs = self.wcs
 
         for wc in scan_wcs:
-            self.retrieveGridScan('{}.{}'.format(basename,wc))
+            self.retrieveGridScan('{}.{}'.format(basename,wc),batch)
 
-    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', allPairs=False):
+    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False):
         ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
 
         # Use EVERY combination of wcs
         if allPairs:
             scan_wcs = self.wcs
             for wcs in itertools.combinations(scan_wcs,2):
-                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]))
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
 
         # Use each wc only once
         if not allPairs:
             scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
             for wcs in scan_wcs:
-                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]))
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
 
     def batch1DBestFitEFT(self, basename='.EFT.SM.Float', wcs=[]):
         ### For each wc, run a 1D fit with others frozen. Use start point from 1D scan with other floating. ###
