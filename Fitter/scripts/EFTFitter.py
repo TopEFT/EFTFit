@@ -67,6 +67,7 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
+        process.wait()
 
     def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
         ### Multidimensional fit ###
@@ -83,6 +84,7 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
+        process.wait()
         logging.info("Done with SMFit.")
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
@@ -110,7 +112,9 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
-            logging.info("Done with gridScan batch submission.")
+        process.wait()
+        logging.info("Done with gridScan batch submission.")
+
         if not batch:
             sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
             logging.info("Done with gridScan.")
@@ -148,6 +152,7 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
+        process.wait()
         
     def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
@@ -166,6 +171,7 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
+        process.wait()
         logging.info("Done with bestFit.")
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         if os.path.isfile('multidimfit'+name+'.root'):
@@ -193,6 +199,7 @@ class EFTFit(object):
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
+        process.wait()
 
         # Condor needs executable permissions on the .sh file, so we used --dry-run
         # Add the permission and complete the submission.
@@ -201,15 +208,14 @@ class EFTFit(object):
                 logging.error("Directory condor{} already exists!".format(name))
                 logging.error("Aborting submission.")
                 #return
-            sp.Popen(['mkdir','condor{}'.format(name)])
-            sp.Popen(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
+            sp.call(['mkdir','condor{}'.format(name)])
+            sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
                 self.log_subprocess_output(condorsub.stdout,'info')
                 self.log_subprocess_output(condorsub.stderr,'err')
-            #sp.Popen(['mv','condor_{}.sh'.format(name.replace('.','')),'condor{}'.format(name)])
-            #sp.Popen(['mv','condor_{}.sub'.format(name.replace('.','')),'condor{}'.format(name)])
+            condorsub.wait()
             
         if batch: logging.info("Done with gridScan batch submission.")
             
@@ -316,6 +322,7 @@ class EFTFit(object):
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
+            process.wait()
 
             # Remove the temporary directory and split root files
             sp.call(['rm','-r',taskname+'tmp'])
@@ -329,6 +336,7 @@ class EFTFit(object):
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
+            process.wait()
             for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
                 os.remove(rootfile)
             if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
@@ -359,6 +367,7 @@ class EFTFit(object):
         # Use each wc only once
         if not allPairs:
             scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
 
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
@@ -375,6 +384,7 @@ class EFTFit(object):
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
+            process.wait()
 
     def batchResubmit2DScansEFT(self, basename='.EFT.gridScan', allPairs=False):
         ### For pairs of wcs, attempt to resubmit failed CRAB jobs ###
@@ -385,8 +395,10 @@ class EFTFit(object):
 
             for wcs in itertools.combinations(scan_wcs,2):
                 process = sp.Popen(['crab','resubmit','crab_'+basename.replace('.','')+wcs[0]+wcs[1]], stdout=sp.PIPE, stderr=sp.PIPE)
-                self.log_subprocess_output(process.stdout,'info')
-                self.log_subprocess_output(process.stderr,'err')
+                with process.stdout,process.stderr:
+                    self.log_subprocess_output(process.stdout,'info')
+                    self.log_subprocess_output(process.stderr,'err')
+                process.wait()
 
         # Use each wc only once
         if not allPairs:
@@ -397,6 +409,7 @@ class EFTFit(object):
                 with process.stdout,process.stderr:
                     self.log_subprocess_output(process.stdout,'info')
                     self.log_subprocess_output(process.stderr,'err')
+                process.wait()
 
     def batchRetrieve1DScansEFT(self, basename='.test', batch='crab', scan_wcs=[]):
         ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
@@ -418,6 +431,7 @@ class EFTFit(object):
         # Use each wc only once
         if not allPairs:
             scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
 
