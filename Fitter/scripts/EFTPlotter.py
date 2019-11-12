@@ -15,6 +15,7 @@ class EFTPlot(object):
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-40,30),  'ctp':(-35,65),
                             'ctli':(-20,20), 'ctlSi':(-22,22),
@@ -396,22 +397,15 @@ class EFTPlot(object):
         hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
-        for entry in range(limitTree.GetEntries()):
-            limitTree.GetEntry(entry)
-            currentnll = limitTree.GetLeaf('deltaNLL').GetValue(0)
-            if currentnll == minZ:
-                minentry = entry
-        limitTree.GetEntry(minentry)
-        xmin=limitTree.GetLeaf(wcs[1]).GetValue(0)
-        ymin=limitTree.GetLeaf(wcs[0]).GetValue(0)
-        print("Minimum: {}={}, {}={}".format(wcs[1],xmin,wcs[0],ymin))
-        #limit.Draw(wcs[0]+":"+wcs[1],'quantileExpected==-1','p same') # Best fit point from grid scan
-        #best_fit = canvas.FindObject('Graph')
-        #best_fit.SetMarkerSize(1)
-        #best_fit.SetMarkerStyle(34)
-        #best_fit.Draw("p same")
-        #dedicatedFit = ROOT.TMarker(0.75,1.23,37)
-        #dedicatedFit.Draw('same')
+        #for entry in range(limitTree.GetEntries()):
+        #    limitTree.GetEntry(entry)
+        #    currentnll = limitTree.GetLeaf('deltaNLL').GetValue(0)
+        #    if currentnll == minZ:
+        #        minentry = entry
+        #limitTree.GetEntry(minentry)
+        #xmin=limitTree.GetLeaf(wcs[1]).GetValue(0)
+        #ymin=limitTree.GetLeaf(wcs[0]).GetValue(0)
+        #print("Minimum: {}={}, {}={}".format(wcs[1],xmin,wcs[0],ymin))
 
         # Change plot formats
         hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])
@@ -911,8 +905,7 @@ class EFTPlot(object):
         self.ResetHistoFile(gridScanName)
 
         #self.LLPlot2DEFT(gridScanName,wcs,1,False)
-        #self.LLPlot2DEFT(gridScanName,wcs,10,False)
-        self.LLPlot2DEFT(gridScanName,wcs,100,False)
+        self.LLPlot2DEFT(gridScanName,wcs,10,False)
         self.LLPlot2DEFT(gridScanName,wcs,100000,False)
         # Log Plots
         #self.LLPlot2DEFT(gridScanName,wcs,1,True)
@@ -942,7 +935,7 @@ class EFTPlot(object):
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
-                if filename.endswith('.png'):            
+                if filename.endswith('contour.png') or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self, basename='.EFT.SM.Float', params=[]):
