@@ -75,8 +75,6 @@ class EFTFit(object):
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
-        if autoMaxPOIs:  args.extend(['--autoMaxPOIs=*'])
-        #if autoMaxPOIs:  args.extend(['--autoBounds=mu_tllq'])
         if other:       args.extend(other)
 
         logging.info(" ".join(args))
@@ -504,6 +502,7 @@ class EFTFit(object):
 
         for param in params:
             roorealvar = fit.floatParsFinal().find(param)
+            if not roorealvar: continue
 
             value = round(roorealvar.getVal(),2)
             err_sym =  round(roorealvar.getError(),2)

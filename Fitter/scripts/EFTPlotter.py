@@ -33,7 +33,7 @@ class EFTPlot(object):
 
     def LLPlot1DEFT(self, name='.test', frozen=False, wc='', log=False):
         if not wc:
-            logging.error("No wc specified!")
+            logging.error("No WC specified!")
             return
         if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
@@ -827,7 +827,7 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
 
-    def CorrelationMatrix(self, name='', nuisances=True, SMfit=False, freeze=True):
+    def CorrelationMatrix(self, name='', nuisances=False, SMfit=True, freeze=False):
 
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()

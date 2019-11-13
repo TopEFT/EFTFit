@@ -25,9 +25,10 @@ for entry in range(2,limitTree.GetEntries()): # 0 is the fit point, so ignore it
     limitTree.GetEntry(entry)
     poicurr = round(limitTree.GetLeaf(args.poi).GetValue(0),3)
     deltaNLLcurr = limitTree.GetLeaf('deltaNLL').GetValue(0)+1
-    if(abs(deltaNLLcurr-deltaNLLprev)/deltaNLLprev > 0.03):
-        print("Found deltaNLL discontinuity between {} [{},{}]".format(args.poi,poiprev,poicurr))
-        for sys in systematics+wcs_tracked:
+    if(abs(abs(deltaNLLcurr-deltaNLLprev)/deltaNLLprev) > 0.1 and abs(deltaNLLcurr-deltaNLLprev) > 0.05):
+        print("Found deltaNLL discontinuity between {} [{},{}] of diff {} and reldiff {}".format(args.poi,poiprev,poicurr,round(abs(deltaNLLcurr-deltaNLLprev),2),round(abs(deltaNLLcurr-deltaNLLprev)/deltaNLLprev,2)))
+        #for sys in systematics+wcs_tracked:
+        for sys in wcs_tracked:
             syscurr = round(limitTree.GetLeaf('trackedParam_'+sys).GetValue(0),3)
             limitTree.GetEntry(entry-1)
             sysprev = round(limitTree.GetLeaf('trackedParam_'+sys).GetValue(0),3)
