@@ -116,9 +116,11 @@ class HelperOptions(OptionsBase):
         self.mass         = 125
 
         self.fake_data      = True      # If we should use fake or real data when making the datacard
+        self.use_central    = False     # Which signal samples to use from the anatest file (Only relevant for signal mu fits)
         self.robust_fit     = False     # Whether or not to use the --robustFit option
         self.save_fitresult = False     # Whether a RooFitResult object should be saved or not
         self.save_workspace = False     # Whether a RooWorkspace object should be saved or not
+        self.use_poi_ranges = True      # If we should limit the poi ranges in the combine fit
 
         self.histogram_file  = 'anatest10.root'                     # The histogram file to generate the datacard
         self.original_card   = 'EFT_MultiDim_Datacard.txt'          # The name of the original datacard
@@ -157,11 +159,13 @@ class HelperOptions(OptionsBase):
 
 # Helper class for running various combine related commands
 class CombineHelper(object):
-    def __init__(self,home_dir,out_dir="test_dir",preset=None):
+    def __init__(self,home,out_dir="test_dir",preset=None):
         self.logger = logging.getLogger(__name__)
 
-        self.home_dir = home_dir
-        self.output_dir = os.path.join(CONST.EFTFIT_TEST_DIR,out_dir)   # Note: This path is relative to the 'test' directory
+        self.home_dir = home
+        self.output_dir = ""
+
+        self.setOutputDirectory(out_dir)    # Note: This path is always relative to the 'test' directory
 
         if not os.path.exists(self.output_dir):
             self.logger.info("Making output directory: %s",self.output_dir)
@@ -175,6 +179,15 @@ class CombineHelper(object):
 
         self.ops = HelperOptions()
         if not preset is None: self.setOptions(preset=preset)
+
+    # Wipes any options and re-instantiates the card maker and reader
+    def reset(self):
+        self.ops = HelperOptions()
+        self.dc_maker  = DatacardMaker()
+        self.dc_reader = DatacardReader()
+
+    def setOutputDirectory(self,name):
+        self.output_dir = os.path.join(CONST.EFTFIT_TEST_DIR,name)
 
     def setOptions(self,preset=None,extend=False,**kwargs):
         # preset: A HelperOptions object with preset values for all the options
@@ -329,13 +342,14 @@ class CombineHelper(object):
         card_file = self.ops.getOption('datacard_file')
         hist_file = self.ops.getOption('histogram_file')
         fake_data = self.ops.getOption('fake_data')
+        use_central = self.ops.getOption('use_central')
 
         self.logger.info("Creating datacard %s...",card_file)
         self.chdir(self.output_dir)
         self.dc_maker.outf = card_file
         fpath = os.path.join(CONST.TOPEFT_DATA_DIR,hist_file)
         self.logger.info("Using Histogram File: %s" % (fpath))
-        self.dc_maker.make(fpath,fake_data)
+        self.dc_maker.make(fpath,fake_data,use_central)
         self.loadDatacard()
 
     # Call FitConversion16D.py script to create the parameterization file
@@ -386,10 +400,14 @@ class CombineHelper(object):
             sm_signals = self.ops.getOption('sm_signals')
             tmp = set()
             for p,mu,lst in sm_signals:
-                self.setPOIRange(mu,lst[1],lst[2])
                 tmp.add(mu)
-            self.dc_maker.setOperators(list(tmp))
-            phys_ops.extend(['map=.*/%s:%s[%d,%d,%d]' % (proc,mu,l[0],l[1],l[2]) for proc,mu,l in sm_signals])
+                if len(lst) != 3: continue
+                self.setPOIRange(mu,lst[1],lst[2])
+            self.dc_maker.setOperators(list(tmp))   # This should probably be handled elsewhere
+            # phys_ops.extend(['map=.*/%s:%s[%d,%d,%d]' % (proc,mu,l[0],l[1],l[2]) for proc,mu,l in sm_signals])
+            for proc,mu,l in sm_signals:
+                op = 'map=.*/{proc}:{mu}[{range}]'.format(proc=proc,mu=mu,range=','.join([str(x) for x in l]))
+                phys_ops.append(op)
         else:
             self.logger.error("Unknown workspace type: %s",ws_type)
             raise RuntimeError
@@ -452,7 +470,7 @@ class CombineHelper(object):
         args.extend(['-M',method])
         args.extend(['-v','%d' % (verb)])
         args.extend(['--algo=%s' % (algo)])
-        args.extend(['--setParameterRanges',ranges])
+        if self.ops.getOption('use_poi_ranges'): args.extend(['--setParameterRanges',ranges])
         if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
         if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])

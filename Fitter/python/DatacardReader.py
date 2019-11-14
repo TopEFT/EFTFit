@@ -1,6 +1,10 @@
 import os
 import math
 import logging
+
+import sys
+from cStringIO import StringIO
+
 import CombineHarvester.CombineTools.ch as ch
 from utils import regex_match,run_command
 
@@ -8,7 +12,7 @@ class DatacardReader(object):
     DUMMY_UP = -999
     DUMMY_DOWN = -999
 
-    def __init__(self):
+    def __init__(self,fpath=None):
         self.logger = logging.getLogger(__name__)
 
         self.card_path = ""
@@ -23,6 +27,9 @@ class DatacardReader(object):
             'channel': "",
             'bin_id': 0
         }
+
+        if fpath:
+            self.load(fpath)
 
     # Load a datacard from text file
     def load(self,fpath):
@@ -89,6 +96,30 @@ class DatacardReader(object):
                 s.set_value_d(self.DUMMY_DOWN)
         self.modified_systs = True
         self.cb.ForEachSyst(f)
+
+    # SUPER-Hackish way of getting a systematic object from the CombineHarvester object
+    def getSystematic(self,p,b,syst_name):
+        # Returns a systematic object matching syst_name or None
+        def f(s):
+            m1 = (s.bin() == b)
+            m2 = (s.process() == p)
+            m3 = (s.name() == syst_name)
+            if m1 and m2 and m3:
+                ret = '{name} {vdown} {vup}'.format(name=s.name(),vdown=s.value_d(),vup=s.value_u())
+                print ret,
+        backup = sys.stdout         # backup original stdout
+        sys.stdout = StringIO()     # capture output
+        self.cb.ForEachSyst(f)
+        out = sys.stdout.getvalue() # release output
+        sys.stdout.close()          # close the stream
+        sys.stdout = backup         # restore original stdout
+        # print "Length: {}".format(len(out))
+        # print out
+        ret = None
+        if len(out):
+            lst = out.split()
+            ret = {'name': lst[0],'value_d': float(lst[1]),'value_u': float(lst[2])}
+        return ret
 
     # Filter out entire bins from the datacard
     def filterBins(self,bins):
