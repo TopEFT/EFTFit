@@ -29,7 +29,8 @@ def setup_logger(log_file):
 
 def main():
     # A template set of options for doing the SM signal fits, these will get passed (copied) to the actual
-    #   instantiated CombineHelper object
+    #   instantiated CombineHelper object. For a list of all the options see the HelperOptions class
+    #   defined in CombineHelper.py
     SM_SIGNAL_OPS = HelperOptions(
         ws_file      = 'SMWorkspace.root',
         model        = 'HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
@@ -49,7 +50,15 @@ def main():
             # ('tHq',  'mu_ttH',  [1,0,30]),
         ],
         prefit_value = 1.0,
-        algo         = FitAlgo.Singles, # This is the default used for the MultiDimFit method
+        algo         = FitAlgo.SINGLES, # This is the default used for the MultiDimFit method
+    )
+
+    # Example of template options for doing the EFT fit
+    EFT_OPS = HelperOptions(
+        ws_file      = '16D.root',
+        model        = 'EFTFit.Fitter.EFT16DModel:eft16D',
+        ws_type      = WorkspaceType.EFT,
+        prefit_value = 0.0
     )
 
     # This is always relative to the test directory of EFTFit, if sub-directories are specifed
@@ -91,7 +100,17 @@ def main():
     # Clean-up the output directory if it was previously used
     # Important: This will remove everything from the corresponding directory except that which matches
     #   to at least one of the items in the 'keep' list. The search strings support regex matching
-    helper.cleanDirectory(helper.output_dir,keep=["^EFT_MultiDim_Datacard.txt$","^16D.root$","^SMWorkspace.root$","^out.log$"])
+    helper.cleanDirectory(helper.output_dir,keep=[
+        # Hard code list of files to keep
+        "^EFT_MultiDim_Datacard.txt$","^16D.root$","^SMWorkspace.root$","^out.log$"
+        # Or use a more dynamic approach
+        "^out.log$",
+        "^{ws}$".format(ws=helper.ops.getOption('ws_file')),
+        "^{datacard}$".format(datacard=helper.ops.getOptions('original_card')),
+    ])
+
+    # Now make the datacard and workspace files. In principle these don't need to be re-run everytime
+    #   if you're just making changes to the impact plot options
     helper.make_datacard()  # Make the datacard from a histogram file via the TopEFT DatacardMaker class
     helper.make_workspace() # Make the RooWorkspace via the text2workspace script
     helper.loadDatacard(force=True) # (re-)load the datacard into the underlying DatacardReader class
@@ -99,6 +118,8 @@ def main():
                                     #   'modifyDatacard()' method
 
     # Make the impact plots, can also specify combine options at this point if needed
+    # Note: The 'Do Fits' part of the impact plots can take awhile to run
+    pois = helper.dc_maker.getOperators()
     logging.info("Making impacts for all POIs: {}".format(pois))
     helper.runCombine(method=CombineMethod.IMPACTS,
         overwrite=False,    # Special keyword, if False the Helper options specfied here will only
