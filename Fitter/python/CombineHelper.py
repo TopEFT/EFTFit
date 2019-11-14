@@ -159,17 +159,14 @@ class HelperOptions(OptionsBase):
 
 # Helper class for running various combine related commands
 class CombineHelper(object):
-    def __init__(self,home,out_dir="test_dir",preset=None):
+    def __init__(self,home,out_dir,preset=None):
         self.logger = logging.getLogger(__name__)
 
         self.home_dir = home
         self.output_dir = ""
 
         self.setOutputDirectory(out_dir)    # Note: This path is always relative to the 'test' directory
-
-        if not os.path.exists(self.output_dir):
-            self.logger.info("Making output directory: %s",self.output_dir)
-            os.makedirs(self.output_dir)
+        self.makeOutputDirectory()
 
         self.poi_ranges = {}
         self.default_range = [-5.0,5.0]
@@ -188,6 +185,11 @@ class CombineHelper(object):
 
     def setOutputDirectory(self,name):
         self.output_dir = os.path.join(CONST.EFTFIT_TEST_DIR,name)
+
+    def makeOutputDirectory(self):
+        if not os.path.exists(self.output_dir):
+            self.logger.info("Making output directory: %s",self.output_dir)
+            os.makedirs(self.output_dir)
 
     def setOptions(self,preset=None,extend=False,**kwargs):
         # preset: A HelperOptions object with preset values for all the options
