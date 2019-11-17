@@ -75,15 +75,12 @@ void iter_print(std::list<RooAbsData*> lst,Int_t contents) {
 }
 
 
-void workspace_reader() {
+void runit(TString ws_fname, TString lim_fname, Tstring prefit_fname, TString full_fname, Tstring stat_fname) {
     TH1::SetDefaultSumw2(1);
 
     Int_t contents = RooPrintable::kName|RooPrintable::kClassName|RooPrintable::kArgs|RooPrintable::kValue;
     TString line_break = "--------------------------------------------------";
 
-    TString CMSSW_BASE = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/";
-    //TString INPUT_DIR  = "src/EFTFit/Fitter/test/ana12asimov_dir/";
-    TString INPUT_DIR  = "src/EFTFit/Fitter/test/anatest12_Jan18btagReqs/16D_AllSysts_AllFits_SMdata/";
     TString OUTPUT_DIR = "src/EFTFit/Fitter/test/";
 
     std::vector<TString> all_procs {
@@ -98,36 +95,27 @@ void workspace_reader() {
     std::vector<TString> diboson_procs {"WZ","ZZ","WW"};
     std::vector<TString> triboson_procs {"WWW","WWZ","WZZ","ZZZ"};
     std::vector<TString> syst_bkgs {"charge_flips","fakes"};
-
-    TString ws_fname    = "16D.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
-    TString limit_fname = "higgsCombinePostfit.MultiDimFit.mH120.root";  // Made by combine running on pre-fit workspace ('16D.root')
-
-    //TString fr_full_fname = "fitDiagnosticsEFT.root";   // Made by combine running on pre-fit workspace ('16D.root')
-    //TString fr_key = "nuisances_prefit_res";
-
-    TString fr_prefit_fname = "fitDiagnosticsPrefit.root";
-    TString fr_full_fname = "multidimfitPostfit.root";
-    TString fr_stat_fname = "multidimfitStats.root";
     
     TString fr_mdkey = "fit_mdf";
     TString fr_diagkey = "nuisances_prefit_res";
 
-    TFile* ws_file    = TFile::Open(CMSSW_BASE + INPUT_DIR + ws_fname);
-    TFile* limit_file = TFile::Open(CMSSW_BASE + INPUT_DIR + limit_fname);
-
-    TFile* fr_prefit_file = TFile::Open(CMSSW_BASE + INPUT_DIR + fr_prefit_fname);
-    TFile* fr_full_file = TFile::Open(CMSSW_BASE + INPUT_DIR + fr_full_fname);
-    TFile* fr_stat_file = TFile::Open(CMSSW_BASE + INPUT_DIR + fr_stat_fname);
+    TFile* ws_file        = TFile::Open(ws_fname);
+    // TFile* limit_file     = TFile::Open(lim_fname);
+    TFile* fr_prefit_file = TFile::Open(prefit_fname);
+    TFile* fr_full_file   = TFile::Open(full_fname);
+    // TFile* fr_stat_file   = TFile::Open(stat_fname);
 
     // Workspace related objects
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
+    // Fit Result related objects
+    // RooFitResult* fr_prefit = (RooFitResult*) fr_prefit_file->Get(fr_diagkey);
+    RooFitResult* fr_full   = (RooFitResult*) fr_full_file->Get(fr_mdkey);
+    // RooFitResult* fr_stat   = (RooFitResult*) fr_stat_file->Get(fr_mdkey);
 
     //ws->Print("t");
 
     WSHelper ws_helper = WSHelper();
     PlotMaker plot_maker = PlotMaker(ws,".","pdf");
-
-    plot_maker.nodata = false;
 
     std::vector<RooAbsPdf*> all_pdfs      = ws_helper.getPdfs(ws,0,0,0,1);
     std::vector<RooAbsPdf*> other_pdfs    = ws_helper.getPdfs(ws,0,0,1,0);
@@ -292,11 +280,6 @@ void workspace_reader() {
     //lim->GetListOfBranches()->Print();
     //lim->Scan("limit:limitErr:syst:iToy:iSeed:iChannel:ctW:ctZ");
 
-    // Fit Result related objects
-    RooFitResult* fr_prefit = (RooFitResult*) fr_prefit_file->Get(fr_diagkey);
-    RooFitResult* fr_full   = (RooFitResult*) fr_full_file->Get(fr_mdkey);
-    RooFitResult* fr_stat   = (RooFitResult*) fr_stat_file->Get(fr_mdkey);
-
     gStyle->SetOptStat(0);
 
     //plot_maker.makeCorrelationPlot("fr_prefit_corr",fr_prefit);
@@ -308,8 +291,8 @@ void workspace_reader() {
     RooArgSet pars_const = fr_full->constPars();
 
     // For the prefit, the initial and final param values are the same
-    RooArgSet prefit_pars_init  = fr_prefit->floatParsInit();
-    RooArgSet prefit_pars_final = fr_prefit->floatParsFinal();
+    // RooArgSet prefit_pars_init  = fr_prefit->floatParsInit();
+    // RooArgSet prefit_pars_final = fr_prefit->floatParsFinal();
 
     RooArgSet postfit_pars_init  = fr_full->floatParsInit();
     RooArgSet postfit_pars_final = fr_full->floatParsFinal();
@@ -321,12 +304,12 @@ void workspace_reader() {
     ws->saveSnapshot("pars_init" ,pars_init,kTRUE);
     ws->saveSnapshot("pars_final",pars_final,kTRUE);
 
-    RooRealVar* rrv_ctW = (RooRealVar*)pars_init.find("ctW");
-    RooRealVar* rrv_ctZ = (RooRealVar*)pars_init.find("ctZ");
+    // RooRealVar* rrv_ctW = (RooRealVar*)pars_init.find("ctW");
+    // RooRealVar* rrv_ctZ = (RooRealVar*)pars_init.find("ctZ");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    plot_maker.setFitResult(fr_prefit,fr_prefit);
+    // plot_maker.setFitResult(fr_prefit,fr_prefit);
     plot_maker.noratio = true;
     plot_maker.isfakedata = true;
     plot_maker.splitunc = false;
@@ -335,20 +318,20 @@ void workspace_reader() {
     ws->loadSnapshot("prefit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_prefit_merged");
     //plot_maker.makeYieldsPlot(data_all,yields_all       ,yield_procs,"yields_prefit_all");
-    plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_prefit_2lss");
+    //plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_prefit_2lss");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz    ,yield_procs,"yields_prefit_3l_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz,yield_procs,"yields_prefit_3l_non_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_4l        ,yield_procs,"yields_prefit_4l");
 
     std::cout << line_break << std::endl;
 
-    plot_maker.nodata = false;
-    plot_maker.setFitResult(fr_full,fr_stat);
+    // plot_maker.nodata = false;
+    plot_maker.setFitResult(fr_full,fr_full);
 
     ws->loadSnapshot("postfit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_postfit_merged");
     //plot_maker.makeYieldsPlot(data_all,yields_all       ,yield_procs,"yields_postfit_all");
-    //plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
+    plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz    ,yield_procs,"yields_postfit_3l_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz,yield_procs,"yields_postfit_3l_non_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_4l        ,yield_procs,"yields_postfit_4l");
@@ -356,4 +339,37 @@ void workspace_reader() {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Roo1DTable* my_table = ws->data("data_obs")->table(*(ws->cat("CMS_channel")));
+}
+
+
+void workspace_reader() {
+    TString base_dir = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/fromTony/";
+    TString tony_dir = "/afs/crc.nd.edu/user/a/alefeld/Public/ForAndrew/";
+    //TString in_dir  = "src/EFTFit/Fitter/test/ana12asimov_dir/";
+    TString in_dir  = "src/EFTFit/Fitter/test/anatest12_Jan18btagReqs/16D_AllSysts_AllFits_SMdata/";
+
+    // Naming based on output from combine_helper.py
+    TString ws_fname    = "16D.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
+    TString limit_fname = "higgsCombinePostfit.MultiDimFit.mH120.root";  // Made by combine running on pre-fit workspace ('16D.root')
+    TString fr_prefit_fname = "fitDiagnosticsPrefit.root";
+    TString fr_full_fname = "multidimfitPostfit.root";
+    TString fr_stat_fname = "multidimfitStats.root";
+
+    // Other names
+    //TString fr_full_fname = "fitDiagnosticsEFT.root";   // Made by combine running on pre-fit workspace ('16D.root')
+    //TString fr_key = "nuisances_prefit_res";
+
+    // File names from Tony
+    ws_fname = "SMWorkspace.root";
+    fr_full_fname = "multidimfit.SM.Private.Float.Oct9.FullJES.root";
+    // fr_full_fname = "multidimfit.SM.Central.Float.Oct9.FullJES.root";
+
+    TString ws_fpath     = base_dir + "SM_impacts_2019-10-10_1959_ana24_private_test_cminDefaultMinimizerStategy-0/" + ws_fname;
+    // TString ws_fpath     = base_dir + "SM_impacts_2019-10-10_2005_ana24_central_test_cminDefaultMinimizerStategy-0/" + ws_fname;
+    TString lim_fpath    = "";
+    TString prefit_fpath = "";
+    TString full_fpath   = tony_dir + fr_full_fname;
+    TString stat_fpath   = "";
+
+    runit(ws_fpath,lim_fpath,prefit_fpath,full_fpath,stat_fpath);
 }
