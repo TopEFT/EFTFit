@@ -38,6 +38,8 @@ class EFTPlot(object):
         if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
+            
+        ROOT.gROOT.SetBatch(True)
 
         canvas = ROOT.TCanvas()
 
@@ -62,7 +64,7 @@ class EFTPlot(object):
         # Squeeze X down to whatever range captures the float points
         xmin = self.wc_ranges[wc][1]
         xmax = self.wc_ranges[wc][0]
-        for idx in range(graph1.GetN()):
+        for idx in range(graph.GetN()):
             if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
                 xmin = graph.GetX()[idx]
             if graph.GetY()[idx] < 10 and graph.GetX()[idx] > xmax:
@@ -71,7 +73,7 @@ class EFTPlot(object):
         graph.GetYaxis().SetRangeUser(-0.1,10)
 
         #Change markers from invisible dots to nice triangles
-        graph.SetTitle(wc.rstrip('i'))
+        graph.SetTitle("")
         graph.SetMarkerStyle(26)
         graph.SetMarkerSize(1)
         graph.SetMinimum(-0.1)
@@ -96,16 +98,18 @@ class EFTPlot(object):
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         Title.Draw('same')
-        multigraph.GetXaxis().SetTitle(wc)
+        graph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
+        CMS_text.SetTextAlign(30)
         CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
+        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
+        Lumi_text.SetTextAlign(30)
         Lumi_text.Draw('same')
 
         #Check log option, then save as image
