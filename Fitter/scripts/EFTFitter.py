@@ -6,6 +6,8 @@ import ROOT
 import itertools
 import glob
 import getpass
+import array
+from collections import defaultdict
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -176,7 +178,7 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFits(name)
 
-    def gridScan(self, name='.test', batch='', scan_params=['ctW','ctZ'], params_tracked=[], points=5000, freeze=False, other=[]):
+    def gridScan(self, name='.test', batch='', scan_params=['ctW','ctZ'], params_tracked=[], points=160000, freeze=False, other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
@@ -432,7 +434,51 @@ class EFTFit(object):
             #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
+                
+    def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt'):
+        ### Extract a 1D scan from a higher-dimension scan to avoid discontinuities ###
+        if not wc:
+            logging.error("No WC specified!")
+            return
+        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
 
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        limitTree = rootFile.Get('limit')
+
+        # First loop through entries and get deltaNLL list for each value of the WC
+        wc_dict = defaultdict(list)
+        for entry in range(limitTree.GetEntries()):
+            limitTree.GetEntry(entry)
+            wc_dict[limitTree.GetLeaf(wc).GetValue(0)].append(limitTree.GetLeaf('deltaNLL').GetValue(0))
+        rootFile.Close()
+        
+        # Next pick the best deltaNLL for each WC value
+        wc_dict_reduced = {}
+        for key in wc_dict:
+            wc_dict_reduced[key] = min(wc_dict[key])
+            
+        # Now make a new .root file with the new TTree
+        # Only the WC and deltaNLL will be branches
+        # These can be directly used by EFTPlotter
+        outFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}reduced.MultiDimFit.root'.format(name,wc),'RECREATE')
+        outTree = ROOT.TTree('limit','limit')
+        
+        wc_branch = array.array('f',[0.])
+        deltaNLL_branch = array.array('f',[0.])
+        outTree.Branch(wc,wc_branch,wc+'/F')
+        outTree.Branch('deltaNLL',deltaNLL_branch,'deltaNLL/F')
+        
+        # Fill the branches
+        for event in range(len(wc_dict_reduced.keys())):
+            wc_branch[0] = wc_dict_reduced.keys()[event]
+            deltaNLL_branch[0] = wc_dict_reduced.values()[event]
+            outTree.Fill()
+            
+        # Write the file
+        outFile.Write()
+        
     def batch1DBestFitEFT(self, basename='.EFT.SM.Float', wcs=[]):
         ### For each wc, run a 1D fit with others frozen. Use start point from 1D scan with other floating. ###
         if not wcs:
