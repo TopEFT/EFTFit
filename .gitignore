@@ -6,4 +6,7 @@
 **/fit_files/*.root
 **/test/*/
 **/test/crab*.sh
+**/test/condor*.sh
+**/test/condor*.sub
 **/test/*.txt
+**/test/*.root
