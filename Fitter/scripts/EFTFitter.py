@@ -17,7 +17,8 @@ class EFTFit(object):
 
         # WCs lists for easy use
         # Full list of opeators
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Default wcs to keep track of during 2D scans
@@ -27,7 +28,8 @@ class EFTFit(object):
                             'cpt':(-40,30),  'ctp':(-35,65),
                             'ctli':(-20,20), 'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
+                            'cpQM':(-30,50),  
+                            #'ctG':(-3,3),    'cpQM':(-30,50),  
                             'ctlTi':(-4,4),  'ctei':(-20,20),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-20,12), 'cbW':(-10,10)
@@ -374,6 +376,30 @@ class EFTFit(object):
                 #print pois, wcs_tracked
                 self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
 
+    def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=160000, allPairs=False, other=[], wc_triplet=[]):
+        ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
+
+        # Use EVERY combination of wcs
+        if allPairs:
+            scan_wcs = self.wcs
+
+            for wcs in itertools.combinations(scan_wcs,2):
+                wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
+                #print pois, wcs_tracked
+                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+
+        # Use each wc only once
+        if not allPairs:
+            scan_wcs = [('ctZ','ctp','cpt')]
+            if len(wc_triplet)>0: scan_wcs = wc_triplet
+            #scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
+
+            for wcs in scan_wcs:
+                wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
+                #print pois, wcs_tracked
+                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, freeze=freeze, other=other)
+
     def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
         ### For each wc, attempt to resubmit failed CRAB jobs ###
         if not scan_wcs:
@@ -489,6 +515,23 @@ class EFTFit(object):
             start_point = self.getBestValues1DEFT(basename,[wc])
             logging.info("Start value: {}".format(start_point))
             self.bestFit('{}.BestFit.{}'.format(basename,wc), [wc], start_point, True)
+
+    def batchRetrieve3DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False, wc_triplet=[]):
+        ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
+
+        # Use EVERY combination of wcs
+        if allPairs:
+            scan_wcs = self.wcs
+            for wcs in itertools.combinations(scan_wcs,2):
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
+
+        # Use each wc only once
+        if not allPairs:
+            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+            if len(wc_triplet)>0: scan_wcs = wc_triplet
+            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
+            for wcs in scan_wcs:
+                self.retrieveGridScan('{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]),batch)
             
     def batch2DBestFitEFT(self, basenamegrid='.EFT.gridScan', basenamefit='.EFT.gridScan', wcs_POI=[], freeze=False):
         ### For each combination of wcs, do a best fit using the new start point ###
