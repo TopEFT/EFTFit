@@ -16,7 +16,8 @@ else:
     hist_file = sys.argv[1]
 
 #List of operators to extract parameterizations for
-operators = ['sm']+['ctW','ctp','cpQM','ctG','ctZ','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+#operators = ['sm']+['ctW','ctp','cpQM','ctG','ctZ','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+operators = ['sm']+['ctW','ctp','cpQM','ctZ','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 #operators = ['sm']+['ctW'] #Debug
 
 #Load file

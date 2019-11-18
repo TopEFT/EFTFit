@@ -27,12 +27,14 @@ class EFT16DModel(PhysicsModel):
 
     def setPhysicsOptions(self, options):
         self.fits = None # File containing WC parameterizations of each process+bin *with events*!
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
+        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-40,30),  'ctp':(-35,65),
                             'ctli':(-20,20), 'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
+                            #'ctG':(-3,3),    'cpQM':(-30,50),  
+                                             'cpQM':(-30,50),  
                             'ctlTi':(-4,4),  'ctei':(-20,20),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-20,12), 'cbW':(-10,10)

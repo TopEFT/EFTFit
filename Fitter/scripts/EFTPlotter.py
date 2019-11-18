@@ -13,14 +13,17 @@ class EFTPlot(object):
         self.ContourHelper = ContourHelper()
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        #self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('cpt','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-40,30),  'ctp':(-35,65),
                             'ctli':(-20,20), 'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
+                            #'ctG':(-3,3),    'cpQM':(-30,50),  
+                                             'cpQM':(-30,50),  
                             'ctlTi':(-4,4),  'ctei':(-20,20),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-20,12), 'cbW':(-10,10)
@@ -1041,11 +1044,11 @@ class EFTPlot(object):
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
 
         for idx,line in enumerate(fits_float):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+            #if line[0]=='ctG':
+            #    line[0] = 'ctG#times10'
+            #    line[1] = line[1]*10
+            #    line[2] = [val*10 for val in line[2]]
+            #    line[3] = [val*10 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1063,11 +1066,11 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+            #if line[0]=='ctG':
+            #    line[0] = 'ctG#times10'
+            #    line[1] = line[1]*10
+            #    line[2] = [val*10 for val in line[2]]
+            #    line[3] = [val*10 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1085,19 +1088,19 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
-        y_float = [n*4+3 for n in range(0,16)]
-        y_freeze = [n*4+2 for n in range(0,16)]
+        y_float = [n*4+3 for n in range(0,15)]
+        y_freeze = [n*4+2 for n in range(0,15)]
 
         # Set up the pad and axes
-        canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
-        #canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
+        #canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
+        canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
-        #h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
+        #h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 61, 0, 60)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 61, 0, 60)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
-        h_fit.GetYaxis().SetNdivisions(16,False)
+        h_fit.GetYaxis().SetNdivisions(15,False)
         h_fit.GetYaxis().SetLabelSize(0)
 
         # Add y-axis labels
@@ -1110,13 +1113,13 @@ class EFTPlot(object):
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
-        graph_float = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
+        graph_float = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(1)
 
         graph_freeze = ROOT.TGraph()
-        graph_freeze = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
+        graph_freeze = ROOT.TGraph(15, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(2)
