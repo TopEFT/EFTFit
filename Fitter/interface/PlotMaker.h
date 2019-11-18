@@ -107,7 +107,7 @@ PlotMaker::PlotMaker(RooWorkspace* ws,TString out_dir,TString ftype) {
     this->proc_map["ttlnu"] = new LabelInfo("ttlnu","ttl#nu",kBlue);
     this->proc_map["tllq"] = new LabelInfo("tllq","tllq",kPink+1);
     this->proc_map["tHq"]  = new LabelInfo("tHq","tHq",kCyan);
-    this->proc_map["charge_flips"] = new LabelInfo("charge_flips","Flips",kAzure-9);
+    this->proc_map["charge_flips"] = new LabelInfo("charge_flips","ChargeFlips",kAzure-9);
     this->proc_map["fakes"] = new LabelInfo("fakes","Fakes",kYellow-7);
     this->proc_map["WZ"] = new LabelInfo("WZ","WZ",kMagenta);
     this->proc_map["ZZ"] = new LabelInfo("ZZ","ZZ",kViolet+1);
@@ -148,8 +148,7 @@ void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr p
     vTStr cats = this->ws_helper.stripProcessName(yields);   // This determines the bin ordering!
     int ncats = cats.size();
 
-    std::vector<TString> bkg_procs {"charge_flips","fakes","ttGJets","WZ","ZZ","WW","WWW","WWZ","WZZ","ZZZ",
-                                    "singlet_tWchan","singletbar_tWchan"};
+    std::vector<TString> bkg_procs {"charge_flips","fakes","ttGJets","WZ","ZZ","WW","WWW","WWZ","WZZ","ZZZ"};
     vRooAdd summed_yields = this->getSummedProcesses(yields,procs);
     vRooAdd summed_bkg    = this->getSummedProcesses(yields,bkg_procs);
 
@@ -158,7 +157,7 @@ void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr p
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    vTStr reps {"C_2lss_","C_3l_","C_4l_"};
+    vTStr reps {"C_2lss_","C_3l_","C_4l_","m_2b_","p_2b_","mix_p_1b_","mix_m_1b_","mix_p_2b_","mix_m_2b_","mix_sfz_1b_","mix_sfz_2b_","2b_"};
     //vTStr reps {"mix_sfz_","mix_","p_ee_","p_emu","p_mumu","m_ee_","m_emu","m_mumu"};
 
     std::vector<TH1*> proc_yields;
@@ -258,6 +257,13 @@ void PlotMaker::makeStackPlot(TString fname,TH1D* h_data,TH1* ratio,TH1* r_1sig,
     TString title = h_data->GetTitle();
     title += ";;Events";
     hs->SetTitle(title);
+    if(fname.Contains("yields_prefit_")){
+        TString fnamecopy = fname;
+        fnamecopy = fnamecopy.ReplaceAll("yields_prefit_","");
+        fnamecopy = fnamecopy.ReplaceAll("_stack","");
+        TString hsname = "Prefit Yields "+fnamecopy;
+        hs->SetTitle(hsname);
+    }
 
     canv->cd(1);
 
