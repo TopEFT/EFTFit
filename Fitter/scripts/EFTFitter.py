@@ -1,4 +1,5 @@
 import os
+import stat
 import sys
 import logging
 import subprocess as sp
@@ -190,7 +191,7 @@ class EFTFit(object):
         if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
-        if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','2000'])
+        if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
         if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','40000','--dry-run'])
         logging.info(' '.join(args))
 
@@ -458,16 +459,21 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
                 
-    def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt'):
+    def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', final=True):
         ### Extract a 1D scan from a higher-dimension scan to avoid discontinuities ###
         if not wc:
             logging.error("No WC specified!")
             return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+        if final:
+            os.system('hadd -f higgsCombine{}.MultiDimFit.mH120.root higgsCombine{}.POINTS*.MultiDimFit.root '.format(name,name))
+        if not os.path.exists('higgsCombine{}.MultiDimFit.mH120.root'.format(name)):
+        #if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
 
-        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        rootFile = []
+        rootFile = ROOT.TFile.Open('higgsCombine{}.MultiDimFit.mH120.root'.format(name))
+        #rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         limitTree = rootFile.Get('limit')
 
         # First loop through entries and get deltaNLL list for each value of the WC
@@ -485,7 +491,11 @@ class EFTFit(object):
         # Now make a new .root file with the new TTree
         # Only the WC and deltaNLL will be branches
         # These can be directly used by EFTPlotter
-        outFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}reduced.MultiDimFit.root'.format(name,wc),'RECREATE')
+        outFile = []
+        if final:
+            outFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}reduced.MultiDimFit.root'.format(name,wc),'RECREATE')
+        else:
+            outFile = ROOT.TFile.Open('higgsCombine{}.{}reduced.MultiDimFit.root'.format(name,wc),'RECREATE')
         outTree = ROOT.TTree('limit','limit')
         
         wc_branch = array.array('f',[0.])
@@ -501,6 +511,98 @@ class EFTFit(object):
             
         # Write the file
         outFile.Write()
+
+    def batchReductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', points=27000000, split=40000):
+        JOB_PREFIX = """#!/bin/sh
+        ulimit -s unlimited
+        set -e
+        cd %(CMSSW_BASE)s/src
+        export SCRAM_ARCH=%(SCRAM_ARCH)s
+        eval `scramv1 runtime -sh`
+        cd %(PWD)s
+        """ % ({
+            'CMSSW_BASE': os.environ['CMSSW_BASE'],
+            'SCRAM_ARCH': os.environ['SCRAM_ARCH'],
+            'PWD': os.environ['PWD']
+        })
+        
+        CONDOR_TEMPLATE = """executable = %(EXE)s
+        arguments = $(ProcId) %(NAME)s %(WC)s
+        output                = condor_%(TASK)s/%(TASK)s.$(ClusterId).$(ProcId).out
+        error                 = condor_%(TASK)s/%(TASK)s.$(ClusterId).$(ProcId).err
+        log                   = condor_%(TASK)s/%(TASK)s.$(ClusterId).log
+        
+        # Send the job to Held state on failure.
+        on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)
+        
+        # Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.
+        periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)
+        
+        queue %(NUMBER)s
+        
+        """
+        #%(EXTRA)s
+        
+        fname = '{}.{}'.format(name,wc)
+        script_name = fname+'.sh'
+        logname = script_name.replace('.sh', '.log')
+        with open(fname, "w") as text_file:
+            text_file.write(JOB_PREFIX)
+            #for i, command in enumerate(commands):
+                #tee = 'tee' if i == 0 else 'tee -a'
+                #log_part = '\n'
+                #if do_log: log_part = ' 2>&1 | %s ' % tee + logname + log_part
+                #if command.startswith('combine') or command.startswith('pushd'):
+                    #text_file.write(
+                        #self.pre_cmd + 'eval ' + command + log_part)
+                #else:
+                    #text_file.write(command)
+        st = os.stat(fname)
+        os.chmod(fname, st.st_mode | stat.S_IEXEC)
+        # print JOB_PREFIX + command
+        print 'Created job script: %s' % fname
+
+        outscriptname = 'condor_%s.sh' % fname
+        subfilename = 'condor_%s.sub' % fname
+        print '>> condor job script will be %s' % outscriptname
+        outscript = open(outscriptname, "w")
+        outscript.write(JOB_PREFIX)
+        jobs = 0
+        wsp_files = set()
+        for i,proc in enumerate(range(0,points,split), points/split):
+            outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
+            outscript.write('python /afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/scripts/reduce.py %d %s %s %d\n' % (proc, name, wc, proc+split-1))
+            jobs += 1
+            outscript.write('fi')
+        #for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
+            #outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
+            #jobs += 1
+            #for line in self.job_queue[j:j + self.merge]:
+                #newline = line
+                #outscript.write('  ' + newline + '\n')
+            #outscript.write('fi')
+        outscript.close()
+        st = os.stat(outscriptname)
+        os.chmod(outscriptname, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        subfile = open(subfilename, "w")
+        condor_settings = CONDOR_TEMPLATE % {
+          'EXE': outscriptname,
+          'TASK': ''.join(fname.split('.')),
+          #'EXTRA': self.bopts.decode('string_escape'),
+          'NAME': name,
+          'WC': wc,
+          'NUMBER': jobs
+        }
+        subfile.write(condor_settings)
+        subfile.close()
+        if not os.path.exists('condor_{}'.format(''.join(fname.split('.')))):
+            os.system('mkdir condor_{}'.format(''.join(fname.split('.'))))
+        #run_command(self.dry_run, 'condor_submit %s' % (subfilename))
+        return os.system('condor_submit %s' % (subfilename))
+
+    #def batchReductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', points=27000000, split=40000):
+        #for i in range(0,points,split):
+            #self.submitBatchReductionFitEFT('{}.POINTS.{}.{}'.format(name, i, i+split), wc, points, split)
         
     def batch1DBestFitEFT(self, basename='.EFT.SM.Float', wcs=[]):
         ### For each wc, run a 1D fit with others frozen. Use start point from 1D scan with other floating. ###
