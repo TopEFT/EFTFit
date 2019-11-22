@@ -7,7 +7,7 @@ ROOT.gSystem.Load('$CMSSW_BASE/src/EFTFit/Fitter/interface/TH1EFT_h.so')
 from HiggsAnalysis.CombinedLimit.PhysicsModel import PhysicsModel
 #Based on 'Quadratic' model from HiggsAnalysis.CombinedLimit.QuadraticScaling
 
-class EFT16DModel(PhysicsModel):
+class EFTModel(PhysicsModel):
     """Apply process scaling due to EFT Wilson Coefficients (WCs).
 
     This class takes a dictionary of quadratic fits describing how processes are
@@ -21,7 +21,7 @@ class EFT16DModel(PhysicsModel):
     >>> np.save('scales.npy', scales)
 
     Oversimplified example for running with override options:
-    text2workspace.py EFT_MultiDim_Datacard.txt -P HiggsAnalysis.CombinedLimit.EFT:quad --PO scaling=scales.npy --PO process=ttZ --PO process=ttW --PO coefficient=cuW -o cuW.root
+    text2workspace.py EFT_MultiDim_Datacard.txt -P EFTFit.Fitter.EFTModel:eftmodel --PO fits=EFT_Parameterization.npy --PO process=ttZ --PO process=ttW --PO coefficient=cuW -o cuW.root
     combine -M MultiDimFit ctW.root --setParameterRanges=-4,4
     """
 
@@ -159,4 +159,4 @@ class EFT16DModel(PhysicsModel):
             return name
 
 
-eft16D = EFT16DModel()
+eftmodel = EFTModel()

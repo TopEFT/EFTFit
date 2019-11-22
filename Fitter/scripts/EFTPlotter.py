@@ -1231,11 +1231,11 @@ class EFTPlot(object):
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
 
-        canvas.Print('BestScanPlot.png','png')
+        canvas.Print('BestScanPlot.pdf','pdf')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
-        ### Preferably this is not used in favor of the BestIntervalPlot, as we do not necessarily trust the simultaneous fit ###
+        ### Preferably this is not used in favor of the BestScanPlot, as we do not necessarily trust the simultaneous fit ###
         ROOT.gROOT.SetBatch(True)
 
         # WC, Best Fit Value, Symmetric Error, Lower Asymm Error, Higher Asymm Error
