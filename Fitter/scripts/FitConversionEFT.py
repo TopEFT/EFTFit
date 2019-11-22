@@ -81,8 +81,8 @@ for key in readfile.GetListOfKeys():
                     fits[(process,category_njet)][(op1,op2)] = round(fit.getCoefficient(op1,op2)/fit.getCoefficient('sm','sm'),8)
 
 #print fits
-print "Saving numpy file {}...".format("16D_Parameterization.npy")
+print "Saving numpy file {}...".format("EFT_Parameterization.npy")
 #print "Categories:",[key[1] for key in fits.keys()]
 #print "Processes:",[key[0] for key in fits.keys()]
 #print "Keys:",fits.keys()
-np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/16D_Parameterization.npy', fits)
+np.save(os.environ["CMSSW_BASE"]+'/src/EFTFit/Fitter/hist_files/EFT_Parameterization.npy', fits)
