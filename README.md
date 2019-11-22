@@ -12,12 +12,12 @@ To install this package:
     git clone https://github.com/cms-govner/EFTFit.git EFTFit
 
 # Directory Structure
-fit_files: Output files from calls to combine
-hist_files: Input histogram files for extracting fit parameterizations. Also, .npy parameterization file.
-interface: C++ helper functions
-python: Python helper functions
-scripts: Top-level scripts for running and visualizing the fits
-test: Directory to call scripts from
+**fit_files:** Output files from calls to combine<br/>
+**hist_files:** Input histogram files for extracting fit parameterizations. Also, .npy parameterization file.<br/>
+**interface:** C++ helper functions<br/>
+**python:** Python helper functions<br/>
+**scripts:** Top-level scripts for running and visualizing the fits<br/>
+**test:** Directory to call scripts from
 
 # Run the fit
 To run a SM signal strength fit:
