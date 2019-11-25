@@ -29,6 +29,7 @@ To run a SM signal strength fit:
         python -i ../scripts/EFTFitter.py
     #Example workflow:
         fitter.makeWorkspaceSM('EFT_MultiDim_Datacard.txt')
+        fitter.bestFitSM()
         fitter.batch1DScanSM('basejobname','condor'/'crab'/'')
         # These go fast enough batch submission isn't necessary
     #Wait for jobs to finish.
@@ -59,6 +60,13 @@ To run a standard EFT fit:
     #2D scans take 1-2 hours each.
 
 # Visualize the fit
+To make the standard array of SM plots:
+
+    #(1) Navigate to the test directory.
+    #(2) Use the batch functions to make them all automatically
+        python -i ../scripts/EFTPlotter.py
+        plotter.BatchLLPlot1DSM('basejobname')
+
 To make the standard array of EFT plots:
 
     #(1) Navigate to the test directory.
