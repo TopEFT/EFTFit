@@ -74,7 +74,7 @@ To make the standard array of EFT plots:
         python -i ../scripts/EFTPlotter.py
         plotter.BatchOverlayPlot1DEFT('basejobname.Float','basejobname.Freeze')
         plotter.BestScanPlot('basejobname.Float','basejobname.Freeze')
-        plotter.BatchBatch2DPlotsEFT('basejobname.Float') # Makes 2DLL and contour plots
+        plotter.BatchBatch2DPlotsEFT('basejobname.Freeze') # Makes 2DLL and contour plots
         plotter.BatchBatch2DPlotsEFT('basejobname.Float') # Makes 2DLL and contour plots
     #The 2D plots will be stored in "Histos.basejobname.Float|Freeze/"
         
