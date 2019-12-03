@@ -19,6 +19,7 @@ class EFTFit(object):
         # WCs lists for easy use
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #anatest28 (no ctG)
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Default wcs to keep track of during 2D scans
@@ -192,7 +193,7 @@ class EFTFit(object):
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
-        if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','40000','--dry-run'])
+        if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','30000','--dry-run'])
         logging.info(' '.join(args))
 
         # Run the combineTool.py command
@@ -459,13 +460,13 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
                 
-    def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', final=True):
+    def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', final=True, from_wcs=[]):
         ### Extract a 1D scan from a higher-dimension scan to avoid discontinuities ###
         if not wc:
             logging.error("No WC specified!")
             return
         if final:
-            os.system('hadd -f higgsCombine{}.MultiDimFit.mH120.root higgsCombine{}.POINTS*.MultiDimFit.root '.format(name,name))
+            os.system('hadd -f higgsCombine{}.MultiDimFit.mH120.root higgsCombine{}.POINTS*.{}reduced.MultiDimFit.root '.format(name,name,''.join(from_wcs)))
         if not os.path.exists('higgsCombine{}.MultiDimFit.mH120.root'.format(name)):
         #if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
@@ -512,7 +513,63 @@ class EFTFit(object):
         # Write the file
         outFile.Write()
 
-    def batchReductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', points=27000000, split=40000):
+    def reduction2DFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wcs=['cpt','ctp'], final=True):
+        ### Extract a 2D scan from a higher-dimension scan to avoid discontinuities ###
+        if not wcs:
+            logging.error("No WC specified!")
+            return
+        if final:
+            os.system('hadd -f higgsCombine{}.MultiDimFit.mH120.root higgsCombine{}.POINTS*.{}reduced.MultiDimFit.root '.format(name,name,''.join(wcs)))
+        if not os.path.exists('higgsCombine{}.MultiDimFit.mH120.root'.format(name)):
+        #if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            return
+
+        rootFile = []
+        rootFile = ROOT.TFile.Open('higgsCombine{}.MultiDimFit.mH120.root'.format(name))
+        #rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        limitTree = rootFile.Get('limit')
+
+        # First loop through entries and get deltaNLL list for each value of the WC
+        wc_dict = defaultdict(list)
+        for entry in range(limitTree.GetEntries()):
+            limitTree.GetEntry(entry)
+            wc_dict[limitTree.GetLeaf(wcs[0]).GetValue(0),limitTree.GetLeaf(wcs[1]).GetValue(0)].append(limitTree.GetLeaf('deltaNLL').GetValue(0))
+        rootFile.Close()
+        
+        # Next pick the best deltaNLL for each WC value
+        wc_dict_reduced = {}
+        for key in wc_dict:
+            wc_dict_reduced[key] = min(wc_dict[key])
+            
+        # Now make a new .root file with the new TTree
+        # Only the WC and deltaNLL will be branches
+        # These can be directly used by EFTPlotter
+        outFile = []
+        if final:
+            outFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}reduced.MultiDimFit.root'.format(name,''.join(wcs)),'RECREATE')
+        else:
+            outFile = ROOT.TFile.Open('higgsCombine{}.{}{}reduced.MultiDimFit.root'.format(name,wcs[0],wcs[1]),'RECREATE')
+        outTree = ROOT.TTree('limit','limit')
+        
+        wc_branch1 = array.array('f',[0.])
+        wc_branch2 = array.array('f',[0.])
+        deltaNLL_branch = array.array('f',[0.])
+        outTree.Branch(wcs[0],wc_branch1,wcs[0]+'/F')
+        outTree.Branch(wcs[1],wc_branch2,wcs[1]+'/F')
+        outTree.Branch('deltaNLL',deltaNLL_branch,'deltaNLL/F')
+        
+        # Fill the branches
+        for wc1,wc2 in wc_dict_reduced:
+            wc_branch1[0] = wc1
+            wc_branch2[0] = wc2
+            deltaNLL_branch[0] = wc_dict_reduced[(wc1,wc2)]
+            outTree.Fill()
+            
+        # Write the file
+        outFile.Write()
+
+    def batchReductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc=['cpt'], points=27000000, split=30000):
         JOB_PREFIX = """#!/bin/sh
         ulimit -s unlimited
         set -e
@@ -527,7 +584,7 @@ class EFTFit(object):
         })
         
         CONDOR_TEMPLATE = """executable = %(EXE)s
-        arguments = $(ProcId) %(NAME)s %(WC)s
+        arguments = $(ProcId)
         output                = condor_%(TASK)s/%(TASK)s.$(ClusterId).$(ProcId).out
         error                 = condor_%(TASK)s/%(TASK)s.$(ClusterId).$(ProcId).err
         log                   = condor_%(TASK)s/%(TASK)s.$(ClusterId).log
@@ -543,7 +600,7 @@ class EFTFit(object):
         """
         #%(EXTRA)s
         
-        fname = '{}.{}'.format(name,wc)
+        fname = '{}.{}'.format(name,''.join(wc))
         script_name = fname+'.sh'
         logname = script_name.replace('.sh', '.log')
         with open(fname, "w") as text_file:
@@ -571,7 +628,7 @@ class EFTFit(object):
         wsp_files = set()
         for i,proc in enumerate(range(0,points,split), points/split):
             outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
-            outscript.write('python /afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/scripts/reduce.py %d %s %s %d\n' % (proc, name, wc, proc+split-1))
+            outscript.write('python /afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/scripts/reduce.py %d %d %s %s\n' % (proc, proc+split-1, name, ' '.join(wc)))
             jobs += 1
             outscript.write('fi')
         #for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
@@ -589,8 +646,8 @@ class EFTFit(object):
           'EXE': outscriptname,
           'TASK': ''.join(fname.split('.')),
           #'EXTRA': self.bopts.decode('string_escape'),
-          'NAME': name,
-          'WC': wc,
+          #'NAME': name,
+          #'WC': ' '.join(wc),
           'NUMBER': jobs
         }
         subfile.write(condor_settings)

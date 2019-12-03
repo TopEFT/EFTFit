@@ -357,6 +357,16 @@ class EFTPlot(object):
         for wc in wcs:
             self.LLPlot1DEFT(basename+'.'+wc, frozen, wc, log)
 
+    def BatchLLPlotNDEFT(self, basename='.test', frozen=False, wcs=[], log=False):
+        if not wcs:
+            wcs = self.wcs
+
+        ROOT.gROOT.SetBatch(True)
+
+        #wcs.remove('ctG')
+        for pair in zip(wcs[::2], wcs[1::2]):
+            self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
+
     def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
             wcs = self.wcs
@@ -396,9 +406,13 @@ class EFTPlot(object):
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],hname,self.wc_ranges[wcs[1]][0]*2,self.wc_ranges[wcs[1]][1]*2,self.wc_ranges[wcs[0]][0]*2,self.wc_ranges[wcs[0]][1]*2), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        hist = ROOT.TH3F(hname, hname, 300, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 300, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],hname,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        #htemp = ROOT.TH2F(hname,hname,200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
+        hist.Project3DProfile().Draw('colz')
         
-        hist = canvas.GetPrimitive(hname)
+        #hist = canvas.GetPrimitive(hname)
 
         # Draw best fit point from grid scan
         #for entry in range(limitTree.GetEntries()):
@@ -459,9 +473,11 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*deltaNLL<100', 'prof colz')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(300,{},{},300,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
+        #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',300,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],300,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -525,6 +541,7 @@ class EFTPlot(object):
 
         # Draw and save plot
         h_contour.Draw('AXIS')
+        #canvas.Print('contour.png','png')
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
@@ -533,6 +550,18 @@ class EFTPlot(object):
         c9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
         marker_2.DrawMarker(0,0)
+
+        #c = [2.3, 6.18, 11.83]
+        #original.SetContourLevel(0, c[0])
+        #original.SetContourLevel(1, c[1])
+        #original.SetContourLevel(2, c[2])
+        #import numpy
+        #original.SetContour(3, numpy.array(c))
+        #original.SetMaximum(3)
+        #ROOT.gStyle.SetOptStat(0)
+        #original.Draw("cont1z")
+        #marker_1.DrawMarker(0,0)
+        #marker_2.DrawMarker(0,0)
 
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
@@ -1085,19 +1114,24 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
-        y_float = [n*4+3 for n in range(0,16)]
-        y_freeze = [n*4+2 for n in range(0,16)]
+        numWC=16
+        if '28redo' in basename_float:
+            numWC=15
+        y_float = [n*4+3 for n in range(0,numWC)]
+        y_freeze = [n*4+2 for n in range(0,numWC)]
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
-        #canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
+        if 'EFT' in basename_float:
+            canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
-        #h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
+        if 'EFT' in basename_float:
+            h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
-        h_fit.GetYaxis().SetNdivisions(16,False)
+        h_fit.GetYaxis().SetNdivisions(numWC,False)
         h_fit.GetYaxis().SetLabelSize(0)
 
         # Add y-axis labels
@@ -1110,13 +1144,13 @@ class EFTPlot(object):
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
-        graph_float = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
+        graph_float = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(1)
 
         graph_freeze = ROOT.TGraph()
-        graph_freeze = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
+        graph_freeze = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(2)
