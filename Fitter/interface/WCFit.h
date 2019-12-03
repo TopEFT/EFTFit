@@ -133,7 +133,7 @@ public:
     }
 
     // Returns a particular structure constant from the fit function
-    double getCoefficient(std::string & n1, std::string & n2) {
+    double getCoefficient(std::string n1, std::string n2) {
         // Note: This is a very brute force method of finding the corresponding coefficient,
         //       the overloaded function method should be used whenever possible
         auto idx_pair = this->getIndexPair(n1,n2);
