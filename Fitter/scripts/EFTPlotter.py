@@ -1048,6 +1048,10 @@ class EFTPlot(object):
                 prevnll = nll
             if not len(lowedges) == len(highedges):
                 logging.error("Something is strange! Interval is missing endpoint!")
+            ## uncomment for 2 decimal place printing for AN
+            #true_minimum = '%.2f' % float(true_minimum)
+            #lowedges = ['%.2f' % elem for elem in lowedges]
+            #highedges = ['%.2f' % elem for elem in highedges]
             fit_array.append([param,true_minimum,lowedges,highedges])
 
         for line in fit_array:
@@ -1122,11 +1126,11 @@ class EFTPlot(object):
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
-        if 'EFT' in basename_float:
+        if 'Asimov' not in basename_float:
             canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
-        if 'EFT' in basename_float:
+        if 'Asimov' not in basename_float:
             h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
         h_fit.Draw()
         h_fit.SetStats(0)
@@ -1266,6 +1270,7 @@ class EFTPlot(object):
         Lumi_text.Draw('same')
 
         canvas.Print('BestScanPlot.png','png')
+        canvas.Print('BestScanPlot.pdf','pdf')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
