@@ -106,7 +106,7 @@ def main():
         # Or use a more dynamic approach
         "^out.log$",
         "^{ws}$".format(ws=helper.ops.getOption('ws_file')),
-        "^{datacard}$".format(datacard=helper.ops.getOptions('original_card')),
+        "^{datacard}$".format(datacard=helper.ops.getOption('original_card')),
     ])
 
     # Now make the datacard and workspace files. In principle these don't need to be re-run everytime
