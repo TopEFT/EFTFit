@@ -186,18 +186,30 @@ class CombineHelper(object):
     def setOutputDirectory(self,name):
         self.output_dir = os.path.join(CONST.EFTFIT_TEST_DIR,name)
 
+    def getOutputDirectory(self):
+        return self.output_dir
+
     def makeOutputDirectory(self):
-        if not os.path.exists(self.output_dir):
-            self.logger.info("Making output directory: %s",self.output_dir)
-            os.makedirs(self.output_dir)
+        fpath = self.getOutputDirectory()
+        if not os.path.exists(fpath):
+            self.logger.info("Making output directory: %s",fpath)
+            os.makedirs(fpath)
 
     def setOptions(self,preset=None,extend=False,**kwargs):
-        # preset: A HelperOptions object with preset values for all the options
+        # preset: A HelperOptions object with preset values for multiple options
         # extend: If true, list type options will be extended instead of replaced
         if not preset is None:
             self.ops = HelperOptions(**preset.getCopy())
             return
         self.ops.setOptions(extend=extend,**kwargs)
+
+    def getPOIs(self):
+        pois = set()
+        if self.ops.getOption('ws_type') == WorkspaceType.SM:
+            for p,poi,lst in self.ops.getOption('sm_signals'): pois.add(poi)
+        else:
+            for poi in self.dc_maker.getOperators(): pois.add(poi)
+        return list(pois)
 
     def setPOIRange(self,poi,lo,hi):
         self.poi_ranges[poi] = [lo,hi]
@@ -212,17 +224,36 @@ class CombineHelper(object):
             poi_ranges += poi + "=%.2f,%.2f" % (lo,hi)
         return poi_ranges
 
+    # Returns the fpath to the datacard to be used
+    def getDatacardPath(self):
+        dir_path = self.getOutputDirectory()
+        datacard = self.ops.getOption('datacard_file')
+        return os.path.join(dir_path,datacard)
+
+    # Check if the datacard exists in the output directory
+    def hasDatacard(self):
+        return os.path.exists(self.getDatacardPath())
+
     # Attempt to parse the text datacard into the dc_reader
     def loadDatacard(self,force=False):
         if self.dc_reader.hasCard() and not force:
             # The card has already been loaded
             return
-        datacard = self.ops.getOption('datacard_file')
-        card_file = os.path.join(self.output_dir,datacard)
+        card_file = self.getDatacardPath()
         if not os.path.exists(card_file):
             self.logger.error("Unable to load datacard file %s.",card_file)
             return
         self.dc_reader.load(card_file)
+
+    # Returns the fpath to the workspace to be used
+    def getWorkspacePath(self):
+        dir_path = self.getOutputDirectory()
+        ws_file = self.ops.getOption('ws_file')
+        return os.path.join(dir_path,ws_file)
+
+    # Check if the workspace exists in the output directory
+    def hasWorkspace(self):
+        return os.path.exists(self.getWorkspacePath())
 
     def chdir(self,dir_path):
         if os.getcwd() == dir_path: return
@@ -262,7 +293,7 @@ class CombineHelper(object):
         if rel_path.split('/')[0] == '..':
             self.logger.error("Invalid target directory. The target directory must be a sub-directory of the user: %s",CONST.USER_DIR)
             return
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
         to_copy = []
         for out in sorted(os.listdir('.')):
             fpath = os.path.join('.',out)
@@ -292,7 +323,7 @@ class CombineHelper(object):
             return
         old_card = self.ops.getOption('datacard_file')
         self.logger.info("Modifying datacard %s...",old_card)
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
         if filter_bins: self.dc_reader.filterBins(bins=filter_bins)
         for syst in remove_systs:
             procs = syst.getOption('procs')
@@ -347,7 +378,7 @@ class CombineHelper(object):
         use_central = self.ops.getOption('use_central')
 
         self.logger.info("Creating datacard %s...",card_file)
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
         self.dc_maker.outf = card_file
         fpath = os.path.join(CONST.TOPEFT_DATA_DIR,hist_file)
         self.logger.info("Using Histogram File: %s" % (fpath))
@@ -384,7 +415,7 @@ class CombineHelper(object):
                     (WorkspaceType.SM) or to fit for EFT WC values (WorkspaceType.EFT) 
         '''
         self.logger.info("Making workspace file...")
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
 
         ws_file  = self.ops.getOption('ws_file')
         datacard = self.ops.getOption('datacard_file')
@@ -425,7 +456,7 @@ class CombineHelper(object):
     # Run combine using the FitDiagnostic method
     def make_fitdiagnostics(self):
         self.logger.info("Making fit diagnostic...")
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
 
         ws_file    = self.ops.getOption('ws_file')
         method     = self.ops.getOption('method')
@@ -451,7 +482,7 @@ class CombineHelper(object):
     # Run combine using the MultiDimFit method
     def make_multidimfit(self):
         self.logger.info("Making MultiDimFit...")
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
 
         ws_file    = self.ops.getOption('ws_file')
         method     = self.ops.getOption('method')
@@ -462,9 +493,11 @@ class CombineHelper(object):
         trk_pars   = self.ops.getOption('track_parameters')
         redef_pois = self.ops.getOption('redefine_pois')
         param_vals = self.ops.getOption('parameter_values')
+        pf_val     = self.ops.getOption('prefit_value')
         other_ops  = self.ops.getOption('other_options')
 
-        pois   = self.dc_maker.getOperators()
+        # pois   = self.dc_maker.getOperators()
+        pois   = self.getPOIs()
         ranges = self.getPOIRangeStr(pois)
 
         args = ['combine',ws_file]
@@ -473,7 +506,9 @@ class CombineHelper(object):
         args.extend(['-v','%d' % (verb)])
         args.extend(['--algo=%s' % (algo)])
         if self.ops.getOption('use_poi_ranges'): args.extend(['--setParameterRanges',ranges])
-        if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
+        if frz_lst:
+            args.extend(['--preFitValue','%.2f' % (pf_val)])
+            args.extend(['--freezeParameters',','.join(frz_lst)])
         if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
         if param_vals: args.extend(['--setParameters',','.join(param_vals)])
@@ -504,9 +539,9 @@ class CombineHelper(object):
                 self.ops.redefine_pois: Passed to the '--redefineSignalPOIs' option of combineTool
         '''
         self.logger.info("Making impact plots...")
-        self.chdir(self.output_dir)
+        self.chdir(self.getOutputDirectory())
 
-        self.cleanDirectory(self.output_dir,remove=['^higgsCombine_paramFit_.*','^higgsCombine_initialFit_.*'])
+        self.cleanDirectory(self.getOutputDirectory(),remove=['^higgsCombine_paramFit_.*','^higgsCombine_initialFit_.*'])
 
         ws_file    = self.ops.getOption('ws_file')
         ws_type    = self.ops.getOption('ws_type')
@@ -553,7 +588,7 @@ class CombineHelper(object):
         run_command(args)
 
         # Create the impact plot pdf file
-        pois = [x for x in redef_pois] if redef_pois else [x for x in self.dc_maker.getOperators()]
+        pois = [x for x in redef_pois] if redef_pois else [x for x in self.getPOIs()]
         for poi in pois:
             outf = 'impacts_%s' % (poi)
             args = ['plotImpacts.py','-i','impacts.json','--POI','%s' % (poi),'-o',outf]
