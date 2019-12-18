@@ -362,7 +362,7 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     plot_maker.noratio = true;
     plot_maker.isfakedata = false;
     plot_maker.splitunc = false;
-    plot_maker.nodata = true;
+    plot_maker.nodata = false;
 
     ws->loadSnapshot("prefit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields   ,yield_procs,"yields_prefit_merged");
@@ -400,13 +400,15 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
 
 
 void workspace_reader() {
-    TString base_dir = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/fromTony/";
-    TString tony_dir = "/afs/crc.nd.edu/user/a/alefeld/Public/ForAndrew/";
-    //TString in_dir  = "src/EFTFit/Fitter/test/ana12asimov_dir/";
-    TString in_dir  = "src/EFTFit/Fitter/test/anatest12_Jan18btagReqs/16D_AllSysts_AllFits_SMdata/";
+    // TString base_dir = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/fromTony/";
+    TString base_dir = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/";
+    // TString tony_dir = "/afs/crc.nd.edu/user/a/alefeld/Public/ForAndrew/";
+    // TString in_dir  = "src/EFTFit/Fitter/test/ana12asimov_dir/";
+    // TString in_dir  = "src/EFTFit/Fitter/test/anatest12_Jan18btagReqs/16D_AllSysts_AllFits_SMdata/";
 
     // Naming based on output from combine_helper.py
-    TString ws_fname    = "16D.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
+    // TString ws_fname    = "16D.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
+    TString ws_fname = "SMWorkspace.root";  // Made from text2workspace.py, using SM signals as POIs
     TString limit_fname = "higgsCombinePostfit.MultiDimFit.mH120.root";  // Made by combine running on pre-fit workspace ('16D.root')
     TString fr_prefit_fname = "fitDiagnosticsPrefit.root";
     TString fr_full_fname = "multidimfitPostfit.root";
@@ -417,18 +419,25 @@ void workspace_reader() {
     //TString fr_key = "nuisances_prefit_res";
 
     // File names from Tony
-    ws_fname = "SMWorkspace.root";
-    fr_full_fname = "multidimfit.SM.Private.Float.Oct9.FullJES.root";
+    // ws_fname = "SMWorkspace.root";
+    // fr_full_fname = "multidimfit.SM.Private.Float.Oct9.FullJES.root";
     // fr_full_fname = "multidimfit.SM.Central.Float.Oct9.FullJES.root";
 
-    //TString ws_fpath     = base_dir + "SM_impacts_2019-10-10_1959_ana24_private_test_cminDefaultMinimizerStategy-0/" + ws_fname;
-    TString ws_fpath     = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/16DWorkspace.root";
-    TString lim_fpath    = "";
-    TString prefit_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
-    TString full_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
-    //TString full_fpath   = tony_dir + fr_full_fname;
-    //TString full_fpath   = "";
-    TString stat_fpath   = "";
+    // TString ws_fpath     = base_dir + "SM_impacts_2019-10-10_1959_ana24_private_test_cminDefaultMinimizerStategy-0/" + ws_fname;
+    // TString ws_fpath     = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/16DWorkspace.root";
+    // TString lim_fpath    = "";
+    // TString prefit_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
+    // TString full_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
+    // TString full_fpath   = tony_dir + fr_full_fname;
+    // TString full_fpath   = "";
+    // TString stat_fpath   = "";
+
+    TString sub_dir = "data2017v1/SM_fitting_2019-12-06_ana32_private/";
+    TString ws_fpath     = base_dir + sub_dir + ws_fname;
+    TString prefit_fpath = base_dir + sub_dir + fr_prefit_fname;
+    TString full_fpath   = base_dir + sub_dir + fr_full_fname;
+    TString lim_fpath  = "";
+    TString stat_fpath = "";
 
     runit(ws_fpath,lim_fpath,prefit_fpath,full_fpath,stat_fpath);
 }
