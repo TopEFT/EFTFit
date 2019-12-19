@@ -159,14 +159,20 @@ class HelperOptions(OptionsBase):
 
 # Helper class for running various combine related commands
 class CombineHelper(object):
-    def __init__(self,home,out_dir,preset=None):
+    DEFAULT_OUTPUT_DIR = 'combine_helper_default_dir'
+    
+    def __init__(self,home,out_dir="",preset=None):
         self.logger = logging.getLogger(__name__)
 
         self.home_dir = home
         self.output_dir = ""
 
-        self.setOutputDirectory(out_dir)    # Note: This path is always relative to the 'test' directory
-        self.makeOutputDirectory()
+        if len(out_dir):
+            self.setOutputDirectory(out_dir)    # Note: This path is always relative to the 'test' directory
+            self.makeOutputDirectory()
+        else:
+            # Note: This is just so we don't accidently remove a bunch of files from an unexpected directory 
+            self.output_dir = self.DEFAULT_OUTPUT_DIR
 
         self.poi_ranges = {}
         self.default_range = [-5.0,5.0]
