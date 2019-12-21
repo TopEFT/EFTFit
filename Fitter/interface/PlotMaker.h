@@ -506,8 +506,12 @@ TH1D* PlotMaker::getErrorHistogram(TString hname, vRooAdd yields, vTStr cats, Ro
         int bin_idx = cat_idx + 1;  // Histogram bins are offset by 1, since idx 0 is underflow bin
 
         double mc_central = yields.at(cat_idx)->getVal();
-        double err = yields.at(cat_idx)->getPropagatedError(*(fr));
-
+        double err = 0.0;
+        if (fr) {
+            err = yields.at(cat_idx)->getPropagatedError(*(fr));
+        } else {
+            std::cout << "[WARNING] No RooFitResult object given --> Setting bin error to 0 for " << cat << std::endl;
+        }
         h_err->SetBinContent(bin_idx,mc_central);
         h_err->SetBinError(bin_idx,err);
     }
