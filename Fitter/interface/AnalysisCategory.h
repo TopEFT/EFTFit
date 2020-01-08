@@ -17,7 +17,8 @@ class AnalysisCategory {
         Int_t proc_width;
         TString cat_name;
         RooDataSet* roo_data;
-        std::unordered_map<std::string,RooAddition*> exp_proc;
+        std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
+                                                                //  expected yield for a specific process
 
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
         std::vector<TString> children;      // Contains the names of the categories merged into this one
@@ -151,10 +152,12 @@ std::vector<TString> AnalysisCategory::getChildren() {
     return this->children;
 }
 
+// Returns a ptr to the actual RooDataSet object for this category
 RooDataSet* AnalysisCategory::getRooData() {
     return this->roo_data;
 }
 
+// Returns a ptr to the RooAddition object for a particular process
 RooAddition* AnalysisCategory::getRooAdd(TString proc) {
     std::string s(proc.Data());
     if (!this->hasProc(proc)) {
@@ -163,6 +166,7 @@ RooAddition* AnalysisCategory::getRooAdd(TString proc) {
     return this->exp_proc[s];
 }
 
+// Returns the number of events in this category (which may be a merged category)
 double AnalysisCategory::getData() {
     if (this->roo_data) {
         return this->roo_data->sumEntries();

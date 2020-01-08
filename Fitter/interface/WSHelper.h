@@ -140,9 +140,7 @@ class WSHelper {
                     for (auto pat: pats) {
                         bool chk = str.Contains(pat);
                         if (chk) {
-                            //In either case, break on first match (i.e wl any match passes, bl any match fails)
-                            add_it = !mode;
-                            //args.add(*f);
+                            add_it = !mode; // In either case, break on first match (i.e wl any match passes, bl any match fails)
                             break;
                         }
                     }
