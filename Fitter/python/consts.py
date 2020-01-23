@@ -3,6 +3,7 @@ import os
 # Various path related constants
 CMSSW_SRC   = os.path.expandvars("$CMSSW_BASE/src")
 USER_DIR    = os.path.expanduser("~")
+WEB_DIR     = os.path.join(USER_DIR,"www")
 
 HIGGS_DIR      = os.path.join(CMSSW_SRC,"HiggsAnalysis/CombinedLimit")
 HIGGS_TEST_DIR = os.path.join(HIGGS_DIR,"test")
