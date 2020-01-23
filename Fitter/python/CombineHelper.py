@@ -93,8 +93,10 @@ class OptionsBase(object):
             line = "%s:" % (k.ljust(colw)),self.getOption(k)
             self.logger.info(line)
 
-# A container class for specifying information relating some particular Systematic
 class CombineSystematic(OptionsBase):
+    '''
+        A container class for specifying information relating to some particular Systematic
+    '''
     def __init__(self,**kwargs):
         super(CombineSystematic,self).__init__()    # This initializes the logger
         self.bins  = []
@@ -106,8 +108,10 @@ class CombineSystematic(OptionsBase):
 
         self.setOptions(extend=False,**kwargs)
 
-# A class for storing a named set of options for the CombineHelper class
 class HelperOptions(OptionsBase):
+    '''
+        A class for storing a named set of options for the CombineHelper class
+    '''
     def __init__(self,**kwargs):
         super(HelperOptions,self).__init__()    # This initializes the logger
 
@@ -139,6 +143,7 @@ class HelperOptions(OptionsBase):
         self.parameter_values  = []         # Parameter values for the --setParameters option
         self.auto_bounds_pois  = []         # Adjust bounds for the POIs if they end up close to the boundary
         self.sm_signals        = []
+        self.exclude_nuisances = []         # A list of parameters to skip when running the Impacts method
         self.other_options     = []         # A list of additional options. These should be fully
                                             # formed options e.g. '--cminDefaultMinimizerStrategy=2'
         # FitDiagnostic Options
@@ -157,8 +162,10 @@ class HelperOptions(OptionsBase):
 
         self.setOptions(extend=False,**kwargs)  # Overwrite any default options with those passed to the constructor
 
-# Helper class for running various combine related commands
 class CombineHelper(object):
+    '''
+        Helper class for running various combine related commands
+    '''
     DEFAULT_OUTPUT_DIR = 'combine_helper_default_dir'
     
     def __init__(self,home,out_dir="",preset=None):
@@ -202,8 +209,10 @@ class CombineHelper(object):
             os.makedirs(fpath)
 
     def setOptions(self,preset=None,extend=False,**kwargs):
-        # preset: A HelperOptions object with preset values for multiple options
-        # extend: If true, list type options will be extended instead of replaced
+        '''
+            preset: A HelperOptions object with preset values for multiple options
+            extend: If true, list type options with be extended instead of overwritten
+        '''
         if not preset is None:
             self.ops = HelperOptions(**preset.getCopy())
             return
@@ -216,6 +225,13 @@ class CombineHelper(object):
         else:
             for poi in self.dc_maker.getOperators(): pois.add(poi)
         return list(pois)
+
+    # Returns a list of systematics from the loaded datacard
+    def getSysts(self,keep=[]):
+        if not self.dc_reader.hasCard():
+            self.logger.error("Can't get systematics. No card has been loaded!")
+            raise RuntimeError
+        return self.dc_reader.getSysts(keep=keep)
 
     def setPOIRange(self,poi,lo,hi):
         self.poi_ranges[poi] = [lo,hi]
@@ -261,6 +277,7 @@ class CombineHelper(object):
     def hasWorkspace(self):
         return os.path.exists(self.getWorkspacePath())
 
+    # Change the current working directory
     def chdir(self,dir_path):
         if os.getcwd() == dir_path: return
         self.logger.info("Moving to: %s",dir_path)
@@ -323,10 +340,11 @@ class CombineHelper(object):
 
     # Modify an existing datacard, save it, then re-load it
     def modifyDatacard(self,new_card,remove_systs=[],add_systs=[],filter_bins=[]):
-        self.loadDatacard() # Try to load the default datacard (if we already loaded a card this does nothing)
+        # self.loadDatacard() # Try to load the default datacard (if we already loaded a card this does nothing)
         if not self.dc_reader.hasCard():
             self.logger.error("Unable to modify datacard. No card has been loaded!")
-            return
+            raise RuntimeError
+            # return
         old_card = self.ops.getOption('datacard_file')
         self.logger.info("Modifying datacard %s...",old_card)
         self.chdir(self.getOutputDirectory())
@@ -357,7 +375,7 @@ class CombineHelper(object):
         # overwrite: Whether or not the adjusted options should be kept after the runCombine call finishes
         # extend: If true, list type options will be extended instead of replaced
         if not overwrite:
-            tmp_ops = HelperOptions(**self.ops.getCopy())
+            orig_ops = HelperOptions(**self.ops.getCopy())
 
         self.setOptions(extend=extend,**kwargs)   # Adjust helper options on each call
         method = self.ops.getOption('method')
@@ -374,7 +392,7 @@ class CombineHelper(object):
             raise RuntimeError
 
         if not overwrite:
-            self.setOptions(preset=tmp_ops)
+            self.setOptions(preset=orig_ops)
 
     # Call DatacardMaker() to create the initial datacard text file
     def make_datacard(self):
@@ -500,6 +518,9 @@ class CombineHelper(object):
         redef_pois = self.ops.getOption('redefine_pois')
         param_vals = self.ops.getOption('parameter_values')
         pf_val     = self.ops.getOption('prefit_value')
+        is_robust  = self.ops.getOption('robust_fit')
+        save_fr    = self.ops.getOption('save_fitresult')
+        save_ws    = self.ops.getOption('save_workspace')
         other_ops  = self.ops.getOption('other_options')
 
         # pois   = self.dc_maker.getOperators()
@@ -518,9 +539,9 @@ class CombineHelper(object):
         if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
         if param_vals: args.extend(['--setParameters',','.join(param_vals)])
-        if self.ops.getOption('save_fitresult'): args.extend(['--saveFitResult'])
-        if self.ops.getOption('save_workspace'): args.extend(['--saveWorkspace'])
-        if self.ops.getOption('robust_fit'): args.extend(['--robustFit','1'])
+        if save_fr: args.extend(['--saveFitResult'])
+        if save_ws: args.extend(['--saveWorkspace'])
+        if is_robust: args.extend(['--robustFit','1'])
         if other_ops: args.extend([x for x in other_ops])
 
         self.logger.info("Combine command: %s", ' '.join(args))
@@ -549,27 +570,35 @@ class CombineHelper(object):
 
         self.cleanDirectory(self.getOutputDirectory(),remove=['^higgsCombine_paramFit_.*','^higgsCombine_initialFit_.*'])
 
-        ws_file    = self.ops.getOption('ws_file')
-        ws_type    = self.ops.getOption('ws_type')
-        method     = self.ops.getOption('method')
-        verb       = self.ops.getOption('verbosity')
-        mass       = self.ops.getOption('mass')
-        name       = self.ops.getOption('name')
-        frz_lst    = self.ops.getOption('freeze_parameters')
-        redef_pois = self.ops.getOption('redefine_pois')
-        auto_pois  = self.ops.getOption('auto_bounds_pois')
-        other_ops  = self.ops.getOption('other_options')    # Note: These options will be applied to both
-                                                            #       the '--doInitialFit' and '--doFits' steps
+        ws_file      = self.ops.getOption('ws_file')
+        ws_type      = self.ops.getOption('ws_type')
+        method       = self.ops.getOption('method')
+        verb         = self.ops.getOption('verbosity')
+        mass         = self.ops.getOption('mass')
+        name         = self.ops.getOption('name')
+        frz_lst      = self.ops.getOption('freeze_parameters')
+        redef_pois   = self.ops.getOption('redefine_pois')
+        auto_pois    = self.ops.getOption('auto_bounds_pois')
+        is_robust    = self.ops.getOption('robust_fit')
+        param_vals   = self.ops.getOption('parameter_values')   # Only for '--doInitialFit'
+        exclude_nuis = self.ops.getOption('exclude_nuisances')
+        other_ops    = self.ops.getOption('other_options')    # Note: These options will be applied to both
+                                                              #       the '--doInitialFit' and '--doFits' steps
+
+        pois   = self.getPOIs()
+        ranges = self.getPOIRangeStr(pois)
 
         # Do the initial fits
         args = ['combineTool.py','-M',method,'--doInitialFit']
         args.extend(['-d',ws_file,'-n',ws_type])
         args.extend(['-v','%d' % (verb),'-m','%d' % (mass)])
+        if self.ops.getOption('use_poi_ranges'): args.extend(['--setParameterRanges',ranges])
+        if param_vals: args.extend(['--setParameters',','.join(param_vals)])
         if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
         if auto_pois: args.extend(['--autoBoundsPOIs=%s' % (','.join(auto_pois))])
         if other_ops: args.extend([x for x in other_ops])
-        if self.ops.getOption('robust_fit'): args.extend(['--robustFit','1'])
+        if is_robust: args.extend(['--robustFit','1'])
         self.logger.info("Initial Fits command: %s", ' '.join(args))
         run_command(args)
 
@@ -577,11 +606,12 @@ class CombineHelper(object):
         args = ['combineTool.py','-M',method,'--doFits','--allPars']
         args.extend(['-d',ws_file,'-n',ws_type])
         args.extend(['-v','%d' % (verb),'-m','%d' % (mass)])
+        if exclude_nuis: args.extend(['--exclude',','.join(exclude_nuis)])
         if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
         if auto_pois: args.extend(['--autoBoundsPOIs=%s' % (','.join(auto_pois))])
         if other_ops: args.extend([x for x in other_ops])
-        if self.ops.getOption('robust_fit'): args.extend(['--robustFit','1'])
+        if is_robust: args.extend(['--robustFit','1'])
         self.logger.info("Do Fits command: %s", ' '.join(args))
         run_command(args)
 
@@ -589,6 +619,7 @@ class CombineHelper(object):
         args = ['combineTool.py','-M',method,'-o','impacts.json','--allPars']
         args.extend(['-d',ws_file,'-n',ws_type])
         args.extend(['-v','%d' % (verb),'-m','%d' % (mass)])
+        if exclude_nuis: args.extend(['--exclude',','.join(exclude_nuis)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
         self.logger.info("To JSON command: %s", ' '.join(args))
         run_command(args)
