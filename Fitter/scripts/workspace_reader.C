@@ -88,7 +88,7 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
         //"WWW","WWZ","WZZ","ZZZ",
         "Diboson","Triboson",
         //"singlet_tWchan","singletbar_tWchan",
-        "charge_flips","fakes","ttGJets",
+        "charge_flips","fakes","convs",
         "ttH","ttll","ttlnu","tllq","tHq"
     };
     std::vector<TString> sig_procs {"ttH","ttll","ttlnu","tllq","tHq"};
@@ -106,14 +106,14 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     TFile* ws_file        = TFile::Open(ws_fname);
     // TFile* limit_file     = TFile::Open(lim_fname);
     TFile* fr_prefit_file = TFile::Open(prefit_fname);
-    //TFile* fr_full_file   = TFile::Open(full_fname);
+    TFile* fr_full_file   = TFile::Open(full_fname);
     // TFile* fr_stat_file   = TFile::Open(stat_fname);
 
     // Workspace related objects
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
     // Fit Result related objects
     RooFitResult* fr_prefit = (RooFitResult*) fr_prefit_file->Get(fr_diagkey);
-    //RooFitResult* fr_full   = (RooFitResult*) fr_full_file->Get(fr_mdkey);
+    RooFitResult* fr_full   = (RooFitResult*) fr_full_file->Get(fr_mdkey);
     // RooFitResult* fr_stat   = (RooFitResult*) fr_stat_file->Get(fr_mdkey);
 
     //ws->Print("t");
@@ -196,7 +196,7 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     std::vector<TString> subcats_2lss {
         //"p_ee","p_emu","p_mumu",
         //"m_ee","m_emu","m_mumu",
-        "p","m"
+        "_p_","_m_"
     };
     std::vector<TString> subcats_3l_nsfz {
         //"ppp","mmm","mix"
@@ -250,6 +250,7 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     std::vector<RooAddition*> yields_all,yields_2lss,yields_3l,yields_3l_non_sfz,yields_3l_sfz,yields_4l;
     std::vector<RooAddition*> yields_2lss_p,yields_2lss_m,yields_3l_nsfz_p_1b,yields_3l_nsfz_m_1b,yields_3l_nsfz_p_2b,yields_3l_nsfz_m_2b,yields_3l_sfz_1b,yields_3l_sfz_2b;
     std::vector<RooAddition*> merged_yields,merged_2lss,merged_3l_nsfz,merged_3l_sfz,merged_4l;
+
     merged_2lss    = ws_helper.mergeSubCats(exp_2lss   ,"2lss",yield_procs,subcats_2lss);
     merged_3l_sfz  = ws_helper.mergeSubCats(exp_3l_sfz ,"3l"  ,yield_procs,subcats_3l_sfz);
     merged_3l_nsfz = ws_helper.mergeSubCats(exp_3l_nsfz,"3l"  ,yield_procs,subcats_3l_nsfz);
@@ -343,12 +344,12 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     RooArgSet prefit_pars_init  = fr_prefit->floatParsInit();
     RooArgSet prefit_pars_final = fr_prefit->floatParsFinal();
 
-    //RooArgSet postfit_pars_init  = fr_full->floatParsInit();
-    //RooArgSet postfit_pars_final = fr_full->floatParsFinal();
+    RooArgSet postfit_pars_init  = fr_full->floatParsInit();
+    RooArgSet postfit_pars_final = fr_full->floatParsFinal();
 
     ws->saveSnapshot("prefit_pars",prefit_pars_init,kTRUE);
     //ws->saveSnapshot("prefit_pars" ,postfit_pars_init,kTRUE);
-    //ws->saveSnapshot("postfit_pars",postfit_pars_final,kTRUE);
+    ws->saveSnapshot("postfit_pars",postfit_pars_final,kTRUE);
 
     //ws->saveSnapshot("pars_init" ,pars_init,kTRUE);
     //ws->saveSnapshot("pars_final",pars_final,kTRUE);
@@ -362,36 +363,36 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
     plot_maker.noratio = true;
     plot_maker.isfakedata = false;
     plot_maker.splitunc = false;
-    plot_maker.nodata = true;
+    plot_maker.nodata = false;
 
-    ws->loadSnapshot("prefit_pars");
+    //ws->loadSnapshot("prefit_pars");
     //plot_maker.makeYieldsPlot(merged_data,merged_yields   ,yield_procs,"yields_prefit_merged");
     //plot_maker.makeYieldsPlot(data_all,yields_all         ,yield_procs,"yields_prefit_all");
     //plot_maker.makeYieldsPlot(data_all,yields_2lss        ,yield_procs,"yields_prefit_2lss");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz      ,yield_procs,"yields_prefit_3l_sfz");
     //plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz  ,yield_procs,"yields_prefit_3l_non_sfz");
-    plot_maker.makeYieldsPlot(data_all,yields_2lss_p      ,yield_procs,"yields_prefit_2lss_p");
-    plot_maker.makeYieldsPlot(data_all,yields_2lss_m      ,yield_procs,"yields_prefit_2lss_m");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_p_1b,yield_procs,"yields_prefit_3l_nsfz_p_1b");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_m_1b,yield_procs,"yields_prefit_3l_nsfz_m_1b");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_p_2b,yield_procs,"yields_prefit_3l_nsfz_p_2b");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_m_2b,yield_procs,"yields_prefit_3l_nsfz_m_2b");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_sfz_1b   ,yield_procs,"yields_prefit_3l_sfz_1b");
-    plot_maker.makeYieldsPlot(data_all,yields_3l_sfz_2b   ,yield_procs,"yields_prefit_3l_sfz_2b");
-    plot_maker.makeYieldsPlot(data_all,yields_4l          ,yield_procs,"yields_prefit_4l");
+    //plot_maker.makeYieldsPlot(data_all,yields_2lss_p      ,yield_procs,"yields_prefit_2lss_p");
+    //plot_maker.makeYieldsPlot(data_all,yields_2lss_m      ,yield_procs,"yields_prefit_2lss_m");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_p_1b,yield_procs,"yields_prefit_3l_nsfz_p_1b");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_m_1b,yield_procs,"yields_prefit_3l_nsfz_m_1b");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_p_2b,yield_procs,"yields_prefit_3l_nsfz_p_2b");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_nsfz_m_2b,yield_procs,"yields_prefit_3l_nsfz_m_2b");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz_1b   ,yield_procs,"yields_prefit_3l_sfz_1b");
+    //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz_2b   ,yield_procs,"yields_prefit_3l_sfz_2b");
+    //plot_maker.makeYieldsPlot(data_all,yields_4l          ,yield_procs,"yields_prefit_4l");
 
     std::cout << line_break << std::endl;
 
-    // plot_maker.nodata = false;
-    //plot_maker.setFitResult(fr_full,fr_full);
+    plot_maker.nodata = false;
+    plot_maker.setFitResult(fr_full,fr_full);
 
-    //ws->loadSnapshot("postfit_pars");
-    //plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_postfit_merged");
-    //plot_maker.makeYieldsPlot(data_all,yields_all       ,yield_procs,"yields_postfit_all");
-    //plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
-    //plot_maker.makeYieldsPlot(data_all,yields_3l_sfz    ,yield_procs,"yields_postfit_3l_sfz");
-    //plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz,yield_procs,"yields_postfit_3l_non_sfz");
-    //plot_maker.makeYieldsPlot(data_all,yields_4l        ,yield_procs,"yields_postfit_4l");
+    ws->loadSnapshot("postfit_pars");
+    plot_maker.makeYieldsPlot(merged_data,merged_yields ,yield_procs,"yields_postfit_merged");
+    plot_maker.makeYieldsPlot(data_all,yields_all       ,yield_procs,"yields_postfit_all");
+    plot_maker.makeYieldsPlot(data_all,yields_2lss      ,yield_procs,"yields_postfit_2lss");
+    plot_maker.makeYieldsPlot(data_all,yields_3l_sfz    ,yield_procs,"yields_postfit_3l_sfz");
+    plot_maker.makeYieldsPlot(data_all,yields_3l_non_sfz,yield_procs,"yields_postfit_3l_non_sfz");
+    plot_maker.makeYieldsPlot(data_all,yields_4l        ,yield_procs,"yields_postfit_4l");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -400,15 +401,15 @@ void runit(TString ws_fname, TString lim_fname, TString prefit_fname, TString fu
 
 
 void workspace_reader() {
-    TString base_dir = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/fromTony/";
+    TString base_dir = "/afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter";
     TString tony_dir = "/afs/crc.nd.edu/user/a/alefeld/Public/ForAndrew/";
     //TString in_dir  = "src/EFTFit/Fitter/test/ana12asimov_dir/";
     TString in_dir  = "src/EFTFit/Fitter/test/anatest12_Jan18btagReqs/16D_AllSysts_AllFits_SMdata/";
 
     // Naming based on output from combine_helper.py
-    TString ws_fname    = "16D.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
+    TString ws_fname    = "EFTWorkspace.root";    // Made from text2workspace.py, which converts a datacard to a RooWorkspace
     TString limit_fname = "higgsCombinePostfit.MultiDimFit.mH120.root";  // Made by combine running on pre-fit workspace ('16D.root')
-    TString fr_prefit_fname = "fitDiagnosticsPrefit.root";
+    TString fr_prefit_fname = "fit_diagnostics/fitDiagnosticsPrefit.root";
     TString fr_full_fname = "multidimfitPostfit.root";
     TString fr_stat_fname = "multidimfitStats.root";
 
@@ -418,14 +419,14 @@ void workspace_reader() {
 
     // File names from Tony
     ws_fname = "SMWorkspace.root";
-    fr_full_fname = "multidimfit.SM.Private.Float.Oct9.FullJES.root";
+    fr_full_fname = "fit_files/higgsCombine.SM.Private.Float.12032019.MultiDimFit.root";
     // fr_full_fname = "multidimfit.SM.Central.Float.Oct9.FullJES.root";
 
     //TString ws_fpath     = base_dir + "SM_impacts_2019-10-10_1959_ana24_private_test_cminDefaultMinimizerStategy-0/" + ws_fname;
-    TString ws_fpath     = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/16DWorkspace.root";
+    TString ws_fpath     = "/afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/test/SMWorkspace.root";
     TString lim_fpath    = "";
-    TString prefit_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
-    TString full_fpath = "/afs/crc.nd.edu/user/a/alefeld/Private/EFT/CMSSW_8_1_0/src/EFTFit/Fitter/test/fitDiagnosticsEFTFD.root";
+    TString prefit_fpath = "/afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/test/fit_diagnostics/fitDiagnosticsEFT.root";
+    TString full_fpath = "/afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/fit_files/multidimfit.SM.Private.Float.12122019.root";
     //TString full_fpath   = tony_dir + fr_full_fname;
     //TString full_fpath   = "";
     TString stat_fpath   = "";

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include <stdio.h>
 
 #include "TString.h"
 #include "TIterator.h"
@@ -461,6 +462,8 @@ std::vector<RooAddition*> WSHelper::mergeSubCats(
                 }
                 RooAddition* merged_f = this->merge(cat_filter,name);
                 merged_subcats.push_back(merged_f);
+                //std::cout << name << " & " << merged_f->getVal() << std::endl;
+                printf("%s & %.2f\n", name.Data(), merged_f->getVal());
             }
         }
     }
