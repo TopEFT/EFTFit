@@ -481,6 +481,8 @@ class EFTPlot(object):
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
+        fit = self.getIntervalFits(name[:-len(''.join(wcs))-1],wcs)
+
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
         for xbin in range(original.GetNbinsX()):
@@ -523,6 +525,16 @@ class EFTPlot(object):
         marker_2.SetMarkerSize(1.2)
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
+ 
+        # Marker for EFT best fit
+        marker_3 = ROOT.TMarker()
+        marker_3.SetMarkerSize(2.0)
+        marker_3.SetMarkerColor(97)
+        marker_3.SetMarkerStyle(32)
+        marker_4 = ROOT.TMarker()
+        marker_4.SetMarkerSize(1.2)
+        marker_4.SetMarkerColor(89)
+        marker_4.SetMarkerStyle(32)
 
         # Change format of plot
         h_contour.SetStats(0)
@@ -551,6 +563,9 @@ class EFTPlot(object):
         c9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
         marker_2.DrawMarker(0,0)
+
+        marker_3.DrawMarker(fit[1][1],fit[0][1])
+        marker_4.DrawMarker(fit[1][1],fit[0][1])
 
         #c = [2.3, 6.18, 11.83]
         #original.SetContourLevel(0, c[0])
@@ -903,9 +918,12 @@ class EFTPlot(object):
 
                 canvas.Clear()
                 newmatrix.Draw('colz')
+                ROOT.gStyle.SetPaintTextFormat('.2f')
 
                 # Save the plot
                 canvas.Print(newmatrix.GetName()+'.png','png')
+                newmatrix.Draw('same text')
+                canvas.Print(newmatrix.GetName()+'text.png','png')
 
                 # Save the plot to the histogram file
                 outfile = ROOT.TFile(self.histosFileName,'UPDATE')

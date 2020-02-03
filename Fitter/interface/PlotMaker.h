@@ -51,6 +51,8 @@ class PlotMaker {
         RooWorkspace* ws;
         std::map<TString,LabelInfo*> proc_map;
 
+        TLatex *CMSInfoLatex;
+
         bool nodata;
         bool noratio;
         bool isfakedata;
@@ -101,6 +103,17 @@ PlotMaker::PlotMaker(RooWorkspace* ws,TString out_dir,TString ftype) {
     this->output_type = ftype;
     this->ws_helper   = WSHelper();
 
+
+    double lumi2017 = 41530;
+    double lumi = lumi2017 / 1000;
+    TString lumistr = TString::Format("%.1f",lumi);
+    TString cmsinfo = "CMS Preliminary  #sqrt{s} = 13 TeV, L = "+lumistr+" fb^{-1}";
+    this->CMSInfoLatex = new TLatex(0.48, 0.91, cmsinfo.Data());
+    this->CMSInfoLatex->SetNDC();
+    this->CMSInfoLatex->SetTextFont(42);
+    // this->CMSInfoLatex.SetTextSize(0.055);
+    this->CMSInfoLatex->SetTextSize(0.035);
+
     //this->proc_map["ttH"] = new LabelInfo("ttH","t#bar{t}H",kRed+1);
     this->proc_map["ttH"] = new LabelInfo("ttH","ttH",kRed+1);
     this->proc_map["ttll"] = new LabelInfo("ttll","ttll",kGreen+1);
@@ -118,6 +131,7 @@ PlotMaker::PlotMaker(RooWorkspace* ws,TString out_dir,TString ftype) {
     this->proc_map["ZZZ"] = new LabelInfo("ZZZ","ZZZ",kSpring+4);
     //this->proc_map["ttGJets"] = new LabelInfo("convs","Convs",kYellow+3);
     this->proc_map["ttGJets"] = new LabelInfo("convs","Convs",kGreen);
+    this->proc_map["convs"] = new LabelInfo("convs","Convs",kGreen);    // ttGJets got renamed to this starting with anatest24
     this->proc_map["singlet_tWchan"] = new LabelInfo("tW","tW",kMagenta+1);
     this->proc_map["singletbar_tWchan"] = new LabelInfo("tbarW","#bar{t}W",kMagenta+2);
     this->proc_map["Diboson"] = new LabelInfo("Diboson","Diboson",kMagenta);
@@ -150,14 +164,14 @@ void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr p
 
     std::vector<TString> bkg_procs {"charge_flips","fakes","ttGJets","WZ","ZZ","WW","WWW","WWZ","WZZ","ZZZ"};
     vRooAdd summed_yields = this->getSummedProcesses(yields,procs);
-    vRooAdd summed_bkg    = this->getSummedProcesses(yields,bkg_procs);
+    // vRooAdd summed_bkg    = this->getSummedProcesses(yields,bkg_procs);
 
     this->printObsData(data,cats);
     this->printSummedYields(summed_yields,cats);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    vTStr reps {"C_2lss_","C_3l_","C_4l_","m_2b_","p_2b_","mix_p_1b_","mix_m_1b_","mix_p_2b_","mix_m_2b_","mix_sfz_1b_","mix_sfz_2b_","2b_"};
+    vTStr reps {"C_2lss_","C_3l_","C_4l_","m_2b_","p_2b_","mix_p_1b_","mix_m_1b_","mix_p_2b_","mix_m_2b_","mix_sfz_1b_","mix_sfz_2b_","2b_","mix_"};
     //vTStr reps {"mix_sfz_","mix_","p_ee_","p_emu","p_mumu","m_ee_","m_emu","m_mumu"};
 
     std::vector<TH1*> proc_yields;
@@ -175,6 +189,8 @@ void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr p
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // TH1D* h_sum = this->getSummedYieldHistogram("yield_sum",summed_yields,cats);
 
     h_data->SetLineColor(1);
     h_data->SetLineWidth(2);
@@ -265,6 +281,9 @@ void PlotMaker::makeStackPlot(TString fname,TH1D* h_data,TH1* ratio,TH1* r_1sig,
         hs->SetTitle(hsname);
     }
 
+    title = ";;Events";
+    hs->SetTitle(title);
+
     canv->cd(1);
 
     hs->Draw("hist");
@@ -304,6 +323,7 @@ void PlotMaker::makeStackPlot(TString fname,TH1D* h_data,TH1* ratio,TH1* r_1sig,
         latex_label->Draw();
     }
 
+    this->CMSInfoLatex->Draw();
     d_leg->Draw();
 
     if (include_ratio) {
@@ -486,8 +506,12 @@ TH1D* PlotMaker::getErrorHistogram(TString hname, vRooAdd yields, vTStr cats, Ro
         int bin_idx = cat_idx + 1;  // Histogram bins are offset by 1, since idx 0 is underflow bin
 
         double mc_central = yields.at(cat_idx)->getVal();
-        double err = yields.at(cat_idx)->getPropagatedError(*(fr));
-
+        double err = 0.0;
+        if (fr) {
+            err = yields.at(cat_idx)->getPropagatedError(*(fr));
+        } else {
+            std::cout << "[WARNING] No RooFitResult object given --> Setting bin error to 0 for " << cat << std::endl;
+        }
         h_err->SetBinContent(bin_idx,mc_central);
         h_err->SetBinError(bin_idx,err);
     }
