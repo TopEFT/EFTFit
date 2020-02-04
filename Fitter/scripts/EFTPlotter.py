@@ -481,8 +481,6 @@ class EFTPlot(object):
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
-        fit = self.getIntervalFits(name[:-len(''.join(wcs))-1],wcs)
-
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
         for xbin in range(original.GetNbinsX()):
@@ -526,16 +524,6 @@ class EFTPlot(object):
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
  
-        # Marker for EFT best fit
-        marker_3 = ROOT.TMarker()
-        marker_3.SetMarkerSize(2.0)
-        marker_3.SetMarkerColor(97)
-        marker_3.SetMarkerStyle(32)
-        marker_4 = ROOT.TMarker()
-        marker_4.SetMarkerSize(1.2)
-        marker_4.SetMarkerColor(89)
-        marker_4.SetMarkerStyle(32)
-
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
@@ -563,9 +551,6 @@ class EFTPlot(object):
         c9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
         marker_2.DrawMarker(0,0)
-
-        marker_3.DrawMarker(fit[1][1],fit[0][1])
-        marker_4.DrawMarker(fit[1][1],fit[0][1])
 
         #c = [2.3, 6.18, 11.83]
         #original.SetContourLevel(0, c[0])
@@ -996,7 +981,7 @@ class EFTPlot(object):
                 if filename.endswith('contour.png') or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
-    def getIntervalFits(self, basename='.EFT.SM.Float', params=[]):
+    def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
         ### Return a table of parameters, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
         if not params:
@@ -1047,9 +1032,12 @@ class EFTPlot(object):
 
             # Extract 2-sig certainty intervals and save WC value of minumum
             lowedges=[]
+            l1sigma=[]
             highedges=[]
+            h1sigma=[]
             true_minimum = -1000
             prevnll = 1000
+            prevnll1 = 1000
             for idx,coord in enumerate(coords):
                 wc,nll = coord[0],coord[1]
                 # Did we cross a low edge?
@@ -1067,17 +1055,35 @@ class EFTPlot(object):
                     cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     highedges.append(cross)
                 # Is this the best fit?
+                if prevnll>2 and 2>nll:
+                    #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
+                    interval = prevnll-nll
+                    linPctInterp = (prevnll-2)/interval
+                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
+                    l1sigma.append(cross)
+                # Did we cross a high edge?
+                if prevnll<2 and 2<nll:
+                    #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
+                    interval = nll-prevnll
+                    linPctInterp = (2-prevnll)/interval
+                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
+                    h1sigma.append(cross)
+                # Is this the best fit?
                 if nll == min(nll_values):
                     true_minimum = wc
                 # Continue
                 prevnll = nll
             if not len(lowedges) == len(highedges):
                 logging.error("Something is strange! Interval is missing endpoint!")
+            if not len(l1sigma) == len(h1sigma):
+                logging.error("Something is strange! Interval is missing endpoint!")
             ## uncomment for 2 decimal place printing for AN
             #true_minimum = '%.2f' % float(true_minimum)
             #lowedges = ['%.2f' % elem for elem in lowedges]
             #highedges = ['%.2f' % elem for elem in highedges]
-            fit_array.append([param,true_minimum,lowedges,highedges])
+            if siginterval==2: fit_array.append([param,true_minimum,lowedges,highedges])
+            elif siginterval==1: fit_array.append([param,true_minimum,l1sigma,h1sigma])
+            else: fit_array.append([param,true_minimum,lowedges,highedges])
 
         for line in fit_array:
             print line
@@ -1097,6 +1103,8 @@ class EFTPlot(object):
         fits_float = self.getIntervalFits(basename_float)
         fits_freeze = self.getIntervalFits(basename_freeze)
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
+        fits_float1sigma = self.getIntervalFits(basename_float,siginterval=1)
+        fits_freeze1sigma = self.getIntervalFits(basename_freeze,siginterval=1)
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
@@ -1121,6 +1129,50 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
+            if line[0]=='ctG':
+                line[0] = 'ctG#times10'
+                line[1] = line[1]*10
+                line[2] = [val*10 for val in line[2]]
+                line[3] = [val*10 for val in line[3]]
+            if line[0]=='ctp':
+                line[0] = 'ctp#divide5'
+                line[1] = line[1]/5
+                line[2] = [val/5 for val in line[2]]
+                line[3] = [val/5 for val in line[3]]
+            if line[0]=='cpt':
+                line[0] = 'cpt#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
+            if line[0]=='cpQM':
+                line[0] = 'cpQM#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
+
+        for idx,line in enumerate(fits_float1sigma):
+            if line[0]=='ctG':
+                line[0] = 'ctG#times10'
+                line[1] = line[1]*10
+                line[2] = [val*10 for val in line[2]]
+                line[3] = [val*10 for val in line[3]]
+            if line[0]=='ctp':
+                line[0] = 'ctp#divide5'
+                line[1] = line[1]/5
+                line[2] = [val/5 for val in line[2]]
+                line[3] = [val/5 for val in line[3]]
+            if line[0]=='cpt':
+                line[0] = 'cpt#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
+            if line[0]=='cpQM':
+                line[0] = 'cpQM#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
+
+        for idx,line in enumerate(fits_freeze1sigma):
             if line[0]=='ctG':
                 line[0] = 'ctG#times10'
                 line[1] = line[1]*10
@@ -1223,6 +1275,43 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
                 lines_float[-1].SetLineColor(1)
+        lines_float_1sigma = []
+        for idx,fittuple in enumerate(fits_float1sigma):
+            for imin,imax in zip(fittuple[2],fittuple[3]):
+                xmin = imin
+                xmax = imax
+                # If a segment ends below the left edge
+                if xmax < h_fit.GetXaxis().GetXmin():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
+                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins above the right edge
+                if xmin > h_fit.GetXaxis().GetXmax():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
+                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins below the left edge
+                if xmin < h_fit.GetXaxis().GetXmin():
+                    min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
+                    min_label.SetTextSize(0.03)
+                    min_label.SetTextColor(1)
+                    lines_labels.append(min_label)
+                    xmin = h_fit.GetXaxis().GetXmin()
+                # If a segment ends above the right edge
+                if xmax > h_fit.GetXaxis().GetXmax():
+                    max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
+                    max_label.SetTextSize(0.03)
+                    max_label.SetTextColor(1)
+                    max_label.SetTextAlign(30)
+                    lines_labels.append(max_label)
+                    xmax = h_fit.GetXaxis().GetXmax()
+                lines_float_1sigma.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
+                lines_float_1sigma[-1].SetLineColor(1)
+                lines_float_1sigma[-1].SetLineWidth(3)
 
 
         lines_freeze = []
@@ -1261,6 +1350,43 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
                 lines_freeze[-1].SetLineColor(2)
+        lines_freeze_1sigma = []
+        for idx,fittuple in enumerate(fits_freeze1sigma):
+            for imin,imax in zip(fittuple[2],fittuple[3]):
+                xmin = imin
+                xmax = imax
+                # If a segment ends below the left edge
+                if xmax < h_fit.GetXaxis().GetXmin():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
+                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins above the right edge
+                if xmin > h_fit.GetXaxis().GetXmax():
+                    outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
+                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerSize(2)
+                    lines_labels.append(outside_label)
+                    continue # Don't attempt to draw the line!
+                # If a segment begins below the left edge
+                if xmin < h_fit.GetXaxis().GetXmin():
+                    min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
+                    min_label.SetTextSize(0.03)
+                    min_label.SetTextColor(2)
+                    lines_labels.append(min_label)
+                    xmin = h_fit.GetXaxis().GetXmin()
+                # If a segment ends above the right edge
+                if xmax > h_fit.GetXaxis().GetXmax():
+                    max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
+                    max_label.SetTextSize(0.03)
+                    max_label.SetTextColor(2)
+                    max_label.SetTextAlign(30)
+                    lines_labels.append(max_label)
+                    xmax = h_fit.GetXaxis().GetXmax()
+                lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
+                lines_freeze_1sigma[-1].SetLineColor(2)
+                lines_freeze_1sigma[-1].SetLineWidth(3)
 
         # Add legend
         legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
@@ -1280,11 +1406,15 @@ class EFTPlot(object):
 
         # Draw everything
         h_fit.Draw()
-        graph_float.Draw('P same')
-        graph_freeze.Draw('P same')
+        #graph_float.Draw('P same')
+        #graph_freeze.Draw('P same')
         for line in lines_float:
             line.Draw('same')
         for line in lines_freeze:
+            line.Draw('same')
+        for line in lines_float_1sigma:
+            line.Draw('same')
+        for line in lines_freeze_1sigma:
             line.Draw('same')
         for label in lines_labels:
             label.Draw('same')
