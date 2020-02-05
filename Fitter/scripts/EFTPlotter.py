@@ -1055,17 +1055,17 @@ class EFTPlot(object):
                     cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     highedges.append(cross)
                 # Is this the best fit?
-                if prevnll>2 and 2>nll:
+                if prevnll>1 and 1>nll:
                     #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = prevnll-nll
                     linPctInterp = (prevnll-2)/interval
                     cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     l1sigma.append(cross)
                 # Did we cross a high edge?
-                if prevnll<2 and 2<nll:
+                if prevnll<1 and 1<nll:
                     #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = nll-prevnll
-                    linPctInterp = (2-prevnll)/interval
+                    linPctInterp = (1-prevnll)/interval
                     cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     h1sigma.append(cross)
                 # Is this the best fit?
