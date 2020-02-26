@@ -26,6 +26,7 @@ class EFTPlot(object):
                             'cpQ3':(-20,12), 'cbW':(-10,10)
                          }
         self.histosFileName = 'Histos.root'
+        self.texdic = {'ctW': 'c_{tW}', 'ctZ': 'c_{tZ}', 'ctp': 'c_{t#varphi }', 'cpQM': 'c^{-}_{#varphi Q}', 'ctG': 'c_{tG}', 'cbW': 'c_{bW}', 'cpQ3': 'c^{3(l)}_{#varphi Q}', 'cptb': 'c_{#varphi tb}', 'cpt': 'c_{#varphi t}', 'cQl3': 'c^{3(l)}_{Ql}', 'cQlM': 'c^{-(l)}_{Ql}', 'cQe': 'c^{(l)}_{Qe}', 'ctl': 'c^{(l)}_{tl}', 'cte': 'c^{(l)}_{te}', 'ctlS': 'c^{S(l)}_{t}', 'ctlT': 'c^{T(l)}_{t}'}
 
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
@@ -1204,11 +1205,11 @@ class EFTPlot(object):
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
         if 'Asimov' not in basename_float:
-            canvas = ROOT.TCanvas('canvas','Summary Plot (Unblinded)',500,800)
+            canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
         if 'Asimov' not in basename_float:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot (Unblinded)', 1, -20, 20, 65, 0, 64)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 65, 0, 64)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1218,7 +1219,16 @@ class EFTPlot(object):
         # Add y-axis labels
         y_labels = []
         for idy,yval in enumerate(y_float):
-            y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,fits_float[idy][0].rstrip('i')))
+            tex = fits_float[idy][0].rstrip('i')
+            scale = ''
+            if 'divide' in tex:
+                scale = tex[tex.find('#divide'):]
+                tex = tex[0:tex.find('#divide')]
+            if 'times' in tex:
+                scale = tex[tex.find('#times'):]
+                tex = tex[0:tex.find('#times')]
+            tex = self.texdic[tex]
+            y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
             y_labels[idy].SetTextAlign(20)
             y_labels[idy].SetTextSize(0.03)
             if fits_float[idy][0]=='cpQM#divide2': y_labels[idy].SetTextSize(0.025)
@@ -1390,8 +1400,8 @@ class EFTPlot(object):
 
         # Add legend
         legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
-        legend.AddEntry(graph_float,"Others Floating",'p')
-        legend.AddEntry(graph_freeze,"Others Frozen to SM",'p')
+        legend.AddEntry(graph_float,"Others Profiled",'p')
+        legend.AddEntry(graph_freeze,"Others Fixed to SM",'p')
         legend.SetTextSize(0.025)
 
         # CMS-required text
