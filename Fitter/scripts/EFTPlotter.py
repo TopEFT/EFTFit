@@ -26,7 +26,7 @@ class EFTPlot(object):
                             'cpQ3':(-20,12), 'cbW':(-10,10)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': 'c_{tW}', 'ctZ': 'c_{tZ}', 'ctp': 'c_{t#varphi }', 'cpQM': 'c^{-}_{#varphi Q}', 'ctG': 'c_{tG}', 'cbW': 'c_{bW}', 'cpQ3': 'c^{3(l)}_{#varphi Q}', 'cptb': 'c_{#varphi tb}', 'cpt': 'c_{#varphi t}', 'cQl3': 'c^{3(l)}_{Ql}', 'cQlM': 'c^{-(l)}_{Ql}', 'cQe': 'c^{(l)}_{Qe}', 'ctl': 'c^{(l)}_{tl}', 'cte': 'c^{(l)}_{te}', 'ctlS': 'c^{S(l)}_{t}', 'ctlT': 'c^{T(l)}_{t}'}
+        self.texdic = {'ctW': 'c_{tW}', 'ctZ': 'c_{tZ}', 'ctp': 'c_{t#varphi}', 'cpQM': 'c^{-}_{#varphiQ}', 'ctG': 'c_{tG}', 'cbW': 'c_{bW}', 'cpQ3': 'c^{3(l)}_{#varphiQ}', 'cptb': 'c_{#varphitb}', 'cpt': 'c_{#varphit}', 'cQl3': 'c^{3(l)}_{Ql}', 'cQlM': 'c^{-(l)}_{Ql}', 'cQe': 'c^{(l)}_{Qe}', 'ctl': 'c^{(l)}_{tl}', 'cte': 'c^{(l)}_{te}', 'ctlS': 'c^{S(l)}_{t}', 'ctlT': 'c^{T(l)}_{t}'}
 
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
@@ -432,8 +432,8 @@ class EFTPlot(object):
         hist.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(wcs[0].rstrip('i'))
-        hist.GetXaxis().SetTitle(wcs[1].rstrip('i'))
+        hist.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
+        hist.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
         hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
@@ -511,6 +511,13 @@ class EFTPlot(object):
         self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
         self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
         self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue-2,3,1)
+        #place holders for the legend, since TLine is weird
+        hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
+        hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
+        hc997 = ROOT.TH1F('c997', 'c68', 1, 0, 1)
+        hc68.SetLineColor(ROOT.kYellow+1)
+        hc95.SetLineColor(ROOT.kCyan-2)
+        hc997.SetLineColor(ROOT.kBlue-2)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
         self.ContourHelper.styleMultiGraph(c9971D,ROOT.kBlue-2,1,3)
@@ -528,8 +535,8 @@ class EFTPlot(object):
         # Change format of plot
         h_contour.SetStats(0)
         h_contour.SetTitle("Significance Contours")
-        h_contour.GetYaxis().SetTitle(wcs[0].rstrip('i'))
-        h_contour.GetXaxis().SetTitle(wcs[1].rstrip('i'))
+        h_contour.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
+        h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -547,9 +554,9 @@ class EFTPlot(object):
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
-        c681D.Draw('L SAME')
-        c951D.Draw('L SAME')
-        c9971D.Draw('L SAME')
+        #C681D.Draw('L SAME')
+        #C951D.Draw('L SAME')
+        #C9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
         marker_2.DrawMarker(0,0)
 
@@ -565,6 +572,14 @@ class EFTPlot(object):
         #marker_1.DrawMarker(0,0)
         #marker_2.DrawMarker(0,0)
 
+
+        legend = ROOT.TLegend(0.1,0.9,0.35,0.945)
+        legend.AddEntry(hc68,"1#sigma",'l')
+        legend.AddEntry(hc95,"2#sigma",'l')
+        legend.AddEntry(hc997,"3#sigma",'l')
+        legend.SetTextSize(0.025)
+        legend.SetNColumns(3)
+        legend.Draw('same')
         CMS_text.Draw('same')
         Lumi_text.Draw('same')
         canvas.SetGrid()
@@ -1239,12 +1254,14 @@ class EFTPlot(object):
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(1)
+        graph_float.SetLineColor(1)
 
         graph_freeze = ROOT.TGraph()
         graph_freeze = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(2)
+        graph_freeze.SetLineColor(2)
 
         # Add lines for the errors, but print the value if line would go off the pad
         lines_labels = []
@@ -1400,8 +1417,8 @@ class EFTPlot(object):
 
         # Add legend
         legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
-        legend.AddEntry(graph_float,"Others Profiled",'p')
-        legend.AddEntry(graph_freeze,"Others Fixed to SM",'p')
+        legend.AddEntry(graph_float,"Others Profiled",'l')
+        legend.AddEntry(graph_freeze,"Others Fixed to SM",'l')
         legend.SetTextSize(0.025)
 
         # CMS-required text
