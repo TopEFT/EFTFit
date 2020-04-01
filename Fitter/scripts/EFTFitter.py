@@ -160,10 +160,12 @@ class EFTFit(object):
     def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
         CMSSW_BASE = os.getenv('CMSSW_BASE')
+        if params_POI == []:
+            params_POI = self.wcs
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if name:              args.extend(['-n','{}'.format(name)])
-        if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
-        args.extend(['--trackParameters',','.join([wc for wc in self.wcs if wc not in scan_params])])
+        if params_POI:     args.extend(['-P',' -P '.join(params_POI)]) # Preserves constraints
+        args.extend(['--trackParameters',','.join([wc for wc in self.wcs if wc not in params_POI])])
         if startValuesString: args.extend(['--setParameters',startValuesString])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if autoBounds:        args.extend(['--autoBoundsPOIs=*'])
@@ -186,7 +188,7 @@ class EFTFit(object):
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
