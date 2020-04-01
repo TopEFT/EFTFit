@@ -25,8 +25,11 @@ class EFTPlot(object):
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-20,12), 'cbW':(-10,10)
                          }
+        self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
+                         }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': 'c_{tW}', 'ctZ': 'c_{tZ}', 'ctp': 'c_{t#varphi}', 'cpQM': 'c^{-}_{#varphiQ}', 'ctG': 'c_{tG}', 'cbW': 'c_{bW}', 'cpQ3': 'c^{3(l)}_{#varphiQ}', 'cptb': 'c_{#varphitb}', 'cpt': 'c_{#varphit}', 'cQl3': 'c^{3(l)}_{Ql}', 'cQlM': 'c^{-(l)}_{Ql}', 'cQe': 'c^{(l)}_{Qe}', 'ctl': 'c^{(l)}_{tl}', 'cte': 'c^{(l)}_{te}', 'ctlS': 'c^{S(l)}_{t}', 'ctlT': 'c^{T(l)}_{t}'}
+        self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2}', 'ctZ': '#it{c}_{tZ}/#Lambda^{2}', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2}', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2}', 'ctG': '#it{c}_{tG}/#Lambda^{2}', 'cbW': '#it{c}_{bW}/#Lambda^{2}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2}', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2}', 'cpt': '#it{c}_{#varphit}/#Lambda^{2}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2}', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2}', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2}', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2}', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2}', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2}', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2}'}
+        #self.texdic = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
 
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
@@ -213,6 +216,7 @@ class EFTPlot(object):
         Title.SetTextAlign(20)
         Title.Draw('same')
         multigraph.GetXaxis().SetTitle(wc)
+        multigraph.GetXaxis().SetTitle(self.texdic[wc.rstrip('i')])
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
@@ -549,6 +553,9 @@ class EFTPlot(object):
         Lumi_text.SetTextAlign(30)
 
         # Draw and save plot
+        h_contour.GetXaxis().SetTitleOffset(1)
+        h_contour.GetYaxis().SetTitleOffset(1.2)
+        #h_contour.GetYaxis().SetNdivisions(5)
         h_contour.Draw('AXIS')
         #canvas.Print('contour.png','png')
         c68.Draw('L SAME')
@@ -771,10 +778,11 @@ class EFTPlot(object):
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,params[0],params[1]), '', 'prof colz')
+        #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,params[0],params[1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(150,{},{},150,{},{})'.format(minZ,params[0],params[1],self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1]), '', 'prof colz')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(params[0],params[1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',200,0,15,200,0,15)
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',150,self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],150,self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1])
 
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
@@ -793,8 +801,8 @@ class EFTPlot(object):
         #h_contour.SetContour(200)
         #h_contour.GetZaxis().SetRangeUser(0,21);
         #h_contour.GetXaxis().SetRangeUser(0,6); # ttH
-        h_contour.GetXaxis().SetRangeUser(0,4); # tllq
-        h_contour.GetYaxis().SetRangeUser(0,3); # tll, tllnu
+        #h_contour.GetXaxis().SetRangeUser(0,4); # tllq
+        #h_contour.GetYaxis().SetRangeUser(0,3); # tll, tllnu
         #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
 
@@ -818,23 +826,23 @@ class EFTPlot(object):
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
-        simulFit = ROOT.TMarker(0.96,1.11,20) # tllq,ttll
-        #simulFit = ROOT.TMarker(2.58,0.70,20) # ttH,ttlnu
+        #simulFit = ROOT.TMarker(0.96,1.11,20) # tllq,ttll
+        simulFit = ROOT.TMarker(2.58,0.70,20) # ttH,ttlnu
         # Central Fit Marker -- use as needed
         centralFit = ROOT.TGraphAsymmErrors(1)
-        centralFit.SetPoint(0,0.58,1.24) # tllq,ttll
-        centralFit.SetPointError(0,0.54,0.61,0.24,0.31) # tllq,ttll
-        #centralFit.SetPoint(0,2.56,0.84) # ttH,ttlnu
-        #centralFit.SetPointError(0,0.72,0.87,0.36,0.43) # ttH,ttlnu
+        #centralFit.SetPoint(0,0.58,1.24) # tllq,ttll
+        #centralFit.SetPointError(0,0.54,0.61,0.24,0.31) # tllq,ttll
+        centralFit.SetPoint(0,2.56,0.84) # ttH,ttlnu
+        centralFit.SetPointError(0,0.72,0.87,0.36,0.43) # ttH,ttlnu
         centralFit.SetMarkerSize(2)
         centralFit.SetMarkerStyle(6)
         centralFit.SetLineColor(2)
         # Dedicated Fit Marker -- use as needed
         dedicatedFit = ROOT.TGraphAsymmErrors(1)
-        dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
-        dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
-        #dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
-        #dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
+        #dedicatedFit.SetPoint(0,1.01,1.28) # tZq,ttZ
+        #dedicatedFit.SetPointError(0,0.21,0.23,0.13,0.14) # tZq,ttZ
+        dedicatedFit.SetPoint(0,0.75,1.23) # ttH,ttW
+        dedicatedFit.SetPointError(0,0.43,0.46,0.28,0.31) # ttH,ttW
         dedicatedFit.SetMarkerSize(2)
         dedicatedFit.SetMarkerStyle(6)
         dedicatedFit.SetLineColor(8)
@@ -940,6 +948,8 @@ class EFTPlot(object):
                 else:
                     matrix.GetYaxis().SetRange(1,16)
                     matrix.GetXaxis().SetRange(nbins-15,nbins)
+                    matrix.GetYaxis().SetRangeUser(12,27)
+                    matrix.GetXaxis().SetRangeUser(52,67)
 
                 # Change format of plot
                 matrix.SetStats(0)
@@ -952,6 +962,55 @@ class EFTPlot(object):
                 outfile = ROOT.TFile(self.histosFileName,'UPDATE')
                 matrix.Write()
                 outfile.Close()
+
+    def grid2DWC(self, name='', wc='', fits=[]):
+
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas()
+
+        # Get limit tree
+        fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(name,wc))
+        limit_tree = fit_file.Get('limit')
+
+        def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+            return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+        # Fined event with minimum NLL
+        min_val = 0
+        wc_values = []
+        for entry in range(limit_tree.GetEntries()):
+            limit_tree.GetEntry(entry)
+            #min_values.append((entry,2*limit_tree.GetLeaf('deltaNLL').GetValue(0)))
+            if limit_tree.GetLeaf(wc).GetValue(0) == fits[wc]: min_val = entry
+
+        # Load other 15 WCs in the minimum entry
+        best_vals = []
+        for w in self.wcs:
+            limit_tree.GetEntry(min_val)
+            if w == wc:
+                best_vals.append([w, str(limit_tree.GetLeaf(w).GetValue(0))])
+            else:
+                best_vals.append([w, str(limit_tree.GetLeaf('trackedParam_' + w).GetValue(0))])
+
+        # Close files
+        fit_file.Close()
+        return best_vals
+
+    def batchGrid2DWC(self, name=''):
+        best = []
+
+        fits_float = self.getIntervalFits(name)
+        fits = {lst[0] : lst[1] for lst in fits_float}
+
+        for wc in self.wcs:
+            best.append(self.grid2DWC(name, wc, fits))
+
+        j=0
+        for i in range(0, len(self.wcs)):
+            if i ==0: print '  '.join(self.wcs)
+            lst = [str(round(float(w[1]), 3)) for w in best[i]]
+            print best[i][j][0], ' '.join(lst)
+            j = j + 1
 
     def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW']):
         ROOT.gROOT.SetBatch(True)
@@ -1102,7 +1161,10 @@ class EFTPlot(object):
             else: fit_array.append([param,true_minimum,lowedges,highedges])
 
         for line in fit_array:
-            print line
+            pline = line[:]
+            if pline[0][-1] == 'i': pline[0] = pline[0][:-1] 
+            pline[0] = self.texdic[pline[0]]
+            print pline
 
         return fit_array
 
@@ -1416,9 +1478,15 @@ class EFTPlot(object):
                 lines_freeze_1sigma[-1].SetLineWidth(3)
 
         # Add legend
-        legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
-        legend.AddEntry(graph_float,"Others Profiled",'l')
-        legend.AddEntry(graph_freeze,"Others Fixed to SM",'l')
+        legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
+        legend.AddEntry(graph_float,"Others Profiled (2#sigma)",'l')
+        legend.AddEntry(graph_freeze,"Others Fixed to SM (2#sigma)",'l')
+        graph_float_1sigma = graph_float.Clone("graph_float_1sigma")
+        graph_freeze_1sigma = graph_freeze.Clone("graph_freeze_1sigma")
+        graph_float_1sigma.SetLineWidth(3)
+        graph_freeze_1sigma.SetLineWidth(3)
+        legend.AddEntry(graph_float_1sigma,"Others Profiled (1#sigma)",'l')
+        legend.AddEntry(graph_freeze_1sigma,"Others Fixed to SM (1#sigma)",'l')
         legend.SetTextSize(0.025)
 
         # CMS-required text
