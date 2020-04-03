@@ -78,6 +78,11 @@ class EFTFit(object):
         ### Multidimensional fit ###
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
+        if freeze:
+            params_all=['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
+            fit=list(set(params_all) - set(freeze))
+            name += '.'
+            name += '.'.join(fit)
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
         if other:       args.extend(other)
@@ -188,7 +193,7 @@ class EFTFit(object):
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=2']
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
