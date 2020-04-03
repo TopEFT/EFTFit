@@ -17,19 +17,31 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
-                            'cpt':(-40,30),  'ctp':(-35,65),
-                            'ctli':(-20,20), 'ctlSi':(-22,22),
-                            'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),  'ctei':(-20,20),
+                            'cpt':(-39,29),  'ctp':(-35,65),
+                            'ctli':(-19,19), 'ctlSi':(-22,22),
+                            'cQl3i':(-19,19),'cptb':(-39,39),
+                            'ctG':(-2.9,2.9),    'cpQM':(-30,50),  
+                            'ctlTi':(-4,4),  'ctei':(-19,19),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
-                            'cpQ3':(-20,12), 'cbW':(-10,10)
+                            'cpQ3':(-19,12), 'cbW':(-9,9)
                          }
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
         self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2}', 'ctZ': '#it{c}_{tZ}/#Lambda^{2}', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2}', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2}', 'ctG': '#it{c}_{tG}/#Lambda^{2}', 'cbW': '#it{c}_{bW}/#Lambda^{2}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2}', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2}', 'cpt': '#it{c}_{#varphit}/#Lambda^{2}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2}', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2}', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2}', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2}', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2}', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2}', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2}'}
-        #self.texdic = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
+        self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
+        self.texdicrev = {v: k for k,v in self.texdic.items()}
+
+        # CMS-required text
+        self.CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.04)
+        self.CMS_text.SetTextAlign(30)
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.04)
+        self.Lumi_text.SetTextAlign(30)
+
 
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
@@ -68,11 +80,11 @@ class EFTPlot(object):
         # Squeeze X down to whatever range captures the float points
         xmin = self.wc_ranges[wc][1]
         xmax = self.wc_ranges[wc][0]
-        for idx in range(graph.GetN()):
-            if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
-                xmin = graph.GetX()[idx]
-            if graph.GetY()[idx] < 10 and graph.GetX()[idx] > xmax:
-                xmax = graph.GetX()[idx]
+        #for idx in range(graph.GetN()):
+        #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
+        #        xmin = graph.GetX()[idx]
+        #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] > xmax:
+        #        xmax = graph.GetX()[idx]
         graph.GetXaxis().SetRangeUser(xmin,xmax)
         graph.GetYaxis().SetRangeUser(-0.1,10)
 
@@ -109,12 +121,12 @@ class EFTPlot(object):
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
         Lumi_text.SetTextAlign(30)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
         if log:
@@ -139,7 +151,10 @@ class EFTPlot(object):
 
         ROOT.gROOT.SetBatch(True)
 
-        canvas = ROOT.TCanvas()
+        canvas = ROOT.TCanvas('canvas', 'canvas', 700, 530)
+        p1 = ROOT.TPad('p1', 'p1', 0, 0.05, 1.0, 1.0)
+        p1.Draw()
+        p1.cd()
 
         # Get scan trees
         rootFile1 = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name1))
@@ -174,6 +189,11 @@ class EFTPlot(object):
         multigraph.Add(graph1)
         multigraph.Add(graph2)
         multigraph.Draw("AP")
+        multigraph.GetXaxis().SetLabelSize(0.05)
+        multigraph.GetYaxis().SetLabelSize(0.05)
+        multigraph.GetXaxis().SetTitleSize(0.05)
+        multigraph.GetXaxis().SetTitleOffset(0.8)
+        #multigraph.GetXaxis().SetNdivisions(7)
 
         # Squeeze X down to whatever range captures the float points
         xmin = self.wc_ranges[wc][1]
@@ -197,6 +217,7 @@ class EFTPlot(object):
 
         #Add 1-sigma and 2-sigma lines. (Vertical lines were too hard, sadly)
         canvas.SetGrid(1)
+        p1.SetGrid(1)
 
         line68 = ROOT.TLine(xmin,1,xmax,1)
         line68.Draw('same')
@@ -214,21 +235,35 @@ class EFTPlot(object):
         Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
-        Title.Draw('same')
-        multigraph.GetXaxis().SetTitle(wc)
-        multigraph.GetXaxis().SetTitle(self.texdic[wc.rstrip('i')])
+        #Title.Draw('same')
+        #multigraph.GetXaxis().SetTitle(wc)
+        #multigraph.GetXaxis().SetTitle(self.texdic[wc.rstrip('i')])
+        XTitle = ROOT.TLatex(0.85, 0.01, self.texdic[wc.rstrip('i')])
+        XTitle.SetNDC(1)
+        XTitle.SetTextAlign(20)
+        XTitle.SetTextFont(42)
+        canvas.cd()
+        XTitle.Draw('same')
 
         # CMS-required text
         CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
         Lumi_text.SetTextAlign(30)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
+
+        # Lgend
+        legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
+        legend.AddEntry(graph1,"Others Profiled (2#sigma)",'p')
+        legend.AddEntry(graph2,"Others Fixed to SM (2#sigma)",'p')
+        legend.SetTextSize(0.035)
+        legend.SetNColumns(1)
+        legend.Draw('same')
 
         #Check log option, then save as image
         if log:
@@ -335,12 +370,12 @@ class EFTPlot(object):
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
         Lumi_text.SetTextAlign(30)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
         if log:
@@ -445,11 +480,11 @@ class EFTPlot(object):
         CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         # Save plot
         canvas.Print(hname+".png",'png')
@@ -535,27 +570,35 @@ class EFTPlot(object):
         marker_2.SetMarkerSize(1.2)
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
+        hSM = ROOT.TH1F('SM', 'SM', 1, 0, 1)
+        hSM.SetMarkerStyle(33)
+        hSM.SetMarkerColor(97)
  
         # Change format of plot
         h_contour.SetStats(0)
-        h_contour.SetTitle("Significance Contours")
+        #h_contour.SetTitle("Significance Contours")
+        h_contour.SetTitle("")
         h_contour.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
         h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
+        CMS_text.SetTextSize(0.04)
         CMS_text.SetTextAlign(30)
         Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
+        Lumi_text.SetTextSize(0.04)
         Lumi_text.SetTextAlign(30)
 
         # Draw and save plot
-        h_contour.GetXaxis().SetTitleOffset(1)
-        h_contour.GetYaxis().SetTitleOffset(1.2)
-        #h_contour.GetYaxis().SetNdivisions(5)
+        h_contour.GetXaxis().SetTitleOffset(1.1)
+        h_contour.GetXaxis().SetTitleSize(0.04)
+        h_contour.GetXaxis().SetLabelSize(0.04)
+        h_contour.GetYaxis().SetTitleOffset(1.1)
+        h_contour.GetYaxis().SetTitleSize(0.04)
+        h_contour.GetXaxis().SetLabelSize(0.04)
+        #h_contour.GetYaxis().SetNdivisions(7)
         h_contour.Draw('AXIS')
         #canvas.Print('contour.png','png')
         c68.Draw('L SAME')
@@ -580,15 +623,16 @@ class EFTPlot(object):
         #marker_2.DrawMarker(0,0)
 
 
-        legend = ROOT.TLegend(0.1,0.9,0.35,0.945)
+        legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
         legend.AddEntry(hc68,"1#sigma",'l')
         legend.AddEntry(hc95,"2#sigma",'l')
         legend.AddEntry(hc997,"3#sigma",'l')
-        legend.SetTextSize(0.025)
-        legend.SetNColumns(3)
+        legend.AddEntry(hSM,"SM value",'p')
+        legend.SetTextSize(0.035)
+        legend.SetNColumns(4)
         legend.Draw('same')
-        CMS_text.Draw('same')
-        Lumi_text.Draw('same')
+        self.CMS_text.Draw('same')
+        self.Lumi_text.Draw('same')
         canvas.SetGrid()
         canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
 
@@ -671,11 +715,11 @@ class EFTPlot(object):
         CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
         if log:
@@ -748,11 +792,11 @@ class EFTPlot(object):
         CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
-        CMS_text.Draw('same')
+        self.CMS_text.Draw('same')
         Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
         Lumi_text.SetNDC(1)
         Lumi_text.SetTextSize(0.02)
-        Lumi_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         # Save plot
         canvas.Print(hname+".png",'png')
@@ -874,8 +918,8 @@ class EFTPlot(object):
         centralFit.Draw('same')
         dedicatedFit.Draw('same')
 
-        CMS_text.Draw('same')
-        Lumi_text.Draw('same')
+        self.CMS_text.Draw('same')
+        self.Lumi_text.Draw('same')
         canvas.Print('{}{}contour.png'.format(params[0],params[1]),'png')
 
         # Save contour to histogram file
@@ -1163,8 +1207,21 @@ class EFTPlot(object):
         for line in fit_array:
             pline = line[:]
             if pline[0][-1] == 'i': pline[0] = pline[0][:-1] 
-            pline[0] = self.texdic[pline[0]]
-            print pline
+            pline[0] = '\\' + pline[0] + '$/\\Lambda^{2}$'
+            pline[0] = pline[0].replace('3','a')
+            #print line
+            one = pline[2]
+            one = ['%.2f' % elem for elem in one]
+            two = pline[3]
+            two = ['%.2f' % elem for elem in two]
+            s = pline[0] + ' & '
+            if len(one)==2:
+                one = ', '.join(one)
+                two = ', '.join(two)
+                s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
+            else:
+                s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
+            print s
 
         return fit_array
 
@@ -1178,10 +1235,17 @@ class EFTPlot(object):
         #if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar4.2sig'
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
+        print 'two sigma'
+        print 'float'
         fits_float = self.getIntervalFits(basename_float)
+        print 'freeze'
         fits_freeze = self.getIntervalFits(basename_freeze)
+        print '\n'
+        print 'one sigma'
+        print 'float'
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
         fits_float1sigma = self.getIntervalFits(basename_float,siginterval=1)
+        print 'freeze'
         fits_freeze1sigma = self.getIntervalFits(basename_freeze,siginterval=1)
 
         for idx,line in enumerate(fits_float):
@@ -1292,6 +1356,8 @@ class EFTPlot(object):
         h_fit.GetYaxis().SetTickLength(0)
         h_fit.GetYaxis().SetNdivisions(numWC,False)
         h_fit.GetYaxis().SetLabelSize(0)
+        h_fit.SetTitle('')
+        h_fit.GetXaxis().SetLabelSize(0.04)
 
         # Add y-axis labels
         y_labels = []
@@ -1304,7 +1370,7 @@ class EFTPlot(object):
             if 'times' in tex:
                 scale = tex[tex.find('#times'):]
                 tex = tex[0:tex.find('#times')]
-            tex = self.texdic[tex]
+            tex = self.texdicfrac[tex]
             y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
             y_labels[idy].SetTextAlign(20)
             y_labels[idy].SetTextSize(0.03)
@@ -1489,16 +1555,6 @@ class EFTPlot(object):
         legend.AddEntry(graph_freeze_1sigma,"Others Fixed to SM (1#sigma)",'l')
         legend.SetTextSize(0.025)
 
-        # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.925, "CMS Preliminary Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextAlign(30)
-        CMS_text.SetTextSize(0.03)
-        Lumi_text = ROOT.TLatex(0.9, 0.9, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextAlign(30)
-        Lumi_text.SetTextSize(0.03)
-
         # Draw everything
         h_fit.Draw()
         #graph_float.Draw('P same')
@@ -1516,8 +1572,8 @@ class EFTPlot(object):
         for label in y_labels:
             label.Draw('same')
         legend.Draw('same')
-        CMS_text.Draw('same')
-        Lumi_text.Draw('same')
+        self.CMS_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         canvas.Print('BestScanPlot.png','png')
         canvas.Print('BestScanPlot.pdf','pdf')
@@ -1671,8 +1727,8 @@ class EFTPlot(object):
         for label in y_labels:
             label.Draw('same')
         legend.Draw('same')
-        CMS_text.Draw('same')
-        Lumi_text.Draw('same')
+        self.CMS_text.Draw('same')
+        self.Lumi_text.Draw('same')
 
         canvas.Print('BestFitPlot.png','png')
 
