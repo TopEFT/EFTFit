@@ -88,7 +88,7 @@ class EFTModel(PhysicsModel):
                         if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
                             quartic_terms[idx].append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
                             quartic_args[idx].extend([wc1,wc2])
-                #if procbin[1]=='C_2lss_m_emu_2b_5j': print lin_term, quartic_terms
+                #if procbin[1]=='C_2lss_m_emu_2b_5j': print constant,lin_term, quartic_terms
 
                 # New method of filling quartic terms to autosplit every ~<1000 characters
                 #quartic_master = []

@@ -28,12 +28,12 @@ class EFTPlot(object):
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2}', 'ctZ': '#it{c}_{tZ}/#Lambda^{2}', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2}', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2}', 'ctG': '#it{c}_{tG}/#Lambda^{2}', 'cbW': '#it{c}_{bW}/#Lambda^{2}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2}', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2}', 'cpt': '#it{c}_{#varphit}/#Lambda^{2}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2}', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2}', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2}', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2}', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2}', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2}', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2}'}
+        self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]', 'ctZ': '#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'ctG': '#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]', 'cbW': '#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2} [TeV^{-2}]', 'cpt': '#it{c}_{#varphit}/#Lambda^{2} [TeV^{-2}]', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2} [TeV^{-2}]', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2} [TeV^{-2}]', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2} [TeV^{-2}]', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]'}
         self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary Simulation")
+        self.CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
@@ -117,7 +117,7 @@ class EFTPlot(object):
         graph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
@@ -246,7 +246,7 @@ class EFTPlot(object):
         XTitle.Draw('same')
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
@@ -366,7 +366,7 @@ class EFTPlot(object):
         multigraph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
@@ -477,7 +477,7 @@ class EFTPlot(object):
         hist.SetStats(0)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         self.CMS_text.Draw('same')
@@ -549,17 +549,20 @@ class EFTPlot(object):
         c9971D = self.ContourHelper.GetContour(h_contour,9.00)
         self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
         self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
-        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue-2,3,1)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kGreen-2,3,1)
         #place holders for the legend, since TLine is weird
         hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
         hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
         hc997 = ROOT.TH1F('c997', 'c68', 1, 0, 1)
         hc68.SetLineColor(ROOT.kYellow+1)
         hc95.SetLineColor(ROOT.kCyan-2)
-        hc997.SetLineColor(ROOT.kBlue-2)
+        hc997.SetLineColor(ROOT.kGreen-2)
+        hc68.SetLineWidth(3)
+        hc95.SetLineWidth(3)
+        hc997.SetLineWidth(3)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
-        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kBlue-2,1,3)
+        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kGreen-2,1,3)
 
         # Marker for SM point
         marker_1 = ROOT.TMarker()
@@ -582,7 +585,7 @@ class EFTPlot(object):
         h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.04)
         CMS_text.SetTextAlign(30)
@@ -712,7 +715,7 @@ class EFTPlot(object):
         graph.GetXaxis().SetTitle(param)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         self.CMS_text.Draw('same')
@@ -789,7 +792,7 @@ class EFTPlot(object):
         hist.SetStats(0)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         self.CMS_text.Draw('same')
@@ -856,7 +859,7 @@ class EFTPlot(object):
         c997 = self.ContourHelper.GetContour(h_contour,11.83)
         self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
         self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
-        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue-2,3,1)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kGreen-2,3,1)
 
         # Marker for SM point
         marker_1 = ROOT.TMarker()
@@ -898,7 +901,7 @@ class EFTPlot(object):
         h_contour.GetXaxis().SetTitle(params[1])
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextSize(0.02)
         CMS_text.SetTextAlign(30)
@@ -992,8 +995,8 @@ class EFTPlot(object):
                 else:
                     matrix.GetYaxis().SetRange(1,16)
                     matrix.GetXaxis().SetRange(nbins-15,nbins)
-                    matrix.GetYaxis().SetRangeUser(12,27)
-                    matrix.GetXaxis().SetRangeUser(52,67)
+                    matrix.GetYaxis().SetRangeUser(12,28)
+                    matrix.GetXaxis().SetRangeUser(52,68)
 
                 # Change format of plot
                 matrix.SetStats(0)
@@ -1556,6 +1559,7 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # Draw everything
+        h_fit.GetXaxis().SetTitle("Wilson coefficient limit [TeV^{-2}]");
         h_fit.Draw()
         #graph_float.Draw('P same')
         #graph_freeze.Draw('P same')
@@ -1705,7 +1709,7 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.925, "CMS Preliminary Simulation")
+        CMS_text = ROOT.TLatex(0.9, 0.925, "CMS Preliminary")# Simulation")
         CMS_text.SetNDC(1)
         CMS_text.SetTextAlign(30)
         CMS_text.SetTextSize(0.03)
