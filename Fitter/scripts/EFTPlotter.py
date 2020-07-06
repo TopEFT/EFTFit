@@ -33,14 +33,23 @@ class EFTPlot(object):
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(30)
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
+        self.CMS_text.SetTextAlign(33)
+        #self.CMS_text.Draw('same')
+        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(33)
+        self.CMS_extra.SetTextFont(52)
+        #self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
+        #self.Lumi_text.Draw('same')
 
 
     def ResetHistoFile(self, name=''):
@@ -117,15 +126,22 @@ class EFTPlot(object):
         graph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
-        CMS_text.SetTextAlign(30)
+        self.CMS_text = ROOT.TLatex(0.9, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
-        Lumi_text.SetTextAlign(30)
+        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
@@ -138,7 +154,7 @@ class EFTPlot(object):
 
         rootFile.Close()
 
-    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
+    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, final=False):
         if not wc:
             logging.error("No wc specified!")
             return
@@ -246,15 +262,22 @@ class EFTPlot(object):
         XTitle.Draw('same')
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
-        CMS_text.SetTextAlign(30)
+        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.04)
+        self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
-        Lumi_text.SetTextAlign(30)
+        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(33)
+        self.CMS_extra.SetTextFont(52)
+        if not final: self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.04)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         # Lgend
@@ -271,7 +294,8 @@ class EFTPlot(object):
             multigraph.SetLogz()
             canvas.Print('Overlay{}1DNLL_log.png'.format(wc),'png')
         else:
-            canvas.Print('Overlay{}1DNLL.png'.format(wc),'png')
+            if final: canvas.Print('Overlay{}1DNLL_final.png'.format(wc),'png')
+            else: canvas.Print('Overlay{}1DNLL.png'.format(wc),'png')
 
         rootFile1.Close()
         rootFile2.Close()
@@ -366,15 +390,22 @@ class EFTPlot(object):
         multigraph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
-        CMS_text.SetTextAlign(30)
+        self.CMS_text = ROOT.TLatex(0.9, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
-        Lumi_text.SetTextAlign(30)
+        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
@@ -407,14 +438,14 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
+    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False, final=False):
         if not wcs:
             wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
-            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
+            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log, final)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
@@ -477,13 +508,22 @@ class EFTPlot(object):
         hist.SetStats(0)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
+        self.CMS_text = ROOT.TLatex(0.665, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
+        self.CMS_extra = ROOT.TLatex(0.665, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         # Save plot
@@ -496,7 +536,7 @@ class EFTPlot(object):
             hist.Write()
             outfile.Close()
 
-    def ContourPlotEFT(self, name='.test', wcs=[]):
+    def ContourPlotEFT(self, name='.test', wcs=[], final=False):
         if len(wcs)!=2:
             logging.error("Function 'ContourPlot' requires exactly two wcs!")
             return
@@ -547,18 +587,21 @@ class EFTPlot(object):
         c681D = self.ContourHelper.GetContour(h_contour,1.00)
         c951D = self.ContourHelper.GetContour(h_contour,4.00)
         c9971D = self.ContourHelper.GetContour(h_contour,9.00)
-        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,3,1)
-        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,3,1)
-        self.ContourHelper.styleMultiGraph(c997,ROOT.kGreen-2,3,1)
+        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,2,1)
+        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,2,6)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,3,3)
         #place holders for the legend, since TLine is weird
         hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
         hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
         hc997 = ROOT.TH1F('c997', 'c68', 1, 0, 1)
         hc68.SetLineColor(ROOT.kYellow+1)
         hc95.SetLineColor(ROOT.kCyan-2)
-        hc997.SetLineColor(ROOT.kGreen-2)
-        hc68.SetLineWidth(3)
-        hc95.SetLineWidth(3)
+        hc997.SetLineColor(ROOT.kBlue)
+        hc68.SetLineStyle(1)
+        hc95.SetLineStyle(6)
+        hc997.SetLineStyle(3)
+        hc68.SetLineWidth(2)
+        hc95.SetLineWidth(2)
         hc997.SetLineWidth(3)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
@@ -585,14 +628,23 @@ class EFTPlot(object):
         h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.95, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.04)
-        CMS_text.SetTextAlign(30)
-        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.04)
-        Lumi_text.SetTextAlign(30)
+        self.CMS_text = ROOT.TLatex(0.1, 0.945, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.04)
+        self.CMS_text.SetTextAlign(13)
+        self.CMS_text.Draw('same')
+        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(13)
+        self.CMS_extra.SetTextFont(52)
+        if not final: self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.04)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
+        self.Lumi_text.Draw('same')
 
         # Draw and save plot
         h_contour.GetXaxis().SetTitleOffset(1.1)
@@ -626,18 +678,21 @@ class EFTPlot(object):
         #marker_2.DrawMarker(0,0)
 
 
-        legend = ROOT.TLegend(0.1,0.9,0.45,0.945)
+        legend = ROOT.TLegend(0.12,0.7,0.28,0.895)
         legend.AddEntry(hc68,"1#sigma",'l')
         legend.AddEntry(hc95,"2#sigma",'l')
         legend.AddEntry(hc997,"3#sigma",'l')
         legend.AddEntry(hSM,"SM value",'p')
-        legend.SetTextSize(0.035)
-        legend.SetNColumns(4)
+        #legend.SetTextSize(0.035)
+        legend.SetTextSize(0.025)
+        #legend.SetNColumns(4)
         legend.Draw('same')
         self.CMS_text.Draw('same')
+        if not final: self.CMS_extra.Draw('same')
         self.Lumi_text.Draw('same')
         canvas.SetGrid()
-        canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+        if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
+        else: canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -715,13 +770,22 @@ class EFTPlot(object):
         graph.GetXaxis().SetTitle(param)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
+        self.CMS_text = ROOT.TLatex(0.665, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
+        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         #Check log option, then save as image
@@ -792,13 +856,22 @@ class EFTPlot(object):
         hist.SetStats(0)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.665, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
+        self.CMS_text = ROOT.TLatex(0.665, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        Lumi_text = ROOT.TLatex(0.7, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
+        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
         # Save plot
@@ -901,14 +974,23 @@ class EFTPlot(object):
         h_contour.GetXaxis().SetTitle(params[1])
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.93, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextSize(0.02)
-        CMS_text.SetTextAlign(30)
-        Lumi_text = ROOT.TLatex(0.9, 0.91, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextSize(0.02)
-        Lumi_text.SetTextAlign(30)
+        self.CMS_text = ROOT.TLatex(0.9, 0.93, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextAlign(30)
+        self.CMS_text.Draw('same')
+        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.02)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
+        self.Lumi_text.Draw('same')
 
         # Draw and save plot
         h_contour.Draw('AXIS')
@@ -922,8 +1004,10 @@ class EFTPlot(object):
         dedicatedFit.Draw('same')
 
         self.CMS_text.Draw('same')
+        if not final: self.CMS_extra.Draw('same')
         self.Lumi_text.Draw('same')
-        canvas.Print('{}{}contour.png'.format(params[0],params[1]),'png')
+        if final: canvas.Print('{}{}contour_final.png'.format(params[0],params[1]),'png')
+        else: canvas.Print('{}{}contour.png'.format(params[0],params[1]),'png')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1059,7 +1143,7 @@ class EFTPlot(object):
             print best[i][j][0], ' '.join(lst)
             j = j + 1
 
-    def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW']):
+    def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW'], final=False):
         ROOT.gROOT.SetBatch(True)
         print gridScanName
         self.ResetHistoFile(gridScanName)
@@ -1076,9 +1160,9 @@ class EFTPlot(object):
         #self.CorrelationMatrix(postScanName,False,False,freeze)
         #self.CorrelationMatrix(postScanName,True,False,freeze)
 
-        self.ContourPlotEFT(gridScanName,wcs)
+        self.ContourPlotEFT(gridScanName,wcs,final)
 
-    def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False):
+    def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False, final=False):
         ROOT.gROOT.SetBatch(True)
         
         wcs_pairs = self.wcs_pairs
@@ -1092,7 +1176,7 @@ class EFTPlot(object):
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
-            self.Batch2DPlotsEFT('{}.{}{}'.format(basenamegrid,pair[0],pair[1]), wcs=pair)
+            self.Batch2DPlotsEFT('{}.{}{}'.format(basenamegrid,pair[0],pair[1]), wcs=pair, final=final)
 
             if not os.path.isdir('Histos{}'.format(basenamegrid)):
                 sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
@@ -1100,7 +1184,7 @@ class EFTPlot(object):
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
-                if filename.endswith('contour.png') or ('less' in filename and filename.endswith('.png')):            
+                if filename.endswith('contour.png') or filename.endswith('contour_final.png') or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
@@ -1228,7 +1312,7 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze=''):
+    def BestScanPlot(self, basename_float='', basename_freeze='', final=False):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
@@ -1576,11 +1660,30 @@ class EFTPlot(object):
         for label in y_labels:
             label.Draw('same')
         legend.Draw('same')
+        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.04)
+        self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
+        self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Supplementary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(33)
+        self.CMS_extra.SetTextFont(52)
+        if not final: self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.04)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
-        canvas.Print('BestScanPlot.png','png')
-        canvas.Print('BestScanPlot.pdf','pdf')
+        if final:
+            canvas.Print('BestScanPlot_final.png','png')
+            canvas.Print('BestScanPlot_final.pdf','pdf')
+        else:
+            canvas.Print('BestScanPlot.png','png')
+            canvas.Print('BestScanPlot.pdf','pdf')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
@@ -1709,14 +1812,23 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # CMS-required text
-        CMS_text = ROOT.TLatex(0.9, 0.925, "CMS Preliminary")# Simulation")
-        CMS_text.SetNDC(1)
-        CMS_text.SetTextAlign(30)
-        CMS_text.SetTextSize(0.03)
-        Lumi_text = ROOT.TLatex(0.9, 0.9, "Luminosity = 41.53 fb^{-1}")
-        Lumi_text.SetNDC(1)
-        Lumi_text.SetTextAlign(30)
-        Lumi_text.SetTextSize(0.03)
+        self.CMS_text = ROOT.TLatex(0.9, 0.925, "CMS")# Simulation")
+        self.CMS_text.SetNDC(1)
+        self.CMS_text.SetTextSize(0.03)
+        self.CMS_text.SetTextAlign(30)
+        self.CMS_text.Draw('same')
+        self.CMS_extra = ROOT.TLatex(0.9, 0.91, "Preliminary")# Simulation")
+        self.CMS_extra.SetNDC(1)
+        self.CMS_extra.SetTextSize(0.03)
+        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextFont(52)
+        self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.9, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text.SetNDC(1)
+        self.Lumi_text.SetTextSize(0.03)
+        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextFont(42)
+        self.Lumi_text.Draw('same')
 
         # Draw everything
         h_fit.Draw()
