@@ -124,14 +124,15 @@ class HelperOptions(OptionsBase):
         self.robust_fit     = False     # Whether or not to use the --robustFit option
         self.save_fitresult = False     # Whether a RooFitResult object should be saved or not
         self.save_workspace = False     # Whether a RooWorkspace object should be saved or not
-        self.use_poi_ranges = True      # If we should limit the poi ranges in the combine fit
+        self.use_poi_ranges = True      # If true we should limit the poi ranges in the combine fit
+        self.stats_only     = False     # If true, ignore systematics constraint terms from the datacard
 
         self.histogram_file  = 'anatest10.root'                     # The histogram file to generate the datacard
         self.original_card   = 'EFT_MultiDim_Datacard.txt'          # The name of the original datacard
         self.datacard_file   = self.original_card                   # The name of the (potentially modified) datacard
         self.conversion_file = '16D_Parameterization.npy'           # The EFT 16D WC parameterization mapping
         self.ws_file         = '16D.root'                           # The name of the workspace root file
-        self.model           = 'EFTFit.Fitter.EFT16DModel:eft16D'   # The physics model used to make the RooWorkspace
+        self.model           = 'EFTFit.Fitter.EFTModel:eft16D'   # The physics model used to make the RooWorkspace
         self.ws_type         = WorkspaceType.EFT
         self.method          = CombineMethod.NONE
         self.name            = 'EFT'
@@ -196,6 +197,7 @@ class CombineHelper(object):
         self.dc_maker  = DatacardMaker()
         self.dc_reader = DatacardReader()
 
+    # Note: 'name' is relative to the 'test' directory of 'EFTFit/Fitter'
     def setOutputDirectory(self,name):
         self.output_dir = os.path.join(CONST.EFTFIT_TEST_DIR,name)
 
@@ -645,7 +647,7 @@ if __name__ == "__main__":
     # Examples of how to define templated options
     EFT_OPS = HelperOptions(
         ws_file      = '16D.root',
-        model        = 'EFTFit.Fitter.EFT16DModel:eft16D',
+        model        = 'EFTFit.Fitter.EFTModel:eft16D',
         ws_type      = WorkspaceType.EFT,
         prefit_value = 0.0
     )
