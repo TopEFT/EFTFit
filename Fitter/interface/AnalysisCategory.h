@@ -1,6 +1,8 @@
 #ifndef ANALYSISCATEGORY_H_
 #define ANALYSISCATEGORY_H_
 
+#include <set>
+
 #include "TString.h"
 
 #include "RooWorkspace.h"
@@ -12,6 +14,16 @@
 
 #include "WSHelper.h"
 
+// >VERY< useful convenience class for extracting expected and observed yields of some category from
+// a given RooWorkspace.
+//  * Has methods for creating new categories that are the merger of other categories from the RooWorkspace
+//  * The class stores ptrs to the actual RooObjects located in the RooWorkspace, so changing parameters
+//    (e.g. POIs/Nuis Parameters) will be reflected in the objects stored in this class automatically.
+//  * N.B.: For the methods which return the expected error in a category, the correlations needed for
+//    the error calculation come from a RooFitResult object passed to those methods, which has objects
+//    that are separate from the ones found in the RooWorkspace. As a result, modifying values in certain
+//    objects from the RooWorkspace (e.g. nuisance parameters' Hi/Lo errors) won't be reflected in the result
+//    returned by the methods that make use of a RooFitResult object, such as getExpProcError()
 class AnalysisCategory {
     public:
         Int_t proc_width;
@@ -43,6 +55,7 @@ class AnalysisCategory {
         double getExpProcError(TString, RooFitResult* fr=0);
         double getExpSum();
         double getExpSumError(RooFitResult* fr=0);
+        void setProcOrder(std::vector<TString> order);
         void Print(RooFitResult* fr=0);
 };
 
@@ -120,7 +133,7 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
             }
         }
     }
-    // Next iterate over all processes collecting the RooAddition from each category and merge
+    // Next iterate over all processes collecting the RooAddition object from each category and merge
     //  it with the rest
     for (TString p: this->getProcs()) {
         std::vector<RooAddition*> to_merge;
@@ -215,6 +228,31 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     delete tmp_mrg;
 
     return err;
+}
+
+void AnalysisCategory::setProcOrder(std::vector<TString> order) {
+    std::vector<TString> new_order;
+    std::set<TString> tmp_set;
+    for (TString s: order) {
+        // Only sets the order for processes contained in this AnaCat
+        if (this->hasProc(s)) {
+            new_order.push_back(s);
+            tmp_set.insert(s);
+        }
+    }
+
+    // Add in any processes that weren't specified by the order vector
+    for (TString s: this->getProcs()) {
+        if (tmp_set.count(s)) {
+            continue;
+        }
+        new_order.push_back(s);
+    }
+    this->proc_order = new_order;
+    // std::cout << "New Process Order:" << std::endl;
+    // for (TString s: this->getProcs()) {
+    //     std::cout << "\t" << s << std::endl;
+    // }
 }
 
 void AnalysisCategory::Print(RooFitResult* fr) {
