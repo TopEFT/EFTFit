@@ -130,9 +130,9 @@ class HelperOptions(OptionsBase):
         self.histogram_file  = 'anatest10.root'                     # The histogram file to generate the datacard
         self.original_card   = 'EFT_MultiDim_Datacard.txt'          # The name of the original datacard
         self.datacard_file   = self.original_card                   # The name of the (potentially modified) datacard
-        self.conversion_file = '16D_Parameterization.npy'           # The EFT 16D WC parameterization mapping
+        self.conversion_file = 'EFT_Parameterization.npy'           # The EFT 16D WC parameterization mapping
         self.ws_file         = '16D.root'                           # The name of the workspace root file
-        self.model           = 'EFTFit.Fitter.EFTModel:eft16D'   # The physics model used to make the RooWorkspace
+        self.model           = 'EFTFit.Fitter.EFTModel:eftmodel'   # The physics model used to make the RooWorkspace
         self.ws_type         = WorkspaceType.EFT
         self.method          = CombineMethod.NONE
         self.name            = 'EFT'
@@ -411,13 +411,13 @@ class CombineHelper(object):
         self.dc_maker.make(fpath,fake_data,use_central)
         self.loadDatacard()
 
-    # Call FitConversion16D.py script to create the parameterization file
+    # Call FitConversionEFT.py script to create the parameterization file
     def make_parameterization(self):
         self.logger.info("Making parameterization file...")
 
         file  = self.ops.getOption('histogram_file')
         fpath = os.path.join(CONST.TOPEFT_DATA_DIR,file)
-        script_path = os.path.join(CONST.EFTFIT_TEST_DIR,'../scripts/FitConversion16D.py')
+        script_path = os.path.join(CONST.EFTFIT_TEST_DIR,'../scripts/FitConversionEFT.py')
         args  = ['python',script_path,fpath]
 
         self.logger.info("FitConversion command: %s",' '.join(args))

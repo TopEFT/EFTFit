@@ -182,7 +182,7 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
     # For producing fits with the EFT WCs as the POIs
     EFT_OPS = HelperOptions(
         ws_file      = '16D.root',
-        model        = 'EFTFit.Fitter.EFTModel:eft16D',
+        model        = 'EFTFit.Fitter.EFTModel:eftmodel',
         ws_type      = WorkspaceType.EFT,
         prefit_value = 0.0,
         algo         = FitAlgo.SINGLES
@@ -852,7 +852,7 @@ if __name__ == "__main__":
     # sys.exit()
 
     if not os.path.exists(merged_hist_loc):
-        print "Copying {src} to {dst}".format(srd=src_hist_loc,dst=dst_hist_loc)
+        print "Copying {src} to {dst}".format(src=src_hist_loc,dst=dst_hist_loc)
         shutil.copy(src_hist_loc,dst_hist_loc)  # This is needed b/c we can't specify rel. dirs. in CLF
         CLF = CombineLepFlavors()
         CLF.Filename = hist_file
@@ -863,9 +863,8 @@ if __name__ == "__main__":
         group_directory='data2017v1',
         dir_name=dir_name,
         hist_file=hist_file_merged,
-        mode=HelperMode.EFT_IMPACTS,
-        # mode=HelperMode.EFT_FITTING,
-        testing=False,
+        mode=HelperMode.EFT_FITTING,
+        testing=True,
         force=False,
         copy_output=True
     )
