@@ -28,7 +28,8 @@ obs = list(dict.fromkeys(obs))
 obs.sort()
 obs_wc = ROOT.TH2F('obsVwc', 'Observables vs WCs', 16, 0, 16, len(obs), 0, len(obs))
 for i in xrange(0, len(obs)):
-    label = obs[i].replace('ge', '#gec')
+    label = obs[i].replace('ge', '#geq')
+    #label = ' '.join(label.split('_'))
     obs_wc.GetYaxis().SetBinLabel(i+1, label)
 
 fin = ROOT.TFile('EFTWorkspace.root')
@@ -38,13 +39,22 @@ for wc in xrange(0, len(wcs)):
     obs_wc.GetXaxis().SetBinLabel(wc+1, wcs.keys()[wc])
     for limit in wcs[wcs.keys()[wc]]: #loop over -2 sigma and 2 sigma
         r = []
+        proc_sm = {}
         proc = {}
         for bin in bins: #loop over all bins
+            if bin[0] not in proc_sm:
+                proc_sm[bin[0]] = []
             if bin[0] not in proc:
                 proc[bin[0]] = []
             name = 'r_{0}_{1}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
-            w.var(wcs.keys()[0]).setVal(limit) #set WC to CI
+            proc_sm[bin[0]].append(w.function(name).getVal()) #store the signal strength
+            w.var(wcs.keys()[wc]).setVal(limit) #set WC to CI
             proc[bin[0]].append(w.function(name).getVal()) #store the signal strength
+            w.var(wcs.keys()[wc]).setVal(0) #set WC back to to SM
+    if wcs.keys()[0] == wc:
+        for p,v in proc_sm.items():
+            proc_sm_lst = list(proc_sm)
+            proc_sm_lst.sort()
     for p,v in proc.items():
         proc_lst = list(proc)
         proc_lst.sort()
@@ -74,3 +84,4 @@ ROOT.gStyle.SetOptStat(0)
 obs_wccol.Draw('colz')
 obs_wc.Draw('same text e')
 canvas.Print('hist.pdf')
+canvas.Print('hist.png')
