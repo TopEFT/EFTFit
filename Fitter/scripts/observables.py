@@ -81,7 +81,7 @@ for wc in xrange(0, len(wcs)):
         obs_wccol.SetBinContent(wc+1, o+1, np.interp(bin, [0, max], [0, 1]))
 
 ROOT.gROOT.SetBatch(True)
-canvas = ROOT.TCanvas('canvas','Observable vs WC',1600,1600)
+canvas = ROOT.TCanvas('canvas','Observable vs WC',1600,1200)
 #canvas = ROOT.TCanvas()
 canvas.SetGrid(1)
 ROOT.gStyle.SetOptStat(0)
