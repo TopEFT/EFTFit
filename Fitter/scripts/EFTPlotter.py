@@ -29,7 +29,8 @@ class EFTPlot(object):
                          }
         self.histosFileName = 'Histos.root'
         self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]', 'ctZ': '#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'ctG': '#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]', 'cbW': '#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2} [TeV^{-2}]', 'cpt': '#it{c}_{#varphit}/#Lambda^{2} [TeV^{-2}]', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2} [TeV^{-2}]', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2} [TeV^{-2}]', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2} [TeV^{-2}]', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]'}
-        self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
+        self.texdicfrac = {'ctW': '#it{c}_{tW}', 'ctZ': '#it{c}_{tZ}', 'ctp': '#it{c}_{t#varphi}', 'cpQM': '#it{c}^{#minus}_{#varphiQ}', 'ctG': '#it{c}_{tG}', 'cbW': '#it{c}_{bW}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}', 'cptb': '#it{c}_{#varphitb}', 'cpt': '#it{c}_{#varphit}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}', 'cQlM': '#it{c}^{#minus(#it{l})}_{Ql}', 'cQe': '#it{c}^{(#it{l})}_{Qe}', 'ctl': '#it{c}^{(#it{l})}_{tl}', 'cte': '#it{c}^{(#it{l})}_{te}', 'ctlS': '#it{c}^{S(#it{l})}_{t}', 'ctlT': '#it{c}^{T(#it{l})}_{t}'}
+        #self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
@@ -1297,6 +1298,8 @@ class EFTPlot(object):
             pline[0] = '\\' + pline[0] + '$/\\Lambda^{2}$'
             pline[0] = pline[0].replace('3','a')
             #print line
+            best = pline[1]
+            best = round(float(best), 2)
             one = pline[2]
             one = ['%.2f' % elem for elem in one]
             two = pline[3]
@@ -1643,7 +1646,7 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # Draw everything
-        h_fit.GetXaxis().SetTitle("Wilson coefficient limit [TeV^{-2}]");
+        h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
         h_fit.Draw()
         #graph_float.Draw('P same')
         #graph_freeze.Draw('P same')
