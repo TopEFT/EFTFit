@@ -46,20 +46,24 @@ for wc in xrange(0, len(wcs)):
                 proc_sm[bin[0]] = []
             if bin[0] not in proc:
                 proc[bin[0]] = []
-            name = 'r_{0}_{1}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
+            #name = 'r_{0}_{1}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
+            name = 'n_exp_bin{1}_proc_{0}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
             proc_sm[bin[0]].append(w.function(name).getVal()) #store the signal strength
             w.var(wcs.keys()[wc]).setVal(limit) #set WC to CI
             proc[bin[0]].append(w.function(name).getVal()) #store the signal strength
             w.var(wcs.keys()[wc]).setVal(0) #set WC back to to SM
     if wcs.keys()[0] == wc:
-        for p,v in proc_sm.items():
-            proc_sm_lst = list(proc_sm)
-            proc_sm_lst.sort()
+        proc_sm_lst = list(proc_sm)
+        proc_sm_lst.sort()
     for p,v in proc.items():
         proc_lst = list(proc)
         proc_lst.sort()
-        obs_wc.Fill(wc, proc_lst.index(p), sum(v)) #fill 2D hist
+    for prc in zip(proc.items(),proc_sm.items()):
+        pr = [x for p in prc for x in p]
+        obs_wc.Fill(wc, proc_lst.index(pr[0]), (sum(pr[1]) - sum(pr[3]))/sum(pr[3])**.5) #fill 2D hist
+        #if 'mix' in pr[0] and wc == 0: print pr[0], wcs.keys()[wc], (sum(pr[1]) - sum(pr[3])) / sum(pr[3])**.5
 
+obs_wc.GetXaxis().SetLabelSize(0.02)
 obs_wc.GetYaxis().SetLabelSize(0.02)
 obs_wc.SetMarkerSize(0.5)
 obs_wccol = obs_wc.Clone('obs_wccol')
@@ -69,18 +73,19 @@ for wc in xrange(0, len(wcs)):
     max = 0
     for o in xrange(0, len(obs)):
         bin = obs_wc.GetBinContent(wc+1, o+1)
-        obs_wc.SetBinError(wc+1, o+1, bin**.5)
+        obs_wc.SetBinError(wc+1, o+1, abs(bin)**.5)
         sum = sum + bin
-        if bin > max: max = bin 
+        if abs(bin) > max: max = abs(bin)
     for o in xrange(0, len(obs)):
-        bin = obs_wccol.GetBinContent(wc+1, o+1)
-        obs_wccol.SetBinContent(wc+1, o+1, np.interp(bin, [0, max], [0, 300]))
+        bin = abs(obs_wccol.GetBinContent(wc+1, o+1))
+        obs_wccol.SetBinContent(wc+1, o+1, np.interp(bin, [0, max], [0, 1]))
 
 ROOT.gROOT.SetBatch(True)
 canvas = ROOT.TCanvas('canvas','Observable vs WC',1600,1600)
-canvas = ROOT.TCanvas()
+#canvas = ROOT.TCanvas()
 canvas.SetGrid(1)
 ROOT.gStyle.SetOptStat(0)
+ROOT.gStyle.SetPaintTextFormat('4.2f')
 obs_wccol.Draw('colz')
 obs_wc.Draw('same text e')
 canvas.Print('hist_normCol.pdf')
