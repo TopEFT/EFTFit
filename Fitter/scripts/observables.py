@@ -26,11 +26,17 @@ bins.sort()
 obs = ['_'.join(o.split('_')[1:]) for o,_ in bins]
 obs = list(dict.fromkeys(obs))
 obs.sort()
-obs_wc = ROOT.TH2F('obsVwc', 'Observables vs WCs', 16, 0, 16, len(obs), 0, len(obs))
-for i in xrange(0, len(obs)):
-    label = obs[i].replace('ge', '#geq')
-    #label = ' '.join(label.split('_'))
-    obs_wc.GetYaxis().SetBinLabel(i+1, label)
+obs_hist = ['_'.join(o.split('_')[:-2]) for o in obs]
+obs_hist = list(dict.fromkeys(obs_hist))
+obs_hist.sort()
+obs_wc = ROOT.TH2F('obsVwc', 'Observables vs WCs', 16, 0, 16, len(obs_hist), 0, len(obs_hist))
+#uncomment for all bins
+#for i in xrange(0, len(obs)):
+#    label = obs[i].replace('ge', '#geq')
+#    #label = ' '.join(label.split('_'))
+#    obs_wc.GetYaxis().SetBinLabel(i+1, label)
+for i in xrange(0, len(obs_hist)):
+    obs_wc.GetYaxis().SetBinLabel(i+1, obs_hist[i])
 
 fin = ROOT.TFile('EFTWorkspace.root')
 w = fin.Get('w')
@@ -42,15 +48,17 @@ for wc in xrange(0, len(wcs)):
         proc_sm = {}
         proc = {}
         for bin in bins: #loop over all bins
-            if bin[0] not in proc_sm:
-                proc_sm[bin[0]] = []
-            if bin[0] not in proc:
-                proc[bin[0]] = []
+            #replace b with bin[0] for all bins
+            b = '_'.join(bin[0].split('_')[:-2])
+            if b not in proc_sm:
+                proc_sm[b] = []
+            if b not in proc:
+                proc[b] = []
             #name = 'r_{0}_{1}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
             name = 'n_exp_bin{1}_proc_{0}'.format(bin[1],bin[0]) #generate RooWorkspace signal strength name
-            proc_sm[bin[0]].append(w.function(name).getVal()) #store the signal strength
+            proc_sm[b].append(w.function(name).getVal()) #store the signal strength
             w.var(wcs.keys()[wc]).setVal(limit) #set WC to CI
-            proc[bin[0]].append(w.function(name).getVal()) #store the signal strength
+            proc[b].append(w.function(name).getVal()) #store the signal strength
             w.var(wcs.keys()[wc]).setVal(0) #set WC back to to SM
     if wcs.keys()[0] == wc:
         proc_sm_lst = list(proc_sm)
