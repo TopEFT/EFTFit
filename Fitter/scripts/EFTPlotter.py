@@ -634,7 +634,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(13)
@@ -679,13 +680,13 @@ class EFTPlot(object):
         #marker_2.DrawMarker(0,0)
 
 
-        legend = ROOT.TLegend(0.12,0.7,0.28,0.895)
+        legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
         legend.AddEntry(hc68,"1#sigma",'l')
         legend.AddEntry(hc95,"2#sigma",'l')
         legend.AddEntry(hc997,"3#sigma",'l')
         legend.AddEntry(hSM,"SM value",'p')
-        #legend.SetTextSize(0.035)
-        legend.SetTextSize(0.025)
+        legend.SetTextSize(0.035)
+        #legend.SetTextSize(0.025)
         #legend.SetNColumns(4)
         legend.Draw('same')
         self.CMS_text.Draw('same')
@@ -694,6 +695,8 @@ class EFTPlot(object):
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
         else: canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+        if final: canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
+        else: canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1186,6 +1189,8 @@ class EFTPlot(object):
 
             for filename in os.listdir('.'):
                 if filename.endswith('contour.png') or filename.endswith('contour_final.png') or ('less' in filename and filename.endswith('.png')):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour.pdf') or filename.endswith('contour_final.pdf') or ('less' in filename and filename.endswith('.pdf')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
