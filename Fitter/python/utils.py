@@ -3,6 +3,26 @@ import os
 import subprocess
 import logging
 
+class CombineMethod(object):
+    NONE = "None"
+    MULTIDIMFIT = "MultiDimFit"
+    FITDIAGNOSTIC = "FitDiagnostics"
+    IMPACTS = "Impacts"
+
+class FitAlgo(object):
+    NONE = "none"
+    SINGLES = "singles"
+    CROSS = "cross"
+    CONTOUR2D = "contour2d"
+    RANDOM = "random"
+    FIXED = "fixed"
+    GRID = "grid"
+    IMPACT = "impact"
+
+class WorkspaceType(object):
+    EFT = "EFT"
+    SM  = "SM"
+
 # Match strings using one or more regular expressions
 def regex_match(lst,regex_lst):
     # NOTE: For the regex_lst patterns, we use the raw string to generate the regular expression.
@@ -34,21 +54,6 @@ def run_command(inputs):
         raise e
     for l in stdout.split('\n'):
         logging.info(l)
-
-# Alternate shell subprocess command that pipes subprocess messages to STDOUT
-def run_command2(inputs,verbose=True,indent=0):
-    # Note: This will hold the main thread and wait for the subprocess to complete
-    indent_str = "\t"*indent
-    p = subprocess.Popen(inputs,stdout=subprocess.PIPE)
-    stdout = []
-    while True:
-        l = p.stdout.readline()
-        if l == '' and p.poll() is not None:
-            break
-        if l:
-            stdout.append(l.strip())
-            if verbose: print indent_str+l.strip()
-    return stdout
 
 # Returns a list of file names from the target directory, optionally matching a list of regexs
 def get_files(tdir,targets=[]):
