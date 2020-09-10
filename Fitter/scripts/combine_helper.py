@@ -117,7 +117,7 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
 
     test_dir = os.path.expandvars('${CMSSW_BASE}/src/EFTFit/Fitter/test')
 
-    helper = CombineHelper(home=test_dir,out_dir=out_dir)
+    helper = CombineHelper(out_dir=out_dir)
     helper.setOptions(preset=helper_ops)
 
     # Needs to come after the helper is insantiated, b/c of the logger in the helper

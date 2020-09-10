@@ -17,10 +17,8 @@ class CombineHelper(object):
     '''
     DEFAULT_OUTPUT_DIR = 'combine_helper_default_dir'
     
-    def __init__(self,home,out_dir="",preset=None):
+    def __init__(self,out_dir,preset=None):
         self.logger = logging.getLogger(__name__)
-
-        self.home_dir = home
         self.output_dir = ""
 
         if len(out_dir):
@@ -524,7 +522,7 @@ if __name__ == "__main__":
 
     # Create our actual combine helper class using the options we configured above
     out_dir = os.path.join('ana14','combine_testing')   # Note: The output directory path is relative to the 'test' directory!
-    helper = CombineHelper(os.getcwd(),out_dir=out_dir,preset=helper_ops)
+    helper = CombineHelper(out_dir=out_dir,preset=helper_ops)
 
     # Configure logging to an output file
     # TODO: Would probably make more sense to put this in the CombineHelper class?
