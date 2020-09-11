@@ -77,7 +77,24 @@ To make the standard array of EFT plots:
         plotter.BatchBatch2DPlotsEFT('basejobname.Freeze') # Makes 2DLL and contour plots
         plotter.BatchBatch2DPlotsEFT('basejobname.Float') # Makes 2DLL and contour plots
     #The 2D plots will be stored in "Histos.basejobname.Float|Freeze/"
-        
+
+# Merging lepton flavors
+In the combine fit we merge lepton flavors into the same bins. A script is available to do this automatically and is located [here](https://github.com/cms-govner/CombineHarvester/blob/master/TopEFT/scripts/CombineLepFlavors.py). The script assumes that the file to be converted, specified by `Filename`, is located in the `hist_files` sub-directory of the `CombineHarvester/TopEFT` module. The script will also place the output file in the same `hist_files` sub-directory using the `Filename` base name appended with the string `_MergeLepFl.root`. Below is an example of how to run the script from outside of the `CombineHarvest/TopEFT/scripts` location (assuming you have the git repo already cloned into your CMSSW release):
+```python
+import os
+import shutil
+sys.path.append(os.path.expandvars('${CMSSW_BASE}/src/CombineHarvester/TopEFT/scripts'))
+from CombineLepFlavors import CombineLepFlavors
+
+src_hist_loc = os.path.expanduser('~awightma/Public/anatest_files/anatest32.root')
+dst_hist_loc = os.path.expandvars('${CMSSW_BASE}/src/CombineHarvester/TopEFT/hist_files')
+shutil.copy(src_hist_loc,dst_hist_loc)
+
+CLF = CombineLepFlavors()
+CLF.Filename = 'anatest32.root'
+CLF.execute()
+```
+
 # Using CombineHelper
 The `CombineHelper` class is a helper class that wraps the various tools and scripts needed to convert a histogram ROOT file into inputs that can be passed directly to combine. The class itself hosts a set of configurable options maintained via the `HelperOptions` class. The user can instantiate their own `HelperOptions` instance and configure the options however they want and then pass that on to the `CombineHelper` instantiation as a preset configuration:
 ```python
