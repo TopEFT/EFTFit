@@ -12,6 +12,7 @@ from CombineHarvester.TopEFT.DatacardMaker import DatacardMaker
 from EFTFit.Fitter.DatacardReader import DatacardReader
 from EFTFit.Fitter.LvlFormatter import LvlFormatter
 from EFTFit.Fitter.utils import regex_match
+from EFTFit.Fitter.options import CombineSystematic
 from EFTFit.Fitter.CombineHelper import *
 
 sys.path.append(os.path.join(CONST.EFTFIT_DIR,'scripts'))
@@ -115,8 +116,6 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
         # '--robustHesse=1',
     ])
 
-    test_dir = os.path.expandvars('${CMSSW_BASE}/src/EFTFit/Fitter/test')
-
     helper = CombineHelper(out_dir=out_dir)
     helper.setOptions(preset=helper_ops)
 
@@ -131,22 +130,26 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
     logging.info('force: {}'.format(force))
     logging.info('copy_output: {}'.format(copy_output))
 
-    # TODO: Should make this configurable from outside of the runit() function
-    keep_bins = ['^C_2lss_.*','^C_3l_mix_sfz_.*','^C_4l_.*']
+    # TODO: Should make these configurable from outside of the runit() function
+    keep_bins = []
+    # keep_bins = ['^C_2lss_.*','^C_3l_mix_sfz_.*','^C_4l_.*']
+
+    systs_to_remove = []
+    # systs_to_remove = [ CombineSystematic(syst_name='FR_stats_.*',procs=['.*'],bins=['.*']) ]
 
     to_keep = ["^EFT_MultiDim_Datacard.txt","^16D.root","^SMWorkspace.root","^out.log$"]
     helper.cleanDirectory(helper.output_dir,keep=to_keep)
     if force:
         helper.make_datacard()
         if modify_datacard:
-            helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins)
+            helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins,remove_systs=systs_to_remove)
         helper.make_workspace()
     else:
         if not helper.hasDatacard():
             helper.make_datacard()
         if modify_datacard:
             helper.loadDatacard()
-            helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins)
+            helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins,remove_systs=systs_to_remove)
         if not helper.hasWorkspace():
             helper.make_workspace()
     helper.loadDatacard(force=True)
@@ -255,7 +258,7 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
             frz_up_pois   = ["{poi}={val}".format(poi=k,val=v) for k,v in hi_sm_pois.iteritems()]
             frz_down_pois = ["{poi}={val}".format(poi=k,val=v) for k,v in lo_sm_pois.iteritems()]
             frz_sm_pois   = ["{poi}=1.0".format(poi=k) for k in pois]
-        # helper.runCombine(method=CombineMethod.FITDIAGNOSTIC,name='Prefit',minos_arg='all')
+        helper.runCombine(method=CombineMethod.FITDIAGNOSTIC,name='Prefit',minos_arg='all')
         helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='Postfit')
         helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='Bestfit',  # Start from Brent's best fit point
             parameter_values=frz_nom_pois,
@@ -310,7 +313,7 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
             exclude_nuisances=to_exclude,
         )
 
-    helper.chdir(helper.home_dir)
+    print os.getcwd()
 
     if copy_output:
         if mode == HelperMode.SM_IMPACTS or mode == HelperMode.EFT_IMPACTS:
@@ -352,9 +355,9 @@ if __name__ == "__main__":
     #dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_moreStats'
     # dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_adHoc-MissingPartonSyst_moreStats'
     # dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_MatchingSyst_moreStats_with-NuisOnly'
-    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0'
+    dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0'
 
-    dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_no-SFZ-bin-mask_cmin0'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_no-SFZ-bin-mask_cmin0'
 
     # dir_name = 'ana32_private_sgnl_Asimov_Decorrelated-PS-PDF-Q2RF-QCUT_cmin1-robustHesse1'
     # dir_name = 'ana32_private_sgnl_Asimov_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0-poiRanges'
@@ -386,5 +389,5 @@ if __name__ == "__main__":
         testing=True,
         force=True,
         copy_output=False,
-        modify_datacard=True
+        modify_datacard=False
     )

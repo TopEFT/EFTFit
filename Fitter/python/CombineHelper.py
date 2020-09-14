@@ -294,13 +294,14 @@ class CombineHelper(object):
         model    = self.ops.getOption('model')
         ws_type  = self.ops.getOption('ws_type')
         phys_ops = [x for x in self.ops.getOption('phys_ops')]
+        pois_to_drop = [x for x in self.ops.getOption('drop_model_pois')]
 
         if ws_type == WorkspaceType.EFT:
             self.make_parameterization()    # Make sure we generated the parameterization file
             conv_file = self.ops.getOption('conversion_file')
             fits_file = os.path.join(CONST.EFTFIT_HIST_DIR,conv_file)
-            pois_to_fit = ','.join(self.dc_maker.getOperators())
-            phys_ops.extend(['fits=%s' % (fits_file),'operators=%s' % (pois_to_fit)])
+            pois_to_fit = ','.join([x for x in self.dc_maker.getOperators() if x not in pois_to_drop])
+            phys_ops.extend(['fits=%s' % (fits_file),'wcs=%s' % (pois_to_fit)])
         elif ws_type == WorkspaceType.SM:
             sm_signals = self.ops.getOption('sm_signals')
             tmp = set()

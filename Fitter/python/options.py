@@ -113,6 +113,7 @@ class HelperOptions(OptionsBase):
         self.name            = 'EFT'
 
         self.phys_ops          = []
+        self.drop_model_pois   = []         # A list of POIs to drop from the PhysicsModel when making the RooWorkspace
         self.freeze_parameters = []         # Parameters for the --freezeParameters option
         self.redefine_pois     = []         # Parameters for the --redefineSignalPOIs option
         self.track_parameters  = []         # Parameters for the --trackParameters option
