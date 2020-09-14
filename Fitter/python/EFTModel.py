@@ -27,16 +27,17 @@ class EFTModel(PhysicsModel):
 
     def setPhysicsOptions(self, options):
         self.fits = None # File containing WC parameterizations of each process+bin *with events*!
+        self.linear_only = False    # Physics Option flag to determine if the quadratic terms should be dropped from the workspace
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] # Hardcoded currently...
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-40,30),  'ctp':(-35,65),
                             'ctli':(-20,20), 'ctlSi':(-22,22),
                             'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
+                            'ctG':(-3,3),    'cpQM':(-30,50),
                             'ctlTi':(-4,4),  'ctei':(-20,20),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-20,12), 'cbW':(-10,10)
-                         }
+                        }
         wcs_override = [] # WCs specified by arguments
         self.procbins = [] # Process+bin combinations (tuple) that we have events for
         procbin_override = [] # Process+bin combinations (tuple) specified by arguments
@@ -48,6 +49,27 @@ class EFTModel(PhysicsModel):
                 wcs_override = value.split(',')
             elif option == 'procbins': # Override to fit only a subset of proc+category combinations
                 procbin_override = value.split(',')
+            elif option == 'linear-only':
+                self.linear_only = True
+                # Alternate ranges for linear-term only parameterizations
+                self.wc_ranges = {
+                    'cQei':  ( -999, 999),
+                    'cQl3i': ( -300, 300),
+                    'cQlMi': (-9999, 999),
+                    'cbW':   ( -999, 999),
+                    'cpQ3':  (  -99,  99),
+                    'cpQM':  (-9999, 999),
+                    'cpt':   (-9999, 999),
+                    'cptb':  (-9999,9999),
+                    'ctG':   ( -999,  99),
+                    'ctW':   (  -99,  99),
+                    'ctZ':   (  -99,  99),
+                    'ctei':  (-9999, 300),
+                    'ctlTi': (-9999,9999),
+                    'ctlSi': (  -22,  22),
+                    'ctli':  ( -999, 999),
+                    'ctp':   (-9999,  99),
+                }
             else:
                 print "Unknown option",option
 
@@ -63,7 +85,7 @@ class EFTModel(PhysicsModel):
     def setup(self):
         print "Setting up fits"
         fits = np.load(self.fits)[()]
-        for procbin in self.procbins:
+        for procbin in sorted(self.procbins):
             #self.modelBuilder.out.var(procbin)
             name = 'r_{0}_{1}'.format(procbin[0],procbin[1])
             procbin_name = '_'.join(procbin)
@@ -82,9 +104,14 @@ class EFTModel(PhysicsModel):
                 # Fill function pieces
                 for idx,wc1 in enumerate(self.wcs):
                     if abs(fits[procbin][('sm',wc1)]) >= 0.001:
-                        lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
+                        if fits[procbin][('sm',wc1)] < 0.0:
+                            lin_term.append('({0})*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
+                        else:
+                            lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
+                        # lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
                         lin_args.append(wc1)
                     for idy,wc2 in enumerate(self.wcs):
+                        if self.linear_only: continue
                         if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
                             quartic_terms[idx].append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
                             quartic_args[idx].extend([wc1,wc2])
