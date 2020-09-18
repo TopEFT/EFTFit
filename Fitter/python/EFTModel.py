@@ -17,12 +17,12 @@ class EFTModel(PhysicsModel):
 
     To produce an example dictionary, for coefficient `ctW`:
     >>> import numpy as np
-    >>> scales = {'ctW': {'ttZ': (1, 0.322778, 653.371), 'ttW': (1, 1.20998, 205.528)}}
+    >>> scales = {('ttZ','C_2lss_m_2b_4j'): {(ctW,ctW): 653.371, (ctW,sm): 0.322778, (sm,sm): 1.0}}
     >>> np.save('scales.npy', scales)
 
     Oversimplified example for running with override options:
-    text2workspace.py EFT_MultiDim_Datacard.txt -P EFTFit.Fitter.EFTModel:eftmodel --PO fits=EFT_Parameterization.npy --PO process=ttZ --PO process=ttW --PO coefficient=cuW -o cuW.root
-    combine -M MultiDimFit ctW.root --setParameterRanges=-4,4
+    text2workspace.py EFT_MultiDim_Datacard.txt -P EFTFit.Fitter.EFTModel:eftmodel --PO fits=EFT_Parameterization.npy --PI wcs=ctW,ctZ -o 16D.root
+    combine -M MultiDimFit 16D.root
     """
 
     def setPhysicsOptions(self, options):
@@ -79,15 +79,13 @@ class EFTModel(PhysicsModel):
         self.procbins.extend(fits.keys())
         if len(wcs_override)>0: self.wcs = np.intersect1d(self.wcs,wcs_override)
         if len(procbin_override)>0: self.procbins = np.intersect1d(self.procbins,procbins_override)
-        
-
 
     def setup(self):
         print "Setting up fits"
         fits = np.load(self.fits)[()]
-        for procbin in sorted(self.procbins):
+        for i,procbin in enumerate(sorted(self.procbins)):
             #self.modelBuilder.out.var(procbin)
-            name = 'r_{0}_{1}'.format(procbin[0],procbin[1])
+            name = 'r_{proc}_{cat}'.format(proc=procbin[0],cat=procbin[1])
             procbin_name = '_'.join(procbin)
 
             if not self.modelBuilder.out.function(name):
@@ -108,44 +106,18 @@ class EFTModel(PhysicsModel):
                             lin_term.append('({0})*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
                         else:
                             lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
-                        # lin_term.append('{0}*{1}'.format(round(fits[procbin][('sm',wc1)],4),wc1))
                         lin_args.append(wc1)
                     for idy,wc2 in enumerate(self.wcs):
                         if self.linear_only: continue
                         if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
                             quartic_terms[idx].append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
                             quartic_args[idx].extend([wc1,wc2])
-                #if procbin[1]=='C_2lss_m_emu_2b_5j': print constant,lin_term, quartic_terms
-
-                # New method of filling quartic terms to autosplit every ~<1000 characters
-                #quartic_master = []
-                #quartic_final = []
-                #for idx,wc1 in enumerate(self.wcs):
-                #    for idy,wc2 in enumerate(self.wcs):
-                #        if (idy >= idx) and (abs(fits[procbin][(wc1,wc2)]) >= 0.001):
-                #            quartic_master.append('{0}*{1}*{2}'.format(round(fits[procbin][(wc1,wc2)],4),wc1,wc2))
-
-                #quartic_master = '+'.join(quartic_master)
-                #print "Master original size:",len(quartic_master)
-                #while len(quartic_master) >= 1000:
-                #    quarter_tmp = quartic_master[:1000]
-                #    quartic_master = quartic_master[1000:]
-                #    quartic_tmp = quartic_split[0].rsplit('+')
-                #    quartic_final.append(quartic_tmp[0])
-                #    quartic_master += quartic_tmp[1]
-                #quartic_final.append(quartic_master)
-                #print "Quartic pieces:",len(quartic_final)
-                #print "Size of pieces:"
-                #for idx in range(len(quartic_final)):
-                #    print len(quartic_final[idx])
-
                 # Compile linear function for combine
                 if lin_term:
                     lin_expr = "expr::{lin_name}('{lin_term}',{lin_args})".format(lin_name=lin_name,lin_term="+".join(lin_term),lin_args=",".join(lin_args))
                     lin_func = self.modelBuilder.factory_(lin_expr)
                     self.modelBuilder.out._import(lin_func)
                     fit_terms.append(lin_name)
-
                 # Compile quartic functions separately first
                 for idx,fn in enumerate(quartic_terms):
                     if not fn: continue # Skip empty quartic functions
@@ -153,18 +125,12 @@ class EFTModel(PhysicsModel):
                     quartic_func = self.modelBuilder.factory_(quartic_expr)
                     self.modelBuilder.out._import(quartic_func)
                     fit_terms.append(quartic_names[idx])
-
                 # Compile the full function
                 fit_function = "expr::{name}('{fit_terms}',{fit_args})".format(name=name,fit_terms="+".join(fit_terms),fit_args=",".join(fit_terms[1:]))
                 quadratic = self.modelBuilder.factory_(fit_function)
 
                 # Export fit function
                 self.modelBuilder.out._import(quadratic)
-                
-            #print self.coefficient,"= 0",procbin,a0
-            #print self.coefficient,"= 1",procbin,a0+a1+a2
-        #pprint.pprint(table,indent=1,width=100)
-            
 
     def doParametersOfInterest(self):
         # user can call combine with `--setPhysicsModelParameterRanges` to set to sensible ranges
@@ -172,18 +138,13 @@ class EFTModel(PhysicsModel):
             self.modelBuilder.doVar('{0}[0, {1}, {2}]'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1]))
         print "WCs to fit for: "+",".join(self.wcs)
         self.modelBuilder.doSet('POI', ','.join(self.wcs))
-        #self.modelBuilder.doSet('POI', 'ctW,ctZ')
         self.setup()
 
     def getYieldScale(self, bin, process):
         if (process,bin) not in self.procbins:
             return 1
         else:
-            #print 'scaling {0}, {1}'.format(process, bin)
-            #fits = np.load(self.fits)[()]
-            #print self.coefficient,process,bin,fits[self.coefficient][(process,bin)]
             name = 'r_{0}_{1}'.format(process,bin)
             return name
-
 
 eftmodel = EFTModel()
