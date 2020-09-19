@@ -408,7 +408,7 @@ class CombineHelper(object):
             if fast_scan: args.extend(['--fastScan'])
             if align_edges: args.extend(['--alignEdges=1'])
             if batch_mode:
-                task_name = "TODO-UNDECIDED"
+                task_name = name.replace('.','')
                 args = ['combineTool.py'] + args[1:]
                 args.extend(['--job-mode',batch_mode])
                 args.extend(['--task-name',task_name])
@@ -416,9 +416,43 @@ class CombineHelper(object):
                 if batch_mode == BatchType.CRAB:
                     crab_cfg = self.ops.getOption('crab_config')
                     crab_cfg_path = os.path.join(CONST.EFTFIT_TEST_DIR,crab_cfg)
-                raise NotImplementedError
+                    args.extend(['--custom-crab',crab_cfg_path])
+                    raise NotImplementedError("Crab based batch submission isn't implemented yet...")
+                elif batch_mode == BatchType.CONDOR:
+                    # This option generates the condor submit files, which we then have to run
+                    #   ourselves due to permission issues on the T3
+                    args.extend(['--dry-run'])
+                else:
+                    raise RuntimeError("Unknown BatchType: {}".format(batch_mode))
+
         self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
         run_command(args)
+
+        # TODO: NEEDS TO BE ACTUALLY TESTED
+        # Now actually run the condor submit jobs
+        # Note: Pretty sure the condor_submit command won't lock the main thread
+        #   during execution, so if you want to collect the outputs you will need
+        #   to do so in a separate step. It is also important to make sure that if
+        #   you plan to run multiple condor submissions in a row that the named outputs
+        #   have unique names
+        if algo == FitAlgo.GRID and batch_mode == BatchType.CONDOR:
+            condor_output_dir = 'condor{}'.format(name)
+            condor_exec = 'condor_{}.sh'.format(name.replace('.',''))
+            condor_sub = 'condor_{}.sub'.format(name.replace('.'.''))
+            if os.path.exists(condor_output_dir):
+                self.logger.info("Making condor output directry: {}".format(condor_output_dir))
+                os.makedirs(condor_output_dir)
+            self.cleanDirectory(condor_output_dir)
+            args = ['chmod','a+x',condor_exec]
+            self.logger.info("Permissions command: {cmd}".format(args))
+            run_command(args)
+            args = ['condor_submit']
+            args.extend(['-append','initialdir={}'.format(condor_output_dir)])
+            args.extend([condor_sub])
+            self.logger.info("Condor command: {cmd}".format(cmd=' '.join(condor_args)))
+            run_command(args)
+        if batch_mode:
+            self.logger.info("Finished batch submission")
 
     def make_impact_plots(self):
         '''
