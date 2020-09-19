@@ -8,7 +8,7 @@ import consts as CONST
 from CombineHarvester.TopEFT.DatacardMaker import DatacardMaker
 from DatacardReader import DatacardReader
 from LvlFormatter import LvlFormatter
-from utils import regex_match,run_command,CombineMethod,FitAlgo,WorkspaceType
+from utils import regex_match,run_command,CombineMethod,FitAlgo,WorkspaceType,BatchType
 from options import HelperOptions
 
 class CombineHelper(object):
@@ -66,7 +66,7 @@ class CombineHelper(object):
         '''
         if not preset is None:
             self.ops = HelperOptions(**preset.getCopy())
-            return
+        # These options (if any) will overwrite any set by the preset
         self.ops.setOptions(extend=extend,**kwargs)
 
     def getPOIs(self):
@@ -356,33 +356,40 @@ class CombineHelper(object):
         self.logger.info("Making MultiDimFit...")
         self.chdir(self.getOutputDirectory())
 
-        ws_file    = self.ops.getOption('ws_file')
-        method     = self.ops.getOption('method')
-        verb       = self.ops.getOption('verbosity')
-        name       = self.ops.getOption('name')
-        algo       = self.ops.getOption('algo')
-        frz_lst    = self.ops.getOption('freeze_parameters')
-        trk_pars   = self.ops.getOption('track_parameters')
-        redef_pois = self.ops.getOption('redefine_pois')
-        param_vals = self.ops.getOption('parameter_values')
-        pf_val     = self.ops.getOption('prefit_value')
-        is_robust  = self.ops.getOption('robust_fit')
-        save_fr    = self.ops.getOption('save_fitresult')
-        save_ws    = self.ops.getOption('save_workspace')
-        other_ops  = self.ops.getOption('other_options')
+        ws_file     = self.ops.getOption('ws_file')
+        method      = self.ops.getOption('method')
+        verb        = self.ops.getOption('verbosity')
+        name        = self.ops.getOption('name')
+        algo        = self.ops.getOption('algo')
+        frz_lst     = self.ops.getOption('freeze_parameters')
+        trk_pars    = self.ops.getOption('track_parameters')
+        redef_pois  = self.ops.getOption('redefine_pois')
+        param_vals  = self.ops.getOption('parameter_values')
+        pf_val      = self.ops.getOption('prefit_value')
+        is_robust   = self.ops.getOption('robust_fit')
+        save_fr     = self.ops.getOption('save_fitresult')
+        save_ws     = self.ops.getOption('save_workspace')
 
-        # pois   = self.dc_maker.getOperators()
+        scan_pts    = self.ops.getOption('scan_points')
+        split_pts   = self.ops.getOption('split_points')
+        batch_mode  = self.ops.getOption('batch_type')
+        scan_params = self.ops.getOption('set_parameters')
+        fast_scan   = self.ops.getOption('fast_scan')
+        align_edges = self.ops.getOption('align_edges')
+
+        other_ops   = self.ops.getOption('other_options')
+
         pois   = self.getPOIs()
         ranges = self.getPOIRangeStr(pois)
 
         args = ['combine',ws_file]
         args.extend(['-n',name])
         args.extend(['-M',method])
-        args.extend(['-v','%d' % (verb)])
-        args.extend(['--algo=%s' % (algo)])
+        args.extend(['-v','{verb}'.format(verb=verb)])
+        args.extend(['--algo={algo}'.format(algo=algo)])
         if self.ops.getOption('use_poi_ranges'): args.extend(['--setParameterRanges',ranges])
         if frz_lst:
-            args.extend(['--preFitValue','%.2f' % (pf_val)])
+            args.extend(['--preFitValue','{:.2f}'.format(pf_val)])
             args.extend(['--freezeParameters',','.join(frz_lst)])
         if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
@@ -392,7 +399,25 @@ class CombineHelper(object):
         if is_robust: args.extend(['--robustFit','1'])
         if other_ops: args.extend([x for x in other_ops])
 
-        self.logger.info("Combine command: %s", ' '.join(args))
+        if algo == FitAlgo.GRID:
+            if not scan_params:
+                # No parameters selected --> scan all of them
+                scan_params = [x for x in pois]
+            args.extend(['--points={}'.format(scan_pts)])
+            args.extend(['--parameters={}'.format(x) for x in scan_params])
+            if fast_scan: args.extend(['--fastScan'])
+            if align_edges: args.extend(['--alignEdges=1'])
+            if batch_mode:
+                task_name = "TODO-UNDECIDED"
+                args = ['combineTool.py'] + args[1:]
+                args.extend(['--job-mode',batch_mode])
+                args.extend(['--task-name',task_name])
+                args.extend(['--split-points','{}'.format(split_pts)])
+                if batch_mode == BatchType.CRAB:
+                    crab_cfg = self.ops.getOption('crab_config')
+                    crab_cfg_path = os.path.join(CONST.EFTFIT_TEST_DIR,crab_cfg)
+                raise NotImplementedError
+        self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
         run_command(args)
 
     def make_impact_plots(self):

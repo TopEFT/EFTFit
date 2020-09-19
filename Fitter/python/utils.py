@@ -23,6 +23,11 @@ class WorkspaceType(object):
     EFT = "EFT"
     SM  = "SM"
 
+class BatchType(object):
+    NONE = None
+    CRAB = "crab3"
+    CONDOR = "condor"
+
 # Match strings using one or more regular expressions
 def regex_match(lst,regex_lst):
     # NOTE: For the regex_lst patterns, we use the raw string to generate the regular expression.

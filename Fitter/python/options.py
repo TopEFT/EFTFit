@@ -1,7 +1,7 @@
 import logging
 import copy
 
-from utils import CombineMethod,FitAlgo,WorkspaceType
+from utils import CombineMethod,FitAlgo,WorkspaceType,BatchType
 
 class OptionsBase(object):
     '''
@@ -110,6 +110,7 @@ class HelperOptions(OptionsBase):
         self.model           = 'EFTFit.Fitter.EFTModel:eftmodel'    # The physics model used to make the RooWorkspace
         self.ws_type         = WorkspaceType.EFT
         self.method          = CombineMethod.NONE
+        self.batch_type      = BatchType.NONE
         self.name            = 'EFT'
 
         self.phys_ops          = []
@@ -132,6 +133,12 @@ class HelperOptions(OptionsBase):
         self.float_other_pois = False   # Whether or not the other POIs should be floating or fixed
         self.fast_scan        = False   # Whether or not to do a fast scan, evaluating the likelihood without profiling it
         self.robust_hesse     = False   # Use a more robust calculation of the hessian/covariance matrix
+        self.fast_scan        = False   # Whether or not to use the FastScan option for the grid scan
+        self.align_edges      = False   # Whether or not to align the edges during the grid scan
+        self.scan_points      = 300     # The number of scan points for the grid algo
+        self.split_points     = 3000    # The number of scan points to do per batch task
+
+        self.crab_config = 'custom_crab.py' # Name of the custom crab config to use for crab based grid scans
 
         self.algo = FitAlgo.NONE
 
