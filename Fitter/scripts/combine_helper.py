@@ -49,7 +49,7 @@ class HelperMode(object):
 
     @classmethod
     def isSM(cls,mode):
-        return (mode in [cls.SM_FITTING,cls.SM_IMPACTS,SM_PREFIT])
+        return (mode in [cls.SM_FITTING,cls.SM_IMPACTS,cls.SM_PREFIT])
 
     @classmethod
     def isEFT(cls,mode):
@@ -268,8 +268,12 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
             freeze_parameters=pois
         )
 
+    # NOTE: For the batch submission methods, the main thread won't be locked!
     if mode == HelperMode.EFT_GRIDSCAN:
-        helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='GridScan',algo=FitAlg.GRID)
+        helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='GridScan',
+            algo=FitAlgo.GRID,
+            save_fitresult=False
+        )
 
     # Skips finding the impacts for these nuisances
     to_exclude = []
@@ -372,7 +376,7 @@ if __name__ == "__main__":
         print "Making merged anatest file: {fname}".format(fname=hist_file_merged)
         CLF.execute()
 
-    mode = HelperMode.EFT_FITTING
+    mode = HelperMode.EFT_GRIDSCAN
 
     if HelperMode.isSM(mode):
         ops = HelperOptions(**SM_SIGNAL_OPS.getCopy())
@@ -388,6 +392,11 @@ if __name__ == "__main__":
         use_central=False,
         use_poi_ranges=False,
         histogram_file=hist_file_merged
+    )
+    # Som grid scan options
+    ops.setOptions(
+        set_parameters=['ctZ'],
+        scan_points=100
     )
     # Other options
     ops.setOptions(extend=True,other_options=[

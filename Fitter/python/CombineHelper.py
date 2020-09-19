@@ -364,6 +364,7 @@ class CombineHelper(object):
         frz_lst     = self.ops.getOption('freeze_parameters')
         trk_pars    = self.ops.getOption('track_parameters')
         redef_pois  = self.ops.getOption('redefine_pois')
+        float_pois  = self.ops.getOption('float_other_pois')
         param_vals  = self.ops.getOption('parameter_values')
         pf_val      = self.ops.getOption('prefit_value')
         is_robust   = self.ops.getOption('robust_fit')
@@ -393,6 +394,7 @@ class CombineHelper(object):
             args.extend(['--freezeParameters',','.join(frz_lst)])
         if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
         if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
+        if float_pois: args.extend(['--floatOtherPOIs','1'])
         if param_vals: args.extend(['--setParameters',','.join(param_vals)])
         if save_fr: args.extend(['--saveFitResult'])
         if save_ws: args.extend(['--saveWorkspace'])
@@ -438,7 +440,7 @@ class CombineHelper(object):
         if algo == FitAlgo.GRID and batch_mode == BatchType.CONDOR:
             condor_output_dir = 'condor{}'.format(name)
             condor_exec = 'condor_{}.sh'.format(name.replace('.',''))
-            condor_sub = 'condor_{}.sub'.format(name.replace('.'.''))
+            condor_sub = 'condor_{}.sub'.format(name.replace('.',''))
             if os.path.exists(condor_output_dir):
                 self.logger.info("Making condor output directry: {}".format(condor_output_dir))
                 os.makedirs(condor_output_dir)
