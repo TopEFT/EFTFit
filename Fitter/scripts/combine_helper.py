@@ -43,8 +43,48 @@ class HelperMode(object):
     SM_FITTING = 'SM_fitting'
     SM_IMPACTS = 'SM_impacts'
     SM_PREFIT  = 'SM_prefitOnly'
-    EFT_FITTING = 'EFT_fitting'
-    EFT_IMPACTS = 'EFT_impacts'
+    EFT_FITTING  = 'EFT_fitting'
+    EFT_IMPACTS  = 'EFT_impacts'
+    EFT_GRIDSCAN = 'EFT_gridscan'
+
+    @classmethod
+    def isSM(cls,mode):
+        return (mode in [cls.SM_FITTING,cls.SM_IMPACTS,SM_PREFIT])
+
+    @classmethod
+    def isEFT(cls,mode):
+        return (mode in [cls.EFT_FITTING,cls.EFT_IMPACTS,cls.EFT_GRIDSCAN])
+
+# For producing fits with the EFT WCs as the POIs
+EFT_OPS = HelperOptions(
+    ws_file      = '16D.root',
+    model        = 'EFTFit.Fitter.EFTModel:eftmodel',
+    ws_type      = WorkspaceType.EFT,
+    prefit_value = 0.0,
+    algo         = FitAlgo.SINGLES
+)
+
+# For producing fits with SM signal strength as the POIs
+SM_SIGNAL_OPS = HelperOptions(
+    ws_file      = 'SMWorkspace.root',
+    model        = 'HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
+    ws_type      = WorkspaceType.SM,
+    sm_signals = [# Overwrites the poi_ranges setting if len(tup[2]) == 3
+        # ('ttH',  'mu_ttH',  [1,0,30]),
+        # ('tllq', 'mu_tllq', [1,0,30]),
+        # ('ttll', 'mu_ttll', [1,0,30]),
+        # ('ttlnu','mu_ttlnu',[1,0,30]),
+        # ('tHq',  'mu_ttH',  [1,0,30]),  # Ties tHq process to be scaled by ttH signal
+
+        ('ttH',  'mu_ttH',  [1]),
+        ('tllq', 'mu_tllq', [1]),
+        ('ttll', 'mu_ttll', [1]),
+        ('ttlnu','mu_ttlnu',[1]),
+        ('tHq',  'mu_ttH',  [1]),  # Ties tHq process to be scaled by ttH signal
+    ],
+    prefit_value = 1.0,
+    algo         = FitAlgo.SINGLES
+)
 
 # Configure logging to an output file
 def setup_logger(log_file):
@@ -55,66 +95,13 @@ def setup_logger(log_file):
 
     logging.info("Log file: %s",log_file)
 
-def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy_output=False,modify_datacard=False):
-    # For producing fits with the EFT WCs as the POIs
-    EFT_OPS = HelperOptions(
-        ws_file      = '16D.root',
-        model        = 'EFTFit.Fitter.EFTModel:eftmodel',
-        ws_type      = WorkspaceType.EFT,
-        prefit_value = 0.0,
-        algo         = FitAlgo.SINGLES
-    )
-
-    # For producing fits with SM signal strength as the POIs
-    SM_SIGNAL_OPS = HelperOptions(
-        ws_file      = 'SMWorkspace.root',
-        model        = 'HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
-        ws_type      = WorkspaceType.SM,
-        sm_signals = [# Overwrites the poi_ranges setting if len(tup[2]) == 3
-            # ('ttH',  'mu_ttH',  [1,0,30]),
-            # ('tllq', 'mu_tllq', [1,0,30]),
-            # ('ttll', 'mu_ttll', [1,0,30]),
-            # ('ttlnu','mu_ttlnu',[1,0,30]),
-            # ('tHq',  'mu_ttH',  [1,0,30]),  # Ties tHq process to be scaled by ttH signal
-
-            ('ttH',  'mu_ttH',  [1]),
-            ('tllq', 'mu_tllq', [1]),
-            ('ttll', 'mu_ttll', [1]),
-            ('ttlnu','mu_ttlnu',[1]),
-            ('tHq',  'mu_ttH',  [1]),  # Ties tHq process to be scaled by ttH signal
-        ],
-        prefit_value = 1.0,
-        algo         = FitAlgo.SINGLES
-    )
-
+def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,copy_output=False,modify_datacard=False):
     out_name = '{mode}_{tstamp}_{name}'.format(mode=mode,tstamp=TSTAMP2,name=dir_name)
     if testing:
         out_name = '{mode}_testing'.format(mode=mode)
 
     # Should be relative to the CombineHelper 'home' directory
     out_dir = os.path.join(group_directory,out_name)
-
-    if mode == HelperMode.SM_FITTING or mode == HelperMode.SM_IMPACTS or mode == HelperMode.SM_PREFIT:
-        helper_ops = HelperOptions(**SM_SIGNAL_OPS.getCopy())
-    elif mode == HelperMode.EFT_FITTING or mode == HelperMode.EFT_IMPACTS:
-        helper_ops = HelperOptions(**EFT_OPS.getCopy())
-    else:
-        raise RuntimeError("Unknown run mode: {}".format(mode))
-    helper_ops.setOptions(
-        verbosity=2,
-        fake_data=False,
-        save_fitresult=True,
-        use_central=False,
-        use_poi_ranges=False,
-        histogram_file=hist_file
-    )
-    # Other options
-    helper_ops.setOptions(extend=True,other_options=[
-        '--cminDefaultMinimizerStrategy=0',
-        # '--cminPoiOnlyFit',
-        # '--autoMaxPOIs=*'
-        # '--robustHesse=1',
-    ])
 
     helper = CombineHelper(out_dir=out_dir)
     helper.setOptions(preset=helper_ops)
@@ -124,7 +111,7 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
 
     logging.info('group_directory: {}'.format(group_directory))
     logging.info('dir_name: {}'.format(dir_name))
-    logging.info('hist_file: {}'.format(hist_file))
+    logging.info('hist_file: {}'.format(helper_ops.getOption('histogram_file')))
     logging.info('mode: {}'.format(mode))
     logging.info('testing: {}'.format(testing))
     logging.info('force: {}'.format(force))
@@ -280,6 +267,10 @@ def runit(group_directory,dir_name,hist_file,mode,testing=False,force=False,copy
             parameter_values=frz_sm_pois,
             freeze_parameters=pois
         )
+
+    if mode == HelperMode.EFT_GRIDSCAN:
+        helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='GridScan',algo=FitAlg.GRID)
+
     # Skips finding the impacts for these nuisances
     to_exclude = []
     to_exclude.extend(helper.getSysts(['FR_stats_.*','^QCDscale_VVV$','[lh]fstats[12]']))
@@ -381,13 +372,38 @@ if __name__ == "__main__":
         print "Making merged anatest file: {fname}".format(fname=hist_file_merged)
         CLF.execute()
 
+    mode = HelperMode.EFT_FITTING
+
+    if HelperMode.isSM(mode):
+        ops = HelperOptions(**SM_SIGNAL_OPS.getCopy())
+    elif HelperMode.isEFT(mode):
+        ops = HelperOptions(**EFT_OPS.getCopy())
+    else:
+        raise RuntimeError("Unknown run mode: {}".format(mode))
+
+    ops.setOptions(
+        verbosity=2,
+        fake_data=False,
+        save_fitresult=False,
+        use_central=False,
+        use_poi_ranges=False,
+        histogram_file=hist_file_merged
+    )
+    # Other options
+    ops.setOptions(extend=True,other_options=[
+        '--cminDefaultMinimizerStrategy=0',
+        # '--cminPoiOnlyFit',
+        # '--autoMaxPOIs=*'
+        # '--robustHesse=1',
+    ])
+
     runit(
         group_directory='data2017v1',
         dir_name=dir_name,
-        hist_file=hist_file_merged,
-        mode=HelperMode.EFT_FITTING,
+        helper_ops=ops,
+        mode=mode,
         testing=True,
-        force=True,
+        force=False,
         copy_output=False,
         modify_datacard=False
     )
