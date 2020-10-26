@@ -186,7 +186,7 @@ class EFTFit(object):
         sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
         if os.path.isfile('multidimfit'+name+'.root'):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
-        self.printBestFits(name)
+        self.printBestFitsEFT(name)
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###

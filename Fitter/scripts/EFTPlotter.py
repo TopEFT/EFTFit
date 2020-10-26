@@ -5,6 +5,7 @@ import sys
 import numpy
 import itertools
 import subprocess as sp
+import os
 from EFTFit.Fitter.ContourHelper import ContourHelper
 
 class EFTPlot(object):
@@ -17,19 +18,24 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
+                            'cpt':(-30,20),  'ctp':(-25,75),
+                            #'cpt':(-43,29),  'ctp':(-35,65), #FIXME frozen only
                             'cpt':(-39,29),  'ctp':(-35,65),
                             'ctli':(-19,19), 'ctlSi':(-22,22),
-                            'cQl3i':(-19,19),'cptb':(-39,39),
-                            'ctG':(-2.9,2.9),    'cpQM':(-30,50),  
+                            'cQl3i':(-19,19),'cptb':(-39,49),
+                            #'ctG':(-2.9,2.9),    'cpQM':(-10,30), #FIXME frozen only 
+                            'ctG':(-2.9,2.9),    'cpQM':(-30,50),
                             'ctlTi':(-4,4),  'ctei':(-19,19),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
-                            'cpQ3':(-19,12), 'cbW':(-9,9)
+                            'cpQ3':(-19,15), 'cbW':(-9,9)
                          }
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]', 'ctZ': '#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'ctG': '#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]', 'cbW': '#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2} [TeV^{-2}]', 'cpt': '#it{c}_{#varphit}/#Lambda^{2} [TeV^{-2}]', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2} [TeV^{-2}]', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2} [TeV^{-2}]', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2} [TeV^{-2}]', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]'}
-        self.texdicfrac = {'ctW': '#it{c}_{tW}', 'ctZ': '#it{c}_{tZ}', 'ctp': '#it{c}_{t#varphi}', 'cpQM': '#it{c}^{#minus}_{#varphiQ}', 'ctG': '#it{c}_{tG}', 'cbW': '#it{c}_{bW}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}', 'cptb': '#it{c}_{#varphitb}', 'cpt': '#it{c}_{#varphit}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}', 'cQlM': '#it{c}^{#minus(#it{l})}_{Ql}', 'cQe': '#it{c}^{(#it{l})}_{Qe}', 'ctl': '#it{c}^{(#it{l})}_{tl}', 'cte': '#it{c}^{(#it{l})}_{te}', 'ctlS': '#it{c}^{S(#it{l})}_{t}', 'ctlT': '#it{c}^{T(#it{l})}_{t}'}
+        self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t \\varphi}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\mathrm{\\varphi Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3(\\ell)}_{\mathrm{\\varphi Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\mathrm{\\varphi tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\mathrm{\\varphi t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{\mathrm{S}(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{\mathrm{T}(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'}
+        #self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]', 'ctZ': '#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'ctG': '#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]', 'cbW': '#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2} [TeV^{-2}]', 'cpt': '#it{c}_{#varphit}/#Lambda^{2} [TeV^{-2}]', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2} [TeV^{-2}]', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2} [TeV^{-2}]', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2} [TeV^{-2}]', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]'}
+        self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}', 'ctZ': '\it{c}_{\mathrm{tZ}}', 'ctp': '\it{c}_{\mathrm{t\\varphi}}', 'cpQM': '\it{c}^{-}_{\mathrm{\\varphi Q}}', 'ctG': '\it{c}_{\mathrm{tG}}', 'cbW': '\it{c}_{\mathrm{bW}}', 'cpQ3': '\it{c}^{\mathrm{3}(\\ell)}_{\mathrm{\\varphi Q}}', 'cptb': '\it{c}_{\mathrm{\\varphi tb}}', 'cpt': '\it{c}_{\mathrm{\\varphi t}}', 'cQl3': '\it{c}^{\mathrm{3}(\\ell)}_{\mathrm{Q}\\ell}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}', 'ctlS': '\it{c}^{\mathrm{S}(\\ell)}_{\mathrm{t}}', 'ctlT': '\it{c}^{\mathrm{T}(\\ell)}_{\mathrm{t}}'}
+        #self.texdicfrac = {'ctW': '#it{c}_{tW}', 'ctZ': '#it{c}_{tZ}', 'ctp': '#it{c}_{t#varphi}', 'cpQM': '#it{c}^{#minus}_{#varphiQ}', 'ctG': '#it{c}_{tG}', 'cbW': '#it{c}_{bW}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}', 'cptb': '#it{c}_{#varphitb}', 'cpt': '#it{c}_{#varphit}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}', 'cQlM': '#it{c}^{#minus(#it{l})}_{Ql}', 'cQe': '#it{c}^{(#it{l})}_{Qe}', 'ctl': '#it{c}^{(#it{l})}_{tl}', 'cte': '#it{c}^{(#it{l})}_{te}', 'ctlS': '#it{c}^{S(#it{l})}_{t}', 'ctlT': '#it{c}^{T(#it{l})}_{t}'}
         #self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
@@ -195,6 +201,9 @@ class EFTPlot(object):
             graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
 
         # Rezero the y axis and make the tgraphs
+        zero = graph1nlls.index(0)
+        print graph1nlls[zero], graph1wcs[zero]
+        graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
@@ -229,7 +238,7 @@ class EFTPlot(object):
         graph1.SetMarkerSize(1)
 
         graph2.SetMarkerColor(2)
-        graph2.SetMarkerStyle(26)
+        graph2.SetMarkerStyle(32)
         graph2.SetMarkerSize(1)
 
         #Add 1-sigma and 2-sigma lines. (Vertical lines were too hard, sadly)
@@ -263,17 +272,24 @@ class EFTPlot(object):
         XTitle.Draw('same')
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.18, 0.96, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(33)
+        self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
-        self.CMS_extra.SetTextAlign(33)
+        self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
+        self.arXiv_extra = ROOT.TLatex(0.31, 0.92, "arXiv:20xx.xxxx")# Simulation")
+        self.arXiv_extra.SetNDC(1)
+        self.arXiv_extra.SetTextSize(0.04)
+        self.arXiv_extra.SetTextAlign(30)
+        self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
+        if not final: self.arXiv_extra.Draw('same')
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
@@ -282,12 +298,14 @@ class EFTPlot(object):
         self.Lumi_text.Draw('same')
 
         # Lgend
-        legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
-        legend.AddEntry(graph1,"Others Profiled (2#sigma)",'p')
-        legend.AddEntry(graph2,"Others Fixed to SM (2#sigma)",'p')
-        legend.SetTextSize(0.035)
-        legend.SetNColumns(1)
-        legend.Draw('same')
+        legend = ROOT.TLegend(0.,0.,1,1)
+        #legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
+        legend.AddEntry(graph1,"Others Profiled",'p')
+        legend.AddEntry(graph2,"Others Fixed to SM",'p')
+        legend.SetTextSize(0.35)
+        #legend.SetTextSize(0.035)
+        #legend.SetNColumns(1)
+        #legend.Draw('same')
 
         #Check log option, then save as image
         if log:
@@ -296,7 +314,17 @@ class EFTPlot(object):
             canvas.Print('Overlay{}1DNLL_log.png'.format(wc),'png')
         else:
             if final: canvas.Print('Overlay{}1DNLL_final.png'.format(wc),'png')
-            else: canvas.Print('Overlay{}1DNLL.png'.format(wc),'png')
+            else: 
+                canvas.Print('Overlay{}1DNLL_prelim.png'.format(wc),'png')
+                canvas.Print('Overlay{}1DNLL_prelim.eps'.format(wc),'eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL_prelim.eps'.format(wc))
+        canvas = ROOT.TCanvas('canvas', 'canvas', 400, 100)
+        canvas.cd()
+        legend.Draw()
+        canvas.Print('ext_leg_Overlay1DNLL.png'.format(wc),'png')
+        canvas.Print('ext_leg_Overlay1DNLL.eps'.format(wc),'eps')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_Overlay1DNLL.eps')
 
         rootFile1.Close()
         rootFile2.Close()
@@ -588,9 +616,9 @@ class EFTPlot(object):
         c681D = self.ContourHelper.GetContour(h_contour,1.00)
         c951D = self.ContourHelper.GetContour(h_contour,4.00)
         c9971D = self.ContourHelper.GetContour(h_contour,9.00)
-        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,2,1)
-        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,2,6)
-        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,3,3)
+        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,4,1)
+        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,4,6)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,4,3)
         #place holders for the legend, since TLine is weird
         hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
         hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
@@ -601,9 +629,9 @@ class EFTPlot(object):
         hc68.SetLineStyle(1)
         hc95.SetLineStyle(6)
         hc997.SetLineStyle(3)
-        hc68.SetLineWidth(2)
-        hc95.SetLineWidth(2)
-        hc997.SetLineWidth(3)
+        hc68.SetLineWidth(5)
+        hc95.SetLineWidth(5)
+        hc997.SetLineWidth(5)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
         self.ContourHelper.styleMultiGraph(c9971D,ROOT.kGreen-2,1,3)
@@ -634,8 +662,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(13)
@@ -695,8 +723,19 @@ class EFTPlot(object):
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
         else: canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
-        if final: canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
-        else: canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
+        if final: 
+            #canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_final.eps'.format(wcs[0],wcs[1]),'eps')
+            #convert EPS to PDF to preserve \ell
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final.eps {}{}contour_final.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        else: 
+            #canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_prelim.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim.eps {}{}contour_prelim.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1192,6 +1231,8 @@ class EFTPlot(object):
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.pdf') or filename.endswith('contour_final.pdf') or ('less' in filename and filename.endswith('.pdf')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
         ### Return a table of parameters, their best fits, and their uncertainties ###
@@ -1311,11 +1352,14 @@ class EFTPlot(object):
             two = ['%.2f' % elem for elem in two]
             s = pline[0] + ' & '
             if len(one)==2:
+                tmp = one[1]
+                one[1] = two[0]
+                two[0] = tmp
                 one = ', '.join(one)
                 two = ', '.join(two)
-                s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
+                s += str(best) + '[' + str(one) + ']' + ' and [' + str(two) + ']'
             else:
-                s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
+                s += str(best) + '[' + str(one[0]) + ', ' + str(two[0]) + ']'
             print s
 
         return fit_array
@@ -1345,10 +1389,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+                line[0] = 'ctG#times2'
+                line[1] = line[1]*2
+                line[2] = [val*2 for val in line[2]]
+                line[3] = [val*2 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1367,10 +1411,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze):
             if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+                line[0] = 'ctG#times2'
+                line[1] = line[1]*2
+                line[2] = [val*2 for val in line[2]]
+                line[3] = [val*2 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1389,10 +1433,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_float1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+                line[0] = 'ctG#times2'
+                line[1] = line[1]*2
+                line[2] = [val*2 for val in line[2]]
+                line[3] = [val*2 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1411,10 +1455,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times10'
-                line[1] = line[1]*10
-                line[2] = [val*10 for val in line[2]]
-                line[3] = [val*10 for val in line[3]]
+                line[0] = 'ctG#times2'
+                line[1] = line[1]*2
+                line[2] = [val*2 for val in line[2]]
+                line[3] = [val*2 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1462,14 +1506,17 @@ class EFTPlot(object):
             if 'divide' in tex:
                 scale = tex[tex.find('#divide'):]
                 tex = tex[0:tex.find('#divide')]
+                scale = scale.replace('#divide', '\\div')
             if 'times' in tex:
                 scale = tex[tex.find('#times'):]
+                scale = scale.replace('#times', '\\times')
                 tex = tex[0:tex.find('#times')]
             tex = self.texdicfrac[tex]
-            y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
-            y_labels[idy].SetTextAlign(20)
+            y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.16,yval-1,tex+scale))
+            #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
+            y_labels[idy].SetTextAlign(22)
             y_labels[idy].SetTextSize(0.03)
-            if fits_float[idy][0]=='cpQM#divide2': y_labels[idy].SetTextSize(0.025)
+            if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
@@ -1481,10 +1528,11 @@ class EFTPlot(object):
 
         graph_freeze = ROOT.TGraph()
         graph_freeze = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
-        graph_freeze.SetMarkerStyle(20)
+        graph_freeze.SetMarkerStyle(3)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(2)
         graph_freeze.SetLineColor(2)
+        graph_freeze.SetLineStyle(3)
 
         # Add lines for the errors, but print the value if line would go off the pad
         lines_labels = []
@@ -1600,6 +1648,7 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
                 lines_freeze[-1].SetLineColor(2)
+                lines_freeze[-1].SetLineStyle(3)
         lines_freeze_1sigma = []
         for idx,fittuple in enumerate(fits_freeze1sigma):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -1637,17 +1686,18 @@ class EFTPlot(object):
                 lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
                 lines_freeze_1sigma[-1].SetLineColor(2)
                 lines_freeze_1sigma[-1].SetLineWidth(3)
+                lines_freeze_1sigma[-1].SetLineStyle(3)
 
         # Add legend
         legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
-        legend.AddEntry(graph_float,"Others Profiled (2#sigma)",'l')
-        legend.AddEntry(graph_freeze,"Others Fixed to SM (2#sigma)",'l')
         graph_float_1sigma = graph_float.Clone("graph_float_1sigma")
         graph_freeze_1sigma = graph_freeze.Clone("graph_freeze_1sigma")
         graph_float_1sigma.SetLineWidth(3)
         graph_freeze_1sigma.SetLineWidth(3)
-        legend.AddEntry(graph_float_1sigma,"Others Profiled (1#sigma)",'l')
-        legend.AddEntry(graph_freeze_1sigma,"Others Fixed to SM (1#sigma)",'l')
+        legend.AddEntry(graph_float,"Others profiled (2#sigma)",'l')
+        legend.AddEntry(graph_float_1sigma,"Others profiled (1#sigma)",'l')
+        legend.AddEntry(graph_freeze,"Others fixed to SM (2#sigma)",'l')
+        legend.AddEntry(graph_freeze_1sigma,"Others fixed to SM (1#sigma)",'l')
         legend.SetTextSize(0.025)
 
         # Draw everything
@@ -1673,12 +1723,19 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
+        #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
         self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
+        self.arXiv_extra = ROOT.TLatex(0.9, 0.815, "arXiv:20xx.xxxx")# Simulation")
+        self.arXiv_extra.SetNDC(1)
+        self.arXiv_extra.SetTextSize(0.04)
+        self.arXiv_extra.SetTextAlign(30)
+        self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
+        if not final: self.arXiv_extra.Draw('same')
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
@@ -1688,10 +1745,14 @@ class EFTPlot(object):
 
         if final:
             canvas.Print('BestScanPlot_final.png','png')
-            canvas.Print('BestScanPlot_final.pdf','pdf')
+            canvas.Print('BestScanPlot_final.eps','eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot_final.eps')
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot_final.eps BestScanPlot_final.pdf')
         else:
-            canvas.Print('BestScanPlot.png','png')
-            canvas.Print('BestScanPlot.pdf','pdf')
+            canvas.Print('BestScanPlot_sup.png','png')
+            canvas.Print('BestScanPlot_sup.eps','eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot_sup.eps')
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot_sup.eps BestScanPlot_sup.pdf')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
@@ -1704,7 +1765,7 @@ class EFTPlot(object):
             ('ctZ', 0.001943, 10.497099, -3.072483, 3.093559),
             ('ctp', 0.000558, 2.153222, -2.153222, 2.153222),
             ('cpQM', 0.000139, 1.147733, -1.147733, 1.147733),
-            ('ctG#times10', -4.3e-04, 01.49153, -01.49153, 01.49153),
+            ('ctG#times2', -4.3e-04, 01.49153, -01.49153, 01.49153),
             ('cbW', 0.0, 13.188208, -13.188208, 13.188208),
             ('cpQ3', -0.000237, 1.284475, -1.284475, 1.284475),
             ('cptb', 0.0, 53.786793, -53.786793, 53.786793),
@@ -1723,7 +1784,7 @@ class EFTPlot(object):
             ('ctZ', 0.001882, 2.732047, -1.259174, 1.26976),
             ('ctp', 0.010915, 2.809417, -3.5235, 4.18801),
             ('cpQM', 0.003549, 1.386955, -1.779072, 1.688684),
-            ('ctG#times10', 00.00868, 01.72676, -04.75713, 02.8743),
+            ('ctG#times2', 00.00868, 01.72676, -04.75713, 02.8743),
             ('cbW', -0.00522, 3.477419, -2.071278, 2.081717),
             ('cpQ3', 0.003113, 1.42997, -2.489773, 1.473674),
             ('cptb', -0.012994, 14.945221, -8.696135, 8.672515),
