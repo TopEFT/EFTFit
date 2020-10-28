@@ -1357,9 +1357,11 @@ class EFTPlot(object):
                 two[0] = tmp
                 one = ', '.join(one)
                 two = ', '.join(two)
-                s += str(best) + '[' + str(one) + ']' + ' and [' + str(two) + ']'
+                s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
+                #s += str(best) + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
             else:
-                s += str(best) + '[' + str(one[0]) + ', ' + str(two[0]) + ']'
+                s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
+                #s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
             print s
 
         return fit_array
