@@ -55,6 +55,7 @@ class EFTFit(object):
             return
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
+                '--channel-masks',
                 #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1,0,3]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,3]','--PO','map=.*/ttH:mu_ttH[1,0,3]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
                 #'--PO','map=.*/ttll:mu_ttll[1,0,3]','--PO','map=.*/tHq:mu_ttH[1]','--PO','map=.*/ttlnu:mu_ttlnu[1]','--PO','map=.*/ttH:mu_ttH[1]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
                 #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1]','--PO','map=.*/ttlnu:mu_ttlnu[1]','--PO','map=.*/ttH:mu_ttH[1]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
@@ -153,7 +154,7 @@ class EFTFit(object):
             logging.error("Datacard does not exist!")
             sys.exit()
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['text2workspace.py',datacard,'-P','EFTFit.Fitter.EFTModel:eftmodel','--PO','fits='+CMSSW_BASE+'/src/EFTFit/Fitter/hist_files/EFT_Parameterization.npy','-o','EFTWorkspace.root']
+        args = ['text2workspace.py',datacard,'-P','EFTFit.Fitter.EFTModel:eftmodel','--PO','fits='+CMSSW_BASE+'/src/EFTFit/Fitter/hist_files/EFT_Parameterization.npy','-o','EFTWorkspace.root','--channel-masks']
 
         logging.info(' '.join(args))
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
