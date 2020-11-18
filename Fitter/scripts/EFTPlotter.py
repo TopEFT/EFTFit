@@ -18,13 +18,12 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
-                            'cpt':(-30,20),  'ctp':(-25,75),
-                            #'cpt':(-43,29),  'ctp':(-35,65), #FIXME frozen only
-                            'cpt':(-39,29),  'ctp':(-35,65),
+                            #'cpt':(-30,20),  'ctp':(-25,75), #FIXME frozen only
+                            'cpt':(-43,29),  'ctp':(-35,75),
                             'ctli':(-19,19), 'ctlSi':(-22,22),
                             'cQl3i':(-19,19),'cptb':(-39,49),
-                            #'ctG':(-2.9,2.9),    'cpQM':(-10,30), #FIXME frozen only 
-                            'ctG':(-2.9,2.9),    'cpQM':(-30,50),
+                            'ctG':(-2.9,2.9),    'cpQM':(-10,30), #FIXME frozen only 
+                            #'ctG':(-2.9,2.9),    'cpQM':(-30,50),
                             'ctlTi':(-4,4),  'ctei':(-19,19),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
                             'cpQ3':(-19,15), 'cbW':(-9,9)
@@ -645,16 +644,17 @@ class EFTPlot(object):
 
         # Marker for SM point
         marker_1 = ROOT.TMarker()
-        marker_1.SetMarkerSize(2.0)
+        marker_1.SetMarkerSize(3.0)
         marker_1.SetMarkerColor(97)
         marker_1.SetMarkerStyle(33)
         marker_2 = ROOT.TMarker()
-        marker_2.SetMarkerSize(1.2)
+        marker_2.SetMarkerSize(1.8)
         marker_2.SetMarkerColor(89)
         marker_2.SetMarkerStyle(33)
         hSM = ROOT.TH1F('SM', 'SM', 1, 0, 1)
         hSM.SetMarkerStyle(33)
         hSM.SetMarkerColor(97)
+        hSM.SetMarkerSize(2)
  
         # Change format of plot
         h_contour.SetStats(0)
