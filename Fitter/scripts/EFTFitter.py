@@ -9,6 +9,7 @@ import glob
 import getpass
 import array
 from collections import defaultdict
+from EFTFit.Fitter.findMask import findMask 
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -75,7 +76,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stderr,'err')
         process.wait()
 
-    def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[]):
+    def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[], mask=[]):
         ### Multidimensional fit ###
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
@@ -87,6 +88,15 @@ class EFTFit(object):
         if name:        args.extend(['-n','{}'.format(name)])
         if freeze:      args.extend(['--freezeParameters',','.join(freeze)])
         if other:       args.extend(other)
+        if mask:
+            masks = []
+            for m in mask:
+                msk = findMask(m)
+                if 'sfz' not in m:
+                    msk = [x for x in msk if 'sfz' not in x]
+                masks.append(msk)
+            masks = [item for sub in masks for item in sub]
+            args.extend(['--setParameters',','.join(masks)])
 
         logging.info(" ".join(args))
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -189,7 +199,7 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFitsEFT(name)
 
-    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[]):
+    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
@@ -201,6 +211,16 @@ class EFTFit(object):
         if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if other:             args.extend(other)
+        if mask:
+            masks = []
+            for m in mask:
+                msk = findMask(m)
+                if 'sfz' not in m:
+                    msk = [x for x in msk if 'sfz' not in x]
+                masks.append(msk)
+            masks = [item for sub in masks for item in sub]
+            args.extend(['--setParameters',','.join(masks)])
+
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
         if batch=='condor':            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         logging.info(' '.join(args))
@@ -356,15 +376,15 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[]):
+    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[]):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
 
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, other)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, other, mask)
 
-    def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[]):
+    def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[], mask=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
 
         # Use EVERY combination of wcs
@@ -374,7 +394,7 @@ class EFTFit(object):
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask)
 
         # Use each wc only once
         if not allPairs:
@@ -385,9 +405,9 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask)
 
-    def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[]):
+    def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
 
         # Use EVERY combination of wcs
@@ -397,7 +417,7 @@ class EFTFit(object):
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other)
+                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask)
 
         # Use each wc only once
         if not allPairs:
@@ -409,7 +429,7 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other)
+                self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask)
 
     def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
         ### For each wc, attempt to resubmit failed CRAB jobs ###
