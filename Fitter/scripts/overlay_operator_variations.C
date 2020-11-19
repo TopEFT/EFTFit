@@ -4,6 +4,9 @@
 #include "EFTFit/Fitter/interface/WSHelper.h"
 #include "EFTFit/Fitter/interface/PlotMaker.h"
 #include "EFTFit/Fitter/interface/AnalysisCategory.h"
+#include "EFTFit/Fitter/interface/CategoryManager.h"
+#include "EFTFit/Fitter/interface/HistogramBuilder.h"
+#include "EFTFit/Fitter/interface/utils.h"
 
 // #include "tdrstyle.C"
 
@@ -110,6 +113,104 @@ struct OffScalePoint {
     Color_t clr;
     TArrow* arrow;
     TLatex* latex;
+    // TMathText* latex;
+};
+
+
+struct CMSTextStyle {
+    TString cms_text;
+    int cms_frame_loc;      // 0 - Out of frame top-left, 1 - In frame top-left
+    int cms_align;
+    float cms_size;
+    float cms_font;
+    float cms_offset;       // offset to position the extra text (e.g. "Supplementary")
+    float cms_rel_posX;
+    float cms_rel_posY;
+
+    TString lumi_text;
+    int lumi_align;
+    float lumi_size;
+    float lumi_font;
+    float lumi_offset; // Percentage of some margin (currently just top margin) to shift text
+
+    TString extra_text;
+    int extra_align;
+    float extra_text_font;
+    float extra_over_cms_text_size; // Ratio of "CMS" and extra text size
+
+    TString arxiv_text;
+    float arxiv_font;
+    float arxiv_offset;
+
+    CMSTextStyle() {
+        cms_text = "CMS";
+        cms_frame_loc = 0;
+        cms_align = 11;
+        cms_size = 0.75;
+        cms_font = 61;
+        cms_offset = 0.07;
+        cms_rel_posX = 0.045;
+        cms_rel_posY = 0.100;
+
+        lumi_text = "41.5 fb^{-1} (13 TeV)";
+        lumi_align = 31;
+        lumi_size = 0.60;
+        lumi_font = 42;
+        lumi_offset = 0.20;
+
+        extra_text = "";
+        // extra_text = "Preliminary";
+        extra_align = 11;
+        extra_text_font = 52; // default is helvetica-italics
+        extra_over_cms_text_size = 0.76;    // ratio of "CMS" and extra text size
+
+        arxiv_text = "arXiv:20xx.xxxxx";
+        arxiv_font = 42;
+        arxiv_offset = 0.28;
+    }
+};
+
+struct PlotPartition {
+    int start;  // First bin of the partition
+    int end;    // Last bin of the partition
+
+    double bin_edge;    // x-position of the end bin's right edge
+
+    TString axis_txt;
+    double axis_offsetX;
+
+    TString body_txt_1;
+    TString body_txt_2;
+    double body_offsetX;
+    double body_offsetY;
+    double body_spacing;
+
+    TLine* line;
+    TLatex* axis_latex;
+    TLatex* body_latex_1;
+    TLatex* body_latex_2;
+
+    bool draw_line;
+    bool draw_body_latex;
+    bool draw_axis_latex;
+
+    PlotPartition() {
+        start = 0;
+        end = 1;
+
+        axis_txt = "N_{j}";
+        axis_offsetX = 0.01;
+
+        body_txt_1 = "";
+        body_txt_2 = "";
+        body_offsetX = 0.01;
+        body_offsetY = 0.00;
+        body_spacing = 0.05;
+
+        draw_line = true;
+        draw_body_latex = true;
+        draw_axis_latex = true;
+    }
 };
 
 // This determines the ordering of the THStack histograms
@@ -140,66 +241,87 @@ vTStr BKGD_PROCS {
 
 // How to name bin categories in histograms
 std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
-    {"2lss_m","2lss(-)"},
-    {"2lss_p","2lss(+)"},
-    {"3l_p_nsfz_1b","3l(+)1b"},
-    {"3l_m_nsfz_1b","3l(-)1b"},
-    {"3l_p_nsfz_2b","3l(+)2b"},
-    {"3l_m_nsfz_2b","3l(-)2b"},
-    // {"3l_sfz_1b","3l SFZ 1b"},
+    // Original set
+    // {"2lss_m","2llss(#font[122]{\55})"},
+    // {"2lss_p","2llss(+)"},
+    // {"3l_p_nsfz_1b","3l#kern[-0.1]{1}#kern[0.1]{b}(+)"},
+    // {"3l_m_nsfz_1b","3l#kern[-0.1]{1}#kern[0.1]{b}(#font[122]{\55})"},
+    // {"3l_p_nsfz_2b","3l#kern[+0.0]{2}b(+)"},
+    // {"3l_m_nsfz_2b","3l#kern[+0.0]{2}b(#font[122]{\55})"},
+    // {"3l_sfz_1b","SFZ#kern[-0.1]{1}#kern[0.1]{b}"},
+    // {"3l_sfz_2b","SFZ#kern[+0.0]{2}b"},
+
+    // For use with eps and ps save types
+    {"2lss_m","2\\ell\\text{ss}(-)"},
+    {"2lss_p","2\\ell\\text{ss}(+)"},
+    {"3l_p_nsfz_1b","3\\ell 1\\text{b}(+)"},
+    {"3l_m_nsfz_1b","3\\ell 1\\text{b}(-)"},
+    {"3l_p_nsfz_2b","3\\ell 2\\text{b}(+)"},
+    {"3l_m_nsfz_2b","3\\ell 2\\text{b}(-)"},
     {"3l_sfz_1b","SFZ1b"},
-    // {"3l_sfz_2b","3l SFZ 2b"},
     {"3l_sfz_2b","SFZ2b"},
+    {"4l","4\\ell"},
 
-    {"C_2lss_p_2b_4j","4j"},
-    {"C_2lss_p_2b_5j","5j"},
-    {"C_2lss_p_2b_6j","6j"},
-    {"C_2lss_p_2b_ge7j","ge7j"},
+    // For use with PDF save type
+    // {"2lss_m","2#it{l}ss(-)"},
+    // {"2lss_p","2#it{l}ss(+)"},
+    // {"3l_p_nsfz_1b","3#it{l}1b(+)"},
+    // {"3l_m_nsfz_1b","3#it{l}1b(-)"},
+    // {"3l_p_nsfz_2b","3#it{l}2b(+)"},
+    // {"3l_m_nsfz_2b","3#it{l}2b(-)"},
+    // {"3l_sfz_1b","SFZ1b"},
+    // {"3l_sfz_2b","SFZ2b"},
+    // {"4l","4#it{l}"},
 
-    {"C_2lss_m_2b_4j","4j"},
-    {"C_2lss_m_2b_5j","5j"},
-    {"C_2lss_m_2b_6j","6j"},
-    {"C_2lss_m_2b_ge7j","ge7j"},
+    {"C_2lss_p_2b_4j"  ,"4"},
+    {"C_2lss_p_2b_5j"  ,"5"},
+    {"C_2lss_p_2b_6j"  ,"6"},
+    {"C_2lss_p_2b_ge7j",">6"},
 
-    {"C_3l_mix_p_1b_2j","2j"},
-    {"C_3l_mix_p_1b_3j","3j"},
-    {"C_3l_mix_p_1b_4j","4j"},
-    {"C_3l_mix_p_1b_ge5j","ge5j"},
+    {"C_2lss_m_2b_4j"  ,"4"},
+    {"C_2lss_m_2b_5j"  ,"5"},
+    {"C_2lss_m_2b_6j"  ,"6"},
+    {"C_2lss_m_2b_ge7j",">6"},
 
-    {"C_3l_mix_m_1b_2j","2j"},
-    {"C_3l_mix_m_1b_3j","3j"},
-    {"C_3l_mix_m_1b_4j","4j"},
-    {"C_3l_mix_m_1b_ge5j","ge5j"},
+    {"C_3l_mix_p_1b_2j"  ,"2"},
+    {"C_3l_mix_p_1b_3j"  ,"3"},
+    {"C_3l_mix_p_1b_4j"  ,"4"},
+    {"C_3l_mix_p_1b_ge5j",">4"},
 
-    {"C_3l_mix_p_2b_2j","2j"},
-    {"C_3l_mix_p_2b_3j","3j"},
-    {"C_3l_mix_p_2b_4j","4j"},
-    {"C_3l_mix_p_2b_ge5j","ge5j"},
+    {"C_3l_mix_m_1b_2j"  ,"2"},
+    {"C_3l_mix_m_1b_3j"  ,"3"},
+    {"C_3l_mix_m_1b_4j"  ,"4"},
+    {"C_3l_mix_m_1b_ge5j",">4"},
 
-    {"C_3l_mix_m_2b_2j","2j"},
-    {"C_3l_mix_m_2b_3j","3j"},
-    {"C_3l_mix_m_2b_4j","4j"},
-    {"C_3l_mix_m_2b_ge5j","ge5j"},
+    {"C_3l_mix_p_2b_2j"  ,"2"},
+    {"C_3l_mix_p_2b_3j"  ,"3"},
+    {"C_3l_mix_p_2b_4j"  ,"4"},
+    {"C_3l_mix_p_2b_ge5j",">4"},
 
-    {"C_3l_mix_sfz_1b_2j","2j"},
-    {"C_3l_mix_sfz_1b_3j","3j"},
-    {"C_3l_mix_sfz_1b_4j","4j"},
-    {"C_3l_mix_sfz_1b_ge5j","ge5j"},
+    {"C_3l_mix_m_2b_2j"  ,"2"},
+    {"C_3l_mix_m_2b_3j"  ,"3"},
+    {"C_3l_mix_m_2b_4j"  ,"4"},
+    {"C_3l_mix_m_2b_ge5j",">4"},
 
-    {"C_3l_mix_sfz_2b_2j","2j"},
-    {"C_3l_mix_sfz_2b_3j","3j"},
-    {"C_3l_mix_sfz_2b_4j","4j"},
-    {"C_3l_mix_sfz_2b_ge5j","ge5j"},
+    {"C_3l_mix_sfz_1b_2j"  ,"2"},
+    {"C_3l_mix_sfz_1b_3j"  ,"3"},
+    {"C_3l_mix_sfz_1b_4j"  ,"4"},
+    {"C_3l_mix_sfz_1b_ge5j",">4"},
 
-    {"C_4l_2b_2j","2j"},
-    {"C_4l_2b_3j","3j"},
-    {"C_4l_2b_ge4j","ge4j"},
+    {"C_3l_mix_sfz_2b_2j"  ,"2"},
+    {"C_3l_mix_sfz_2b_3j"  ,"3"},
+    {"C_3l_mix_sfz_2b_4j"  ,"4"},
+    {"C_3l_mix_sfz_2b_ge5j",">4"},
+
+    {"C_4l_2b_2j"  ,"2"},
+    {"C_4l_2b_3j"  ,"3"},
+    {"C_4l_2b_ge4j",">3"},
 };
 
 // How to color code the processes
 std::unordered_map<std::string,Color_t> PROCESS_COLOR_MAP {
     {"ttlnu",kBlue},
-    {"ttll",kGreen+1},
+    {"ttll",kGreen+2},
     {"ttH",kRed+1},
     {"tllq",kPink+1},
     // {"tHq",kCyan},
@@ -208,7 +330,8 @@ std::unordered_map<std::string,Color_t> PROCESS_COLOR_MAP {
     {"fakes",kYellow-7},
     {"Diboson",kMagenta},
     {"Triboson",kSpring+1},
-    {"convs",kGreen}
+    // {"convs",kGreen-7}
+    {"convs",kOrange+1}
 };
 
 // What marker to use for each process
@@ -229,9 +352,9 @@ std::unordered_map<std::string,int> PROCESS_MARKER_MAP {
 std::unordered_map<std::string,int> PROCESS_MARKER_SIZE_MAP {
     {"ttlnu",1},
     {"ttll" ,1},
-    {"ttH"  ,1},
-    {"tllq" ,1},
-    {"tHq"  ,1},
+    {"ttH"  ,2},
+    {"tllq" ,2},
+    {"tHq"  ,2},
 
     {"charge_flips",1},
     {"fakes",1},
@@ -242,10 +365,31 @@ std::unordered_map<std::string,int> PROCESS_MARKER_SIZE_MAP {
 
 // How the processes should be labeled in the legend
 std::unordered_map<std::string,std::string> PROCESS_LABEL_MAP {
-    {"ttlnu","ttl#nu"},
-    {"charge_flips","ChargeFlips"},
-    {"fakes","Fakes"},
-    {"convs","Convs"}
+    // {"ttlnu","ttl#nu"},
+
+    // {"ttlnu","\\text{tt}\\ell\\nu"},
+    // {"ttll","\\text{tt}\\ell\\ell"},
+    // {"tllq","\\text{t}\\ell\\ell\\text{q}"},
+
+    // {"ttlnu","\\mathrm{t}\\overline{\\mathrm{t}}\\text{l}\\nu"},
+    // {"ttll","\\mathrm{t}\\overline{\\mathrm{t}}\\text{ll}"},
+    // {"tllq","\\mathrm{t}\\text{ll}\\mathrm{q}"},
+    // {"ttH","\\mathrm{t}\\overline{\\mathrm{t}}\\mathrm{H}"},
+    // {"tHq","\\mathrm{t}\\text{ll}\\mathrm{H}"},
+
+    {"ttlnu","t#bar{t}l#nu"},
+    {"ttll","t#bar{t}l#bar{l}"},
+    {"tllq","tl#bar{l}q"},
+    {"ttH","t#bar{t}H"},
+    {"tHq","tHq"},
+
+    // {"ttlnu","tt#it{l}#nu"},
+    // {"ttll","tt#it{l}#it{l}"},
+    // {"tllq","t#it{l}#it{l}q"},
+
+    {"charge_flips","Charge misid."},
+    {"fakes","Misid. leptons"},
+    {"convs","Conv."}
 };
 
 // How the processes should be named in the latex yield table
@@ -260,20 +404,19 @@ std::unordered_map<std::string,std::string> YIELD_LABEL_MAP {
     {"convs","Conversions"}
 };
 
-
 // How the WCs (w/o Lambda fraction) should be latex styled in the plots
 std::unordered_map<std::string,std::string> WC_LABEL_MAP {
     {"ctW"  , "#it{c}_{tW}"},
     {"ctZ"  , "#it{c}_{tZ}"},
     {"ctp"  , "#it{c}_{t#varphi}"},
-    {"cpQM" , "#it{c}^{-}_{#varphiQ}"},
+    {"cpQM" , "#it{c}^{#font[122]{\55}}_{#varphiQ}"},
     {"ctG"  , "#it{c}_{tG}"},
     {"cbW"  , "#it{c}_{bW}"},
     {"cpQ3" , "#it{c}^{3(#it{l})}_{#varphiQ}"},
     {"cptb" , "#it{c}_{#varphitb}"},
     {"cpt"  , "#it{c}_{#varphit}"},
     {"cQl3i", "#it{c}^{3(#it{l})}_{Ql}"},
-    {"cQlMi", "#it{c}^{-(#it{l})}_{Ql}"},
+    {"cQlMi", "#it{c}^{#font[122]{\55}(#it{l})}_{Ql}"},
     {"cQei" , "#it{c}^{(#it{l})}_{Qe}"},
     {"ctli" , "#it{c}^{(#it{l})}_{tl}"},
     {"ctei" , "#it{c}^{(#it{l})}_{te}"},
@@ -286,14 +429,14 @@ std::unordered_map<std::string,std::string> WC_LAMBDA_LABEL_MAP {
     {"ctW"  , "#it{c}_{tW}/#Lambda^{2}"},
     {"ctZ"  , "#it{c}_{tZ}/#Lambda^{2}"},
     {"ctp"  , "#it{c}_{t#varphi}/#Lambda^{2}"},
-    {"cpQM" , "#it{c}^{-}_{#varphiQ}/#Lambda^{2}"},
+    {"cpQM" , "#it{c}^{#font[122]{\55}}_{#varphiQ}/#Lambda^{2}"},
     {"ctG"  , "#it{c}_{tG}/#Lambda^{2}"},
     {"cbW"  , "#it{c}_{bW}/#Lambda^{2}"},
     {"cpQ3" , "#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2}"},
     {"cptb" , "#it{c}_{#varphitb}/#Lambda^{2}"},
     {"cpt"  , "#it{c}_{#varphit}/#Lambda^{2}"},
     {"cQl3i", "#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2}"},
-    {"cQlMi", "#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2}"},
+    {"cQlMi", "#it{c}^{#font[122]{\55}(#it{l})}_{Ql}/#Lambda^{2}"},
     {"cQei" , "#it{c}^{(#it{l})}_{Qe}/#Lambda^{2}"},
     {"ctli" , "#it{c}^{(#it{l})}_{tl}/#Lambda^{2}"},
     {"ctei" , "#it{c}^{(#it{l})}_{te}/#Lambda^{2}"},
@@ -306,14 +449,14 @@ std::unordered_map<std::string,std::string> WC_LATEX_FRACTION_LABEL_MAP {
     {"ctW"  , "#frac{#it{c}_{tW}}{#Lambda^{2}}"},
     {"ctZ"  , "#frac{#it{c}_{tZ}}{#Lambda^{2}}"},
     {"ctp"  , "#frac{#it{c}_{t#varphi}}{#Lambda^{2}}"},
-    {"cpQM" , "#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}"},
+    {"cpQM" , "#frac{#it{c}^{#font[122]{\55}}_{#varphiQ}}{#Lambda^{2}}"},
     {"ctG"  , "#frac{#it{c}_{tG}}{#Lambda^{2}}"},
     {"cbW"  , "#frac{#it{c}_{bW}}{#Lambda^{2}}"},
     {"cpQ3" , "#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}"},
     {"cptb" , "#frac{#it{c}_{#varphitb}}{#Lambda^{2}}"},
     {"cpt"  , "#frac{#it{c}_{#varphit}}{#Lambda^{2}}"},
     {"cQl3i", "#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}"},
-    {"cQlMi", "#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}"},
+    {"cQlMi", "#frac{#it{c}^{#font[122]{\55}(#it{l})}_{Ql}}{#Lambda^{2}}"},
     {"cQei" , "#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}"},
     {"ctli" , "#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}"},
     {"ctei" , "#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}"},
@@ -321,10 +464,10 @@ std::unordered_map<std::string,std::string> WC_LATEX_FRACTION_LABEL_MAP {
     {"ctlTi", "#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}"}
 };
 
-
 // Scale the ratio histograms for certain process when doing 'make_fluct_compare_plots' plots
 std::unordered_map<std::string,double> SCALE_PROCESS_RATIO_FLUCT {
-    {"tHq",15}
+    {"tHq",15},
+    // {"tllq",3}
 };
 
 // Basically the null hypothesis
@@ -414,476 +557,79 @@ TString EFTFIT_TEST_DIR = CMSSW_BASE + "src/EFTFit/Fitter/test/";
 TString FR_MDKEY = "fit_mdf";   // The name of the key for the fit result object from a multidimfit file
 TString FR_DIAGKEY = "nuisances_prefit_res";    // Same thing, but for a fitDiagnostics file
 
-// Should return a string padded on left and right to give a centered string (if possible)
-TString centerTStr(TString str, int width) {
-    TString s = str;
-    if (s.Length() >= width) {
-        return s;
-    }
-    int tpad = width - s.Length();  // The total amount of padding we have to work with
-    int lpad = tpad / 2;    // Padding to add to the right of the string
-    int rpad = tpad - lpad; // Padding to add to the left of the string
-    s = TString::Format("%*s%s%*s",lpad,"",s.Data(),rpad,"");
-    return s;
-}
+TString save_type1 = "png";
 
-// Prints the yields for categories which have been summed over certain processes
-template<typename T>
-void printYields(std::vector<T> yields,RooFitResult *fr) {
-    TString indent = "    ";
+// TString save_type2 = "pdf";
+TString save_type2 = "eps";
 
-    std::cout << "Yields:" << std::endl;
-    int dMax = 0;
-    for (auto y: yields) {
-        TString n = y->GetName();
-        dMax = (dMax > n.Length()) ? dMax : n.Length();
-    }
-
-    for (auto y: yields) {
-        TString n  = y->GetName();
-        double val = y->getVal();
-        double err = y->getPropagatedError(*(fr));
-
-        std::cout << indent << std::left << std::setw(dMax) << n << ": "
-                  << std::setw(8) << val << " +/- "
-                  << std::setw(9) << err << std::endl;
-    }
-}
-
-// Prints various values for a single RooRealVar
-void printRRV(RooRealVar* rrv) {
-    const char* indent = "  ";
-    std::string name = rrv->GetName();
-    double nom_var  = rrv->getVal();
-    TString fstr = "";
-    fstr += TString::Format("%s\n",rrv->GetName());
-    fstr += TString::Format("%sVal: %.2f +/- %.2f\n",indent,rrv->getVal(),rrv->getError());
-    // fstr += TString::Format("%sErr: %.2f\n",indent,rrv->getError());
-    fstr += TString::Format("%s(ErrLo,ErrHi):   (%.2f,%.2f)\n",indent,rrv->getErrorLo(),rrv->getErrorHi());
-    fstr += TString::Format("%s(AsymLo,AsymHi): (%.2f,%.2f)\n",indent,rrv->getAsymErrorLo(),rrv->getAsymErrorHi());
-    fstr += TString::Format("%sRange: [%.2f,%.2f]",indent,rrv->getMin(),rrv->getMax());
-    std::cout << fstr << std::endl;
-}
-
-// Prints a single RRV from the given RooArgSet
-void printRRV(TString name, RooArgSet& pois) {
-    RooRealVar* rrv = (RooRealVar*)pois.find(name);
-    if (!rrv) {
-        std::cout << TString::Format("Unknown RRV: %s",name.Data()) << std::endl;
-        return;
-    }
-    printRRV(rrv);
-}
-
-// Prints various values for each element in the RooArgSet
-void printRRVs(RooArgSet pois) {
-    RooLinkedListIter iterP = pois.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) iterP.Next(); rrv != 0; rrv = (RooRealVar*) iterP.Next()) {
-        printRRV(rrv);
-    }
-}
-
-void printNuisParams(RooArgList lst) {
-    int w1 = 0;
-    int w2 = 0;
-    int w3 = 0;
-    int sz = 0;
-    std::string str;
-    for (int i = 0; i < lst.getSize(); i++) {
-        RooRealVar const* rrv = dynamic_cast<RooRealVar const*>(lst.at(i));
-        str  = rrv->GetName();
-        sz = str.size();
-        w1 = TMath::Max(w1,sz);
-
-        str = std::to_string(rrv->getVal());
-        sz  = str.size();
-        w2  = TMath::Max(w2,sz);
-
-        str = "(" + std::to_string(rrv->getErrorLo()) + "," + std::to_string(rrv->getErrorLo()) + ")";
-        sz  = str.size();
-        w3  = TMath::Max(w3,sz);
-
-    }
-    std::cout << TString::Format("%*s : %*s +/- %*s %s",-1*w1,"Name",-1*w2,"Nominal",-1*w3," Asym. Error","Sym. Error") << std::endl;
-    for (int i = 0; i < lst.getSize(); i++) {
-        RooRealVar const* rrv = dynamic_cast<RooRealVar const*>(lst.at(i));
-        std::string name = rrv->GetName();
-        double nom_val = rrv->getVal();
-        double err = rrv->getError();
-        double err_d = rrv->getErrorLo();
-        double err_u = rrv->getErrorHi();
-        str = "(" + std::to_string(err_d) + "," + std::to_string(err_u) + ")";
-        std::cout << std::left << std::setw(w1) << name << " : "
-                  << std::right << std::setw(w2) << std::to_string(nom_val)
-                  << " +/- " << std::left << std::setw(w3) << str
-                  << " " << err
-                  << std::endl;
-    }
-}
-
-void printPOICorrelations(RooArgSet pois, RooFitResult* fr) {
-    int counter = 0;
-    auto it1 = pois.createIterator();
-    for (RooRealVar* rrv1 = (RooRealVar*) it1->Next(); rrv1 != 0; rrv1 = (RooRealVar*) it1->Next()) {
-        auto it2 = pois.createIterator();
-        std::string n1 = rrv1->GetName();
-        for (RooRealVar* rrv2 = (RooRealVar*) it2->Next(); rrv2 != 0; rrv2 = (RooRealVar*) it2->Next()) {
-            std::string n2 = rrv2->GetName();
-            double corr_val = fr->correlation(n1.c_str(),n2.c_str());
-            //double corr_val = fr->correlation(&rrv1,&rrv2);
-            std::string s1 = " <" + n1 + "," + n2 + "> ";
-            std::string s2 = std::to_string(corr_val);
-            if (corr_val > 0) {
-                s2 = " " + s2;
-            }
-            std::cout << std::left << std::setw(15) << s1 << s2 << std::endl;
-            counter++;
-        }
-        //std::cout << std::endl;
-    }
-}
-
-void printLatexYieldTable(std::vector<AnalysisCategory*> cats, vTStr sgnls, vTStr bkgds, RooFitResult* fr) {
-    std::string cr = "\\\\";            // carrige return
-    std::string col    = " & ";         // column identifier
-    std::string hline  = "\\hline";     // insert horizontal line
-
-    bool for_paper = false;  // Changes the sig figs of the output for use in the AN or Paper
-    bool skip_header = false;
-
-    TString last_bkgd_name, last_sgnl_name;
-    TString bkgd_sum_name = "Sum Bkgd.";
-    TString sgnl_sum_name = "Sum Sgnl.";
-    TString tot_exp_name = "Total Exp.";
-    TString data_name = "Data";
-
-    if (for_paper) {
-        skip_header = true;
-        bkgd_sum_name = "Sum Background";
-        sgnl_sum_name = "Sum Signal";
-        tot_exp_name = "Total Expected";
-    }
-
-    std::vector<int> col_widths(cats.size()+1,0);   // The +1 is for the process name column
-    std::vector<double> sum_bkgds(cats.size(),0);
-    std::vector<double> sum_sgnls(cats.size(),0);
-
-    std::vector<std::vector<TString> > rows;
-    std::vector<TString> row;
-
-    ////////////////////////////////////////////////
-    // Add in a header row
-    ////////////////////////////////////////////////
-    if (!skip_header) {
-        row.clear();
-        row.push_back("");
-        col_widths.at(0) = std::max(col_widths.at(0),row.at(0).Length());
-        for (uint i=0; i < cats.size(); i++) {
-            AnalysisCategory* cat = cats.at(i);
-            TString str = cat->getName();
-            if (BIN_LABEL_MAP.count(str.Data())) {
-                str = BIN_LABEL_MAP[str.Data()];
-            }
-            col_widths.at(i+1) = std::max(col_widths.at(i+1),str.Length());
-            row.push_back(str);
-        }
-        rows.push_back(row);
-    }
-
-    ////////////////////////////////////////////////
-    // Add in the background process rows
-    ////////////////////////////////////////////////
-    for (uint i=0; i < bkgds.size(); i++) {
-        row.clear();
-        TString proc = bkgds.at(i);
-        TString row_name = proc;
-        if (for_paper) {
-            if (YIELD_LABEL_MAP.count(proc.Data())) {
-                row_name = YIELD_LABEL_MAP[proc.Data()];
-            }
-            last_bkgd_name = row_name;
-        }
-        row.push_back(row_name);
-        col_widths.at(0) = std::max(col_widths.at(0),row_name.Length());
-
-        for (uint j=0; j < cats.size(); j++) {
-            AnalysisCategory* cat = cats.at(j);
-            double val = cat->getExpProc(proc);
-            TString str = TString::Format("%.2f",val);
-            if (for_paper) {
-                str = TString::Format("%.1f",val);
-            }
-            sum_bkgds.at(j) += val;
-            row.push_back(str);
-            col_widths.at(j+1) = std::max(col_widths.at(j+1),str.Length());
-        }
-        rows.push_back(row);
-    }
-
-    row.clear();
-    row.push_back(bkgd_sum_name);
-    col_widths.at(0) = std::max(col_widths.at(0),row.at(0).Length());
-    for (uint i=0; i < sum_bkgds.size(); i++) {
-        double val = sum_bkgds.at(i);
-        TString str = TString::Format("%.2f",val);
-        if (for_paper) {
-            str = TString::Format("%.1f",val);
-        }
-        row.push_back(str);
-        col_widths.at(i+1) = std::max(col_widths.at(i+1),str.Length());
-    }
-    rows.push_back(row);
-
-    ////////////////////////////////////////////////
-    // Add in the signal process rows
-    ////////////////////////////////////////////////
-    for (uint i=0; i < sgnls.size(); i++) {
-        row.clear();
-        TString proc = sgnls.at(i);
-        TString row_name = proc;
-        if (for_paper) {
-            if (YIELD_LABEL_MAP.count(proc.Data())) {
-                row_name = YIELD_LABEL_MAP[proc.Data()];
-            }
-            last_sgnl_name = row_name;
-        }
-        row.push_back(row_name);
-        col_widths.at(0) = std::max(col_widths.at(0),row_name.Length());
-
-        for (uint j=0; j < cats.size(); j++) {
-            AnalysisCategory* cat = cats.at(j);
-            double val = cat->getExpProc(proc);
-            TString str = TString::Format("%.2f",val);
-            if (for_paper) {
-                str = TString::Format("%.1f",val);
-            }
-            sum_sgnls.at(j) += val;
-            row.push_back(str);
-            col_widths.at(j+1) = std::max(col_widths.at(j+1),str.Length());
-        }
-        rows.push_back(row);
-    }
-
-    row.clear();
-    row.push_back(sgnl_sum_name);
-    col_widths.at(0) = std::max(col_widths.at(0),row.at(0).Length());
-    for (uint i=0; i < sum_sgnls.size(); i++) {
-        double val = sum_sgnls.at(i);
-        TString str = TString::Format("%.2f",val);
-        if (for_paper) {
-            str = TString::Format("%.1f",val);
-        }
-        row.push_back(str);
-        col_widths.at(i+1) = std::max(col_widths.at(i+1),str.Length());
-    }
-    rows.push_back(row);
-
-    ////////////////////////////////////////////////
-    // Add in the total expected row
-    ////////////////////////////////////////////////
-    row.clear();
-    row.push_back(tot_exp_name);
-    col_widths.at(0) = std::max(col_widths.at(0),row.at(0).Length());
-    for (uint i=0; i < cats.size(); i++) {
-        AnalysisCategory* cat = cats.at(i);
-        double val = cat->getExpSum();
-        double err = cat->getExpSumError(fr);
-        TString str = TString::Format("%.2f \\pm %.2f",val,err);
-        if (for_paper) {
-            str = TString::Format("$%.0f \\pm %.0f$",val,err);
-        } else {
-            // Only update the col widths here b/c this row is an outlier in terms of length
-            col_widths.at(i+1) = std::max(col_widths.at(i+1),str.Length());
-        }
-        row.push_back(str);
-    }
-    rows.push_back(row);
-
-    ////////////////////////////////////////////////
-    // Add in the data observed row
-    ////////////////////////////////////////////////
-    row.clear();
-    row.push_back(data_name);
-    col_widths.at(0) = std::max(col_widths.at(0),row.at(0).Length());
-    for (uint i=0; i < cats.size(); i++) {
-        AnalysisCategory* cat = cats.at(i);
-        double val = cat->getData();
-        TString str = TString::Format("%.0f",val);
-        col_widths.at(i+1) = std::max(col_widths.at(i+1),str.Length());
-        row.push_back(str);
-    }
-    rows.push_back(row);
-
-    ////////////////////////////////////////////////
-    // Construct the entire table row-by-row
-    ////////////////////////////////////////////////
-    std::stringstream ss;
-    for (uint i=0; i < rows.size(); i++) {
-        std::vector<TString> row = rows.at(i);
-        for (uint j=0; j < row.size(); j++) {
-            TString entry = row.at(j);
-            int colw = col_widths.at(j);
-
-            if (j == 0) { // left-justify
-                ss << TString::Format("%*s",-1*colw,entry.Data());
-            } else { // right-justify
-                ss << TString::Format("%*s",colw,entry.Data());
-            }
-            if (j < row.size() - 1) {
-                ss << col;
-            } else {
-                ss << " " << cr;
-            }
-        }
-        if (for_paper) {
-            // Add in the \hline for latex
-            if (row.at(0) == bkgd_sum_name  || row.at(0) == sgnl_sum_name ||
-                row.at(0) == tot_exp_name   || row.at(0) == data_name ||
-                row.at(0) == last_bkgd_name || row.at(0) == last_sgnl_name) {
-                ss << " " << hline;
-            }
-        }
-        ss << "\n";
-    }
-    std::cout << ss.str() << std::endl;
-}
-
-// Iterates over the RooArgSet and sets their values to +/- values based on 'type'
-void adjustRRVs(RooArgSet pois,TString type,double sigma=1.0,std::set<std::string> skip={},std::set<std::string> keep={}) {
-    RooLinkedListIter iterP = pois.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) iterP.Next(); rrv != 0; rrv = (RooRealVar*) iterP.Next()) {
-        std::string name = rrv->GetName();
-        rrv->removeRange();     // We don't care about limiting the range of values at this point
-        if (skip.size() && skip.count(name)) {
-            continue;
-        }
-        if (keep.size() && !keep.count(name)) {
-            continue;
-        }
-        double nom_var  = rrv->getVal();
-        double down_var = rrv->getVal() + rrv->getErrorLo()*sigma;
-        double up_var   = rrv->getVal() + rrv->getErrorHi()*sigma;
-        //std::cout << name << " Up: " << up_var << std::endl;
-        if (type == "up") {
-            rrv->setVal(up_var);
-        } else if (type == "down") {
-            rrv->setVal(down_var);
-        } else if (type == "nom") {
-            rrv->setVal(nom_var);
-        } else {
-            rrv->setVal(nom_var);
-        }
-    }
-}
-
-// Sets the specified RRV to the specified value
-void setRRV(RooArgSet pois, std::string name, double val) {
-    RooLinkedListIter iterP = pois.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) iterP.Next(); rrv != 0; rrv = (RooRealVar*) iterP.Next()) {
-        std::string rrv_name = rrv->GetName();
-        if (rrv_name != name) continue;
-        rrv->setVal(val);
-    }
-}
-
-// Sets the RooRealVar error values
-void setRRVError(RooArgSet pois, std::string name, double val_hi, double val_lo=0.0) {
-    RooLinkedListIter iterP = pois.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) iterP.Next(); rrv != 0; rrv = (RooRealVar*) iterP.Next()) {
-        std::string rrv_name = rrv->GetName();
-        if (rrv_name != name) continue;
-        if (val_lo != 0.0) {
-            rrv->setAsymError(val_lo,val_hi);
-        } else {
-            rrv->setError(val_hi);
-        }
-    }
-}
-
-// Find a specific RooRealVar from a RooArgList
-double getRRV(RooArgList lst, std::string name) {
-    RooLinkedListIter iterP = lst.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) iterP.Next(); rrv != 0; rrv = (RooRealVar*) iterP.Next()) {
-        std::string rrv_name = rrv->GetName();
-        if (rrv_name == name) {
-            return rrv->getVal();
-        }
-    }
-    return -1;
-}
-
-// Iterates over the first set and removes errors from ones which appear in the second set
-void removeErrors(RooArgSet pars,RooArgSet pois) {
-    RooLinkedListIter it1 = pars.iterator();
-    for (RooRealVar* rrv = (RooRealVar*) it1.Next(); rrv != 0; rrv = (RooRealVar*) it1.Next()) {
-        std::string n1 = rrv->GetName();
-        RooLinkedListIter it2 = pois.iterator();
-        for (RooRealVar* poi = (RooRealVar*) it2.Next(); poi !=0; poi = (RooRealVar*) it2.Next()) {
-            std::string n2 = poi->GetName();
-            if (n1 == n2) {            
-                rrv->removeAsymError();
-                rrv->removeError();
-                break;
-            }        
-        }
-    }
-}
-
-// Adds the CMS luminosity text to a given pad object
-void add_cms_text(TPad* pad, float cmsTextSize=0.75, float lumiTextSize=0.60) {
+void add_cms_text(TPad* pad, CMSTextStyle style) {
     //////////////////////
-    // Define some constants
+    // Extract the style options
     //////////////////////
-    TString cmsText     = "CMS";
-    float cmsTextFont   = 61;  // default is helvetic-bold
+    TString cmsText     = style.cms_text;
+    float cmsTextFont   = style.cms_font;  // default is helvetic-bold
+    float cmsTextSize   = style.cms_size;
+    int cmsAlign        = style.cms_align;
+    int cms_frame_loc   = style.cms_frame_loc;
 
-    TString extraText   = "";   // For Paper plots
-    // TString extraText   = "Preliminary";
-    // TString extraText   = "Supplementary";
-    float extraTextFont = 52;  // default is helvetica-italics
+    TString extraText   = style.extra_text;
+    float extraTextFont = style.extra_text_font;  // default is helvetica-italics
+    int extraAlign      = style.extra_align;
 
-    // TString lumiText = "#sqrt{s} = 13 TeV, L = 41.5 fb^{-1}";
-    TString lumiText = "41.5 fb^{-1} (13 TeV)";
-    float lumiTextFont = 42;
+    TString lumiText = style.lumi_text;
+    float lumiTextFont = style.lumi_font;
+    float lumiTextSize = style.lumi_size;
+    int lumiAlign = style.lumi_align;
+
+    TString arxivText = style.arxiv_text;
+    float arxivTextFont = style.arxiv_font;
 
     //////////////////////
     // text sizes and text offsets with respect to the top frame
     // in unit of the top margin size
     //////////////////////
-    // float lumiTextSize     = 0.80;   // 0.60 is tdrstyle default
-    float lumiTextOffset   = 0.20;   // Percentage of some margin (currently just top margin) to shift text
-    // float cmsTextSize      = 0.85;   // 0.75 is tdrstyle default
-    // float cmsTextOffset    = 0.1;  // only used in outOfFrame version
-    float cmsTextOffset    = 0.10;  // This will need to be adjusted if 'lumiText' is changed
+    float lumiTextOffset = style.lumi_offset;   // Percentage of some margin (currently just top margin) to shift text
 
     //////////////////////
+    // controls where the 'extraText' gets placed relative to 'cmsText'
     // also text sizes and text offsets with respect to frame margins
     // in unit of the margin size
     //////////////////////
-    // float relPosX = 0.08;   // Controls where the 'extraText' gets placed relative to 'cmsText'
-    float relPosX = 0.045;
-    float relPosY = 0.100;//0.035;
+    float relPosX = style.cms_rel_posX;
+    float relPosY = style.cms_rel_posY;
 
     //////////////////////
     // ratio of "CMS" and extra text size
     //////////////////////
-    float extraOverCmsTextSize  = 0.76;
+    float extraOverCmsTextSize = style.extra_over_cms_text_size;
     float extraTextSize = extraOverCmsTextSize*cmsTextSize;
+    float arxivTextSize = extraTextSize*0.95;
 
     //////////////////////
     // Add the text
     //////////////////////
 
+    UInt_t txt_ww = 0;
+    UInt_t txt_hh = 0;
+
     float posX = 0.0;
     float posY = 0.0;
-    int align  = 11;
 
-    float H = pad->GetWh();
-    float W = pad->GetWw();
+    double cms_ww = 0.0;
+    double cms_hh = 0.0;
+
+    double lumi_ww = 0.0;
+    double lumi_hh = 0.0;
+
+    float H = pad->GetWh(); // In pixels
+    float W = pad->GetWw(); // In pixels
     float l = pad->GetLeftMargin();
     float t = pad->GetTopMargin();
     float r = pad->GetRightMargin();
     float b = pad->GetBottomMargin();
+
+    float fr_w = 1-l-r; // frame width
+    float fr_h = 1-t-b; // frame height
 
     pad->cd();
 
@@ -897,59 +643,87 @@ void add_cms_text(TPad* pad, float cmsTextSize=0.75, float lumiTextSize=0.60) {
     //////////////////////
     posX = 1-r;
     posY = 1-t+lumiTextOffset*t;
-    latex.SetTextFont(42);
-    latex.SetTextAlign(31);
+    latex.SetTextFont(lumiTextFont);
+    latex.SetTextAlign(lumiAlign);
     latex.SetTextSize(lumiTextSize*t);
-    std::cout << TString::Format("lumiText:  (%.2f,%.2f), Size: %.2f",posX,posY,lumiTextSize*t) << std::endl;
-    latex.DrawLatex(posX,posY,lumiText);
+    // std::cout << TString::Format("lumiText:  (%.2f,%.2f), Size: %.2f",posX,posY,lumiTextSize*t) << std::endl;
+    TLatex* lumi_latex = latex.DrawLatex(posX,posY,lumiText);
+    lumi_latex->GetBoundingBox(txt_ww,txt_hh);
+    lumi_ww = txt_ww / W;
+    lumi_hh = txt_hh / H;
 
     //////////////////////
     // Draw the CMS text
     //////////////////////
 
     //////////////////////
-    // Out of frame top middle-ish
+    // Out of frame top-left
     //////////////////////
-    // posX  = l + cmsTextOffset;
-    // posY  = 1-t+lumiTextOffset*t;
-    // align = 11;
+    if (cms_frame_loc == 0) {    
+        posX  = l + 0.01*fr_w;
+        posY  = 1 - t + lumiTextOffset*t;
+        cmsAlign = 11;
+    }
 
     //////////////////////
     // In frame top-left
     //////////////////////
-    posX  =   l + relPosX*(1-l-r);
-    posY  = 1-t - relPosY*(1-t-b);
-    align = 11;
-
+    if (cms_frame_loc == 1) {
+        posX = l + relPosX*fr_w;
+        posY = 1 - t - relPosY*fr_h;
+        cmsAlign = 11;
+    }
     latex.SetTextFont(cmsTextFont);
-    latex.SetTextAlign(align); 
+    latex.SetTextAlign(cmsAlign); 
     latex.SetTextSize(cmsTextSize*t);
-    std::cout << TString::Format("cmsText:   (%.2f,%.2f), Size: %.2f",posX,posY,cmsTextSize*t) << std::endl;
-    latex.DrawLatex(posX,posY,cmsText);
+
+    // std::cout << TString::Format("cmsText: %s",cmsText.Data()) << std::endl;
+    // std::cout << TString::Format("cmsText:   (%.2f,%.2f), Size: %.2f",posX,posY,cmsTextSize*t) << std::endl;
+    TLatex* cms_latex = latex.DrawLatex(posX,posY,cmsText);
+    cms_latex->GetBoundingBox(txt_ww,txt_hh);
+    cms_ww = txt_ww / W;
+    cms_hh = txt_hh / H;
+
 
     //////////////////////
     // Draw the extra text (i.e. 'Preliminary')
     //////////////////////
 
     //////////////////////
-    // Out of frame top middle-ish
+    // Out of frame
     //////////////////////
-    // posX  = l + cmsTextOffset + relPosX;
-    // posY  = 1-t+lumiTextOffset*t;
-    // align = 11;
+    if (cms_frame_loc == 0) {    
+        posX = l + 0.01*fr_w + cms_ww + 25.0 / W;
+        posY = 1 - t + lumiTextOffset*t;
+    }
 
     //////////////////////
     // In frame and inline with "CMS" text
     //////////////////////
-    posX  = l + cmsTextOffset + relPosX*(1-l-r);
-    posY  = 1-t - relPosY*(1-t-b);
-    align = 11;
+    if (cms_frame_loc == 1) {
+        posX = l + relPosX*fr_w + cms_ww + 25.0 / W;
+        posY = 1 - t - relPosY*fr_h;
+    }
+
 
     latex.SetTextFont(extraTextFont);
     latex.SetTextSize(extraTextSize*t);
-    latex.SetTextAlign(align);
+    latex.SetTextAlign(extraAlign);
     // std::cout << TString::Format("extraText: (%.2f,%.2f)",posX,posY) << std::endl;
     latex.DrawLatex(posX,posY,extraText);
+
+    //////////////////////
+    // Add in the arXiv number text
+    //////////////////////
+    // if (strncmp(extraText.Data(),"Supplementary",extraText.Length()) == 0) {
+    if (extraText.EqualTo("Supplementary")) {
+        posX = 1 - r - lumi_ww - 25.0 / W;
+        posY = 1 - t + lumiTextOffset*t;
+        latex.SetTextFont(arxivTextFont);
+        latex.SetTextSize(arxivTextSize*t);
+        latex.SetTextAlign(lumiAlign);
+        latex.DrawLatex(posX,posY,arxivText);
+    }
 
     return;
 }
@@ -1041,8 +815,13 @@ TGraphAsymmErrors* make_ratio_error_band(TH1D* h_data, TH1D* h_mc, TGraphErrors*
         double diff_up = err_mc->GetErrorY(i);
         double diff_down = err_mc->GetErrorY(i);
 
-        err_up = sqrt(data_up*data_up + diff_up*diff_up);
-        err_lo = sqrt(data_down*data_down + diff_down*diff_down);
+        // Note: This double counts the stat errors, since the data points are drawn with error bars
+        //       in the ratio plot, so err_up/err_lo here should be commented
+        // err_up = sqrt(data_up*data_up + diff_up*diff_up);
+        // err_lo = sqrt(data_down*data_down + diff_down*diff_down);
+
+        err_up = diff_up;
+        err_lo = diff_down;
 
         err_up = err_up / h_mc->GetBinContent(bin_idx);
         err_lo = err_lo / h_mc->GetBinContent(bin_idx);
@@ -1164,87 +943,6 @@ TGraphAsymmErrors* make_ratio_fluct(TH1D* h_nom, TH1D* h_lo, TH1D* h_hi) {
     return gr;
 }
 
-// For error bars see: https://twiki.cern.ch/twiki/bin/view/CMS/PoissonErrorBars
-// Used in: make_overlay_plot_v2
-TH1D* get_data_histogram(TString title,std::vector<AnalysisCategory*> cats) {
-    TString plot_title = TString::Format("%s;category;Events",title.Data());
-    // TH1D* h_data = new TH1D("data_yield",plot_title,cats.size(),0.0,1.0);
-    TH1D* h_data = new TH1D("data_yield",plot_title,cats.size(),0.0,cats.size());
-    h_data->SetLineColor(1);
-    h_data->SetLineWidth(2);
-    h_data->SetMarkerStyle(20);
-    // h_data->SetMarkerSize(0.75);
-    h_data->SetMarkerSize(1.00);
-    h_data->GetYaxis()->SetTitleSize(0.05);
-    h_data->GetYaxis()->SetTitleOffset(1.1);
-    h_data->GetYaxis()->SetLabelSize(0.05);
-
-    h_data->Sumw2(kFALSE);
-    // h_data->Sumw2(false);
-
-    // Fill and label the data histogram
-    for (uint i = 0; i < cats.size(); i++) {
-        AnalysisCategory* cat = cats.at(i);
-        int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
-        double bin_val = cat->getData();
-        h_data->SetBinContent(bin_idx,bin_val);
-        TString bin_label = cat->getName();
-        if (BIN_LABEL_MAP.count(bin_label.Data())) {
-            bin_label = BIN_LABEL_MAP[bin_label.Data()];
-        }
-        h_data->GetXaxis()->SetBinLabel(bin_idx,bin_label);
-    }
-    h_data->SetBinErrorOption(TH1::kPoisson);
-
-    return h_data;  
-}
-
-// Not needed yet...
-// TGraphAsymmErrors get_poisson_error_graph(TH1D* h) {
-
-// }
-
-// Turns a vector of AnalysisCategory objects into a histogram for a particular process with one bin per category
-// Used in: make_overlay_plot_v2, make_fluct_compare_plots
-TH1D* get_process_histogram(TString title, TString proc, std::vector<AnalysisCategory*> cats) {
-    TString plot_title = TString::Format("%s;category;Events",proc.Data());
-    // TH1D* h = new TH1D(proc+"_yield",plot_title,cats.size(),0.0,1.0);
-    TString hname = TString::Format("%s_%s_yield",title.Data(),proc.Data());
-    TH1D* h = new TH1D(hname,plot_title,cats.size(),0.0,cats.size());
-    h->GetYaxis()->SetTitleSize(0.05);
-    h->GetYaxis()->SetTitleOffset(1.1);
-    h->GetYaxis()->SetLabelSize(0.05);
-
-    Color_t h_clr = kBlack;
-    if (PROCESS_COLOR_MAP.count(proc.Data())) {
-        h_clr = PROCESS_COLOR_MAP[proc.Data()];
-    }
-    // h->SetFillColor(h_clr);
-    // h->SetLineColor(h_clr);
-    // h->SetLineWidth(0);
-
-    h->SetFillColor(h_clr);
-    h->SetLineColor(kBlack);
-    h->SetLineWidth(1);
-
-    // Fill and label the histogram
-    for (uint i = 0; i < cats.size(); i++) {
-        AnalysisCategory* cat = cats.at(i);
-        int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
-        TString bin_label = cat->getName();
-        if (BIN_LABEL_MAP.count(bin_label.Data())) {
-            bin_label = BIN_LABEL_MAP[bin_label.Data()];
-        }
-        h->GetXaxis()->SetBinLabel(bin_idx,bin_label);
-        if (cat->hasProc(proc)) {
-            h->SetBinContent(bin_idx,cat->getExpProc(proc));
-        } else {
-            h->SetBinContent(bin_idx,0.0);
-        }
-    }
-    return h;
-}
-
 // Turns a vector of ExtremumPoint structs into a histogram for a particular process
 // Note: The histogram style here should attempt to be kept in sync with 'get_process_histogram'
 TH1D* get_extremum_histogram(TString title, TString proc, std::vector<ExtremumPoint> pts, TString pt_type) {
@@ -1321,27 +1019,6 @@ TH1D* get_extremum_histogram(TString title, TString proc, std::vector<ExtremumPo
         } else {
             h->SetBinContent(bin_idx,0.0);
         }
-    }
-    return h;
-}
-
-// Returns a histogram built from the vector of categories, summed over all processes
-// Used in: make_overlay_plot_v2
-TH1D* get_summed_histogram(TString name,TString title, std::vector<AnalysisCategory*> cats) {
-    // TH1D* h = new TH1D(name,title,cats.size(),0.0,1.0);
-    TH1D* h = new TH1D(name,title,cats.size(),0.0,cats.size());
-    h->SetFillColor(0);
-    h->SetLineWidth(1);
-    // Fill and label the histogram
-    for (uint i = 0; i < cats.size(); i++) {
-        AnalysisCategory* cat = cats.at(i);
-        int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
-        TString bin_label = cat->getName();
-        if (BIN_LABEL_MAP.count(bin_label.Data())) {
-            bin_label = BIN_LABEL_MAP[bin_label.Data()];
-        }
-        h->GetXaxis()->SetBinLabel(bin_idx,bin_label);
-        h->SetBinContent(bin_idx,cat->getExpSum());
     }
     return h;
 }
@@ -1595,6 +1272,7 @@ ExtremumPoint merge_extremum_processes(
     return new_pt;
 }
 
+// Calculate and generate the need positioning of a TArrow object for display on the 'fluct' plots
 void get_offscale_arrow(OffScalePoint& pt) {
     double x1,x2,y1,y2;
 
@@ -1615,13 +1293,17 @@ void get_offscale_arrow(OffScalePoint& pt) {
     double e_lo = pt.lo_val - pt.nom_val;
 
     if (pt.lo_val < pt.axis_max) {
-        arrow->SetLineWidth(3);
+        arrow->SetLineWidth(2);
         y1 = (pt.axis_max - 0.0)*(1.0 - 0.07);  // Make the text at 7% of the axis length;
         // y1 = pt.axis_max;
     }
 
-    TString text = TString::Format("%.1f^{%+.1f}_{%.1f}",pt.nom_val,e_hi,e_lo);
-    TLatex* latex = new TLatex(x1,y1,text.Data());
+
+    TString text = TString::Format("%.1f^{%+.1f}_{#font[122]{\55}%.1f}",pt.nom_val,e_hi,abs(e_lo));
+    TLatex* latex = new TLatex(x1-0.05,y1,text.Data());
+
+    // TMathText* latex = new TMathText(x1-0.05,y1,text.Data());
+    // TString text = TString::Format("%.1f^{%+.1f}_{%.1f}",pt.nom_val,e_hi,e_lo);
 
     // latex->SetTextAlign(23); // Top adjusted
     // latex->SetTextAlign(13); // Left+Top adjusted
@@ -1649,7 +1331,7 @@ void make_external_legend(TLegend* leg, TString title) {
     int n_rows = (n_entries / max_cols) + int(n_entries % max_cols != 0);
     n_rows = std::max(1,n_rows);
 
-    std::cout << "n_rows: " << n_rows << std::endl;
+    // std::cout << "n_rows: " << n_rows << std::endl;
 
     // ww = std::min(max_cols,n_entries)*125;  // At 6 cols should be 750
     // wh = n_rows*50;                         // At 2 rows should be 100
@@ -1685,7 +1367,7 @@ void make_external_legend(TLegend* leg, TString title) {
     leg->SetTextSize(txt_sz); // Size for prec. = 2 font
     // leg->SetTextSize(25);   // Size for prec. = 3 font
 
-    std::cout << "n_entries: " << n_entries << std::endl;
+    // std::cout << "n_entries: " << n_entries << std::endl;
 
 
     if (n_entries < max_cols) {
@@ -1701,13 +1383,19 @@ void make_external_legend(TLegend* leg, TString title) {
     TString save_format;
     TString save_name;
 
-    save_format = "png";
-    save_name = TString::Format("%s.%s",title.Data(),save_format.Data());
-    ext_canv->Print(save_name,save_format);
+    // save_format = "png";
+    // save_name = TString::Format("%s.%s",title.Data(),save_format.Data());
+    // ext_canv->Print(save_name,save_format);
 
-    save_format = "pdf";
-    save_name = TString::Format("%s.%s",title.Data(),save_format.Data());
-    ext_canv->Print(save_name,save_format);
+    // save_format = "eps";
+    // save_name = TString::Format("%s.%s",title.Data(),save_format.Data());
+    // ext_canv->Print(save_name,save_format);
+
+    save_name = TString::Format("%s.%s",title.Data(),save_type1.Data());
+    ext_canv->Print(save_name,save_type1);
+
+    save_name = TString::Format("%s.%s",title.Data(),save_type2.Data());
+    ext_canv->Print(save_name,save_type2);
 
     // delete ext_canv;
 }
@@ -1730,21 +1418,44 @@ void make_overlay_plot_v2(
     bool incl_ratio,
     bool incl_leg,
     bool ext_leg,
-    // int ext_leg,
+    CMSTextStyle cms_style,
     TString xtitle="",
-    std::vector<TH1D*> overlay_hists={}
+    // std::vector<TH1D*> overlay_hists={}
+    std::vector<PlotPartition> partitions={}
 ) {
     bool debug = false;
-    TCanvas* c = new TCanvas("canv","canv",150,10,960,640);// was 700
+
+    // Some configuration settings
+    Float_t small = 1.e-5;
+    const float padding = 1e-5;
+    const float xpad = small;   // Pad spacing left to right
+    const float ypad = small;   // Pad spacing top to bottom
+    const float ygap = 0.11;    // Gap between the main plot and ratio plot
+    const float ydiv = 0.3;     // Height of the second pad when making plots with ratios
+
+    HistogramBuilder builder = HistogramBuilder();
+
+    int c_hh = 640;
+    int c_ww = 960;
+
+    if (cats.size() > 9) {
+        c_ww += (cats.size() - 9)*35;
+        // c_ww = std::min(c_ww,1550);
+    }
+
+    TCanvas* c = new TCanvas("canv","canv",150,10,c_ww,c_hh);
+    // TCanvas* c = new TCanvas("canv","canv",150,10,960*4,640);
     TLegend *leg = new TLegend(0.14,0.75,0.94,0.89);
     THStack *hs = new THStack("hs_category_yield","");
 
     std::vector<TH1D*> proc_hists;
-    TH1D* h_data = get_data_histogram(title,cats);
+    // TH1D* h_data = get_data_histogram(title,cats);
+    TH1D* h_data = builder.buildDataHistogram(title,cats,BIN_LABEL_MAP);
 
     for (TString proc_name: ALL_PROCS) {
         if (debug) std::cout << "DEBUG: Getting process histogram for " << proc_name << std::endl;
-        TH1D* h_proc = get_process_histogram(title,proc_name,cats);
+        // TH1D* h_proc = get_process_histogram(title,proc_name,cats);
+        TH1D* h_proc = builder.buildProcessHistogram(title,proc_name,cats,BIN_LABEL_MAP,PROCESS_COLOR_MAP);
         if (debug) std::cout << "DEBUG: Adding process histogram to legend: " << proc_name << std::endl;
         TString legend_name = proc_name;
         if (PROCESS_LABEL_MAP.count(proc_name.Data())) {
@@ -1761,9 +1472,9 @@ void make_overlay_plot_v2(
         proc_hists.push_back(h_proc);
     }
 
-    for (TH1D* h: overlay_hists) {
-        leg->AddEntry(h,h->GetTitle(),"f");
-    }
+    // for (TH1D* h: overlay_hists) {
+    //     leg->AddEntry(h,h->GetTitle(),"f");
+    // }
 
     for (TH1D* h: proc_hists) {
         if (debug) std::cout << "DEBUG: Adding histogram to stack: " << h->GetName() << std::endl;
@@ -1777,11 +1488,12 @@ void make_overlay_plot_v2(
         hs->SetTitle(TString::Format(";%s;Events",xtitle.Data()));
     }
 
-    TH1D* h_exp_sum = get_summed_histogram("expected_sum","",cats);
+    // TH1D* h_exp_sum = get_summed_histogram("expected_sum","",cats);
+    TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP);
     TGraphErrors* gr_err = get_error_graph(h_exp_sum,cats,fr);
 
     leg->AddEntry(gr_err,"Total unc.","f");
-    leg->AddEntry(h_data,"Data","lp");
+    leg->AddEntry(h_data,"Obs.","lp");
 
     TH1D* h_ratio;
     TH1D* h_ratio_base;
@@ -1802,20 +1514,40 @@ void make_overlay_plot_v2(
         // h_ratio->SetTitle(TString::Format(";%s;Data/MC",xtitle.Data()));
         // h_ratio->SetTitle(TString::Format(";%s;data/pred.",xtitle.Data()));
 
-        h_ratio_base->SetTitle(TString::Format(";%s;data / pred.",xtitle.Data()));
         h_ratio_base->SetLineColor(kRed);
         h_ratio_base->SetLineWidth(2);
-        h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);
+        // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
+        h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
         h_ratio_base->GetYaxis()->SetNdivisions(204,kFALSE);
 
-        h_ratio_base->GetXaxis()->SetLabelSize(0.200);
-        h_ratio_base->GetXaxis()->SetLabelOffset(0.020);  // Default is 0.005
-        h_ratio_base->GetYaxis()->SetTitleSize(0.150);
-        h_ratio_base->GetYaxis()->SetTitleOffset(0.270);  // Default is 1.0
-        h_ratio_base->GetYaxis()->SetLabelSize(0.140);
+        // h_ratio_base->GetXaxis()->SetLabelSize(0.230);//0.230
+        // h_ratio_base->GetXaxis()->SetLabelOffset(0.020);  // Default is 0.005
+        h_ratio_base->GetXaxis()->SetLabelSize(0.270);//0.230
+        h_ratio_base->GetXaxis()->SetLabelOffset(0.040);  // Default is 0.005
+        if (cats.size() > 9) {
+            h_ratio_base->GetXaxis()->SetLabelSize(0.200);
+            h_ratio_base->GetXaxis()->SetLabelOffset(0.015);
+        }
 
-        std::cout << "X-Label Offset: " << h_ratio_base->GetXaxis()->GetLabelOffset() << std::endl;
-        std::cout << "Y-Title Offset: " << h_ratio_base->GetYaxis()->GetTitleOffset() << std::endl;
+        // h_ratio_base->SetTitle(TString::Format(";%s;#frac{Data}{Pred}",xtitle.Data()));
+        // h_ratio_base->GetYaxis()->SetTitleSize(0.150);
+        // h_ratio_base->GetYaxis()->SetTitleOffset(0.300);  // Default is 1.0
+        h_ratio_base->SetTitle(TString::Format(";%s;Obs. / pred.",xtitle.Data()));
+        h_ratio_base->GetYaxis()->SetTitleSize(0.180);
+        h_ratio_base->GetYaxis()->SetTitleOffset(0.220);  // Default is 1.0
+        h_ratio_base->GetYaxis()->SetLabelSize(0.163);// 0.140
+        if (cats.size() > 9) {
+            h_ratio_base->GetYaxis()->SetTitleSize(0.180);
+            h_ratio_base->GetYaxis()->SetTitleOffset(0.130);
+            h_ratio_base->GetYaxis()->SetLabelSize(0.163);
+        }
+
+        // std::cout << "X-Label Size: " << h_ratio_base->GetXaxis()->GetLabelSize() << std::endl;
+        // std::cout << "X-Label Offset: " << h_ratio_base->GetXaxis()->GetLabelOffset() << std::endl;
+
+        // std::cout << "Y-Title Size: " << h_ratio->GetYaxis()->GetTitleSize() << std::endl;
+        // std::cout << "Y-Title Offset: " << h_ratio_base->GetYaxis()->GetTitleOffset() << std::endl;
+        // std::cout << "Y-Label Offset: " << h_ratio_base->GetYaxis()->GetLabelOffset() << std::endl;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1823,54 +1555,31 @@ void make_overlay_plot_v2(
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (debug) std::cout << "DEBUG: Edit canvas object" << std::endl;
-    // TCanvas* c = new TCanvas("canv","canv",150,10,960,700);
     gStyle->SetPadBorderMode(0);
     gStyle->SetFrameBorderMode(0);
 
-    Float_t small = 1.e-5;
-    const float padding = 1e-5;
-    const float xpad = small;    // Pad spacing left to right
-    const float ypad = small;    // Pad spacing top to bottom
-    const float ygap = 0.07;
+    float L = xpad;
+    float B = ypad;
+    float R = 1-xpad;
+    float T = 1-ypad;
+    double L_margin = 105.6 / c->GetWw();   // Targets 0.11 at 960 width
+    double R_margin =  24.0 / c->GetWw();   // Targets 0.025 at 960 width
     if (incl_ratio) {
-        const float ydiv = 0.3; // Height of the second pad
-        // float L = padding;
-        // float B = padding;
-        // float R = 1-padding;
-        // float T = 1-padding;
-        float L = xpad;
-        float B = ypad;
-        float R = 1-xpad;
-        float T = 1-ypad;
         c->Divide(1,2,small,small);
-        // c->GetPad(1)->SetPad(padding,ydiv+padding,1-padding,1-padding); // Order: (L B R T)
         c->GetPad(1)->SetPad(L,B+ydiv,R,T); // Order: (L B R T)
-        c->GetPad(1)->SetLeftMargin(.11);
-        c->GetPad(1)->SetRightMargin(.05);
-        // c->GetPad(1)->SetBottomMargin(.3);
-        // c->GetPad(1)->SetBottomMargin(small);
+        c->GetPad(1)->SetLeftMargin(L_margin);
+        c->GetPad(1)->SetRightMargin(R_margin);//0.05
         c->GetPad(1)->SetBottomMargin(ygap / 2);
         c->GetPad(1)->Modified();
 
-        // c->GetPad(2)->SetPad(padding,padding,1-padding,ydiv-padding);
         c->GetPad(2)->SetPad(L,B,R,ydiv);   // Order: (L B R T)
-        // c->GetPad(2)->SetTopMargin(small);
         c->GetPad(2)->SetTopMargin(ygap / 2);
-        c->GetPad(2)->SetLeftMargin(.11);
-        c->GetPad(2)->SetRightMargin(.05);
-        c->GetPad(2)->SetBottomMargin(.3);
+        c->GetPad(2)->SetLeftMargin(L_margin);
+        c->GetPad(2)->SetRightMargin(R_margin);//0.05
+        c->GetPad(2)->SetBottomMargin(0.333);//0.3
         c->GetPad(2)->SetGrid(0,1);
         c->GetPad(2)->SetTickx();
         c->GetPad(2)->Modified();
-
-        // c->cd(1);
-        // gPad->SetBottomMargin(small);
-        // gPad->Modified();
-
-        // c->cd(2);
-        // gPad->SetTopMargin(small);
-        // gPad->SetTickx();
-        // gPad->Modified();
     } else {
         c->Divide(1,1,small,small);
         c->GetPad(1)->SetGrid(0,0);
@@ -1909,11 +1618,11 @@ void make_overlay_plot_v2(
     max_val = hs->GetMaximum();
     hmax = TMath::Max(max_val,hmax);
 
-    for (TH1D* h: overlay_hists) {
-        max_bin = h->GetMaximumBin();
-        max_val = h->GetBinContent(max_bin);
-        hmax = TMath::Max(max_val,hmax);
-    }
+    // for (TH1D* h: overlay_hists) {
+    //     max_bin = h->GetMaximumBin();
+    //     max_val = h->GetBinContent(max_bin);
+    //     hmax = TMath::Max(max_val,hmax);
+    // }
 
     if (incl_leg) {    
         h_data->SetMaximum(hmax*1.5);
@@ -1933,53 +1642,37 @@ void make_overlay_plot_v2(
 
     if (debug) std::cout << "DEBUG: Drawing stuff" << std::endl;
 
-    // h_data->Draw("hist,e,p");
-    // hs->Draw("hist,same");
     hs->Draw("hist");
-    if (incl_leg) {
-        leg->Draw();
-    }
-    // CMSInfoLatex->Draw();
-    for (TLatex* latex: extra_text) {
-        latex->Draw();
-    }
+    if (incl_leg) leg->Draw();
+    for (TLatex* latex: extra_text) latex->Draw();
+
     h_data->Draw("same,e,p");
     gr_err->Draw("same,2");
-    for (TH1D* h: overlay_hists) h->Draw("same,hist");
+    // for (TH1D* h: overlay_hists) h->Draw("same,hist");
 
-    // 3rd argument makes the lumi text slightly bigger then default (0.60)
-    add_cms_text((TPad*)c->GetPad(1),0.85,0.80);
+    add_cms_text((TPad*)c->GetPad(1),cms_style);
     if (incl_ratio) {
         c->cd(1);
 
         hs->GetYaxis()->SetTitleSize(0.08);
-        hs->GetYaxis()->SetTitleOffset(0.63);//0.53
-
-        // hs->GetYaxis()->SetLabelSize(0.060);
+        hs->GetYaxis()->SetTitleOffset(0.63);
         hs->GetYaxis()->SetLabelSize(0.070);
+        if (cats.size() > 9) {
+            hs->GetYaxis()->SetTitleSize(0.08);
+            hs->GetYaxis()->SetTitleOffset(0.30);
+            hs->GetYaxis()->SetLabelSize(0.070);
+        }
 
         c->cd(2);
-        // h_ratio->Draw("e,p");
-        // h_ratio_base->Draw("same");
-        // h_ratio_band->Draw("same,2");
 
         h_ratio_base->Draw();
-        // h_ratio_base->GetXaxis()->SetLabelSize(0.200);
-        // h_ratio_base->GetYaxis()->SetLabelSize(0.140);
-
         h_ratio_band->Draw("same,2");
         h_ratio->Draw("same,e,p");
 
-
-        // h_ratio->GetYaxis()->SetTitleSize(0.15);
-        // h_ratio->GetYaxis()->SetTitleOffset(0.22);
-
-        // h_ratio->GetYaxis()->SetLabelSize(0.110);
-        // h_ratio->GetXaxis()->SetLabelSize(0.200);
-        // h_ratio->GetXaxis()->SetLabelSize(0.500);
-        if (hs->GetXaxis()->GetNbins() <= 4) {// Likely an njet histogram
-            h_ratio->GetXaxis()->SetLabelSize(0.250);
-        }
+        // The x-axis labeling is determined by the ratio plot
+        // if (hs->GetXaxis()->GetNbins() <= 4) {// Likely an njet histogram
+        //     h_ratio->GetXaxis()->SetLabelSize(0.250);
+        // }
 
         c->GetPad(1)->RedrawAxis();
         c->GetPad(2)->RedrawAxis();
@@ -1994,15 +1687,79 @@ void make_overlay_plot_v2(
         c->GetPad(1)->RedrawAxis();
     }
 
+    c->cd();
+    for (uint idx=0; idx < partitions.size(); idx++) {
+        double x1,x2,y1,y2;
+        PlotPartition partition = partitions.at(idx);
+        Int_t bin_idx = partition.end;
+        double bin_width = (1.0 - L_margin - R_margin) / cats.size();
+
+        x1 = L_margin + bin_width*partition.end;
+        x2 = L_margin + bin_width*partition.end;
+
+        y1 = 0.03;
+        y2 = 0.85;
+
+        partition.line = new TLine(x1,y1,x2,y2);
+        partition.line->SetLineStyle(9);
+
+        if (partition.draw_line) {
+            partition.line->Draw();
+        }
+
+        x1 = (L_margin + bin_width*partition.end) - partition.axis_offsetX;
+        y1 = 0.055;
+        partition.axis_latex = new TLatex(x1,y1,partition.axis_txt.Data());
+
+        // partition.axis_latex->SetTextAlign(23); // H-centered+right adjusted
+        // partition.axis_latex->SetTextAlign(13); // left+top adjusted
+        // partition.axis_latex->SetTextAlign(31); // right+bottom adjusted
+        partition.axis_latex->SetTextAlign(33); // right+top adjusted
+        partition.axis_latex->SetTextSize(0.04);
+        partition.axis_latex->SetTextFont(62);
+
+        if (partition.draw_axis_latex) {
+            partition.axis_latex->Draw();
+        }
+
+        x1 = (L_margin + bin_width*partition.end) - partition.body_offsetX;
+        y1 = 0.75 - partition.body_offsetY;
+        partition.body_latex_1 = new TLatex(x1,y1,partition.body_txt_1.Data());
+        partition.body_latex_1->SetTextAlign(31);
+        partition.body_latex_1->SetTextSize(0.04);
+        partition.body_latex_1->SetTextFont(62);
+
+        x1 = (L_margin + bin_width*partition.end) - partition.body_offsetX;
+        y1 = 0.75 - partition.body_offsetY - partition.body_spacing;
+        partition.body_latex_2 = new TLatex(x1,y1,partition.body_txt_2.Data());
+        partition.body_latex_2->SetTextAlign(31);
+        partition.body_latex_2->SetTextSize(0.035);
+        partition.body_latex_2->SetTextFont(62);
+
+        if (partition.draw_body_latex) {
+            partition.body_latex_1->Draw();
+            if (!partition.body_txt_2.EqualTo("")) {
+                partition.body_latex_2->Draw();
+            }
+        }
+    }
+
     TString save_format, save_name;
 
-    save_format = "png";
-    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
-    c->Print(save_name,save_format);
+    // save_format = "png";
+    // save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
 
-    save_format = "pdf";
-    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
-    c->Print(save_name,save_format);
+    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_type1.Data());
+    c->Print(save_name,save_type1);
+
+    // save_format = "pdf";
+    // save_format = "eps";
+    // save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
+
+    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_type2.Data());
+    c->Print(save_name,save_type2);
 
     // Print an external legend
     if (ext_leg) {
@@ -2046,10 +1803,10 @@ Note:
 */
 void make_fluct_compare_plots(
     TString title,
-    // TString heading_str,
     std::vector<TLatex*> extra_text,
     TString wc_name,
-    std::vector<ExtremumPoint> pts
+    std::vector<ExtremumPoint> pts,
+    CMSTextStyle cms_style
 ) {
     bool debug = false;
     TCanvas* c = new TCanvas("canv","canv",150,10,960,640);// was 700
@@ -2057,14 +1814,6 @@ void make_fluct_compare_plots(
     // TCanvas* c = new TCanvas("canv","canv",150,10,800,800);
     TLegend* leg = new TLegend(0.14,0.75,0.94,0.89);
     THStack* hs = new THStack("hs_category_yield","");
-
-    // TLatex* heading = new TLatex(0.11,1 - 0.06,heading_str.Data());
-    // TLatex* heading = new TLatex(0.11,1 - 0.05,heading_str.Data());
-    // heading->SetTextSize(0.070);
-    // heading->SetTextSize(0.065);
-    // heading->SetTextSize(0.060);
-    // heading->SetNDC();
-    // heading->SetTextFont(42);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Get Histograms
@@ -2159,6 +1908,7 @@ void make_fluct_compare_plots(
             h_lo->Scale(1. / scale_val);
             h_hi->Scale(1. / scale_val);
             legend_name = TString::Format("%s#divide%.0f",legend_name.Data(),scale_val);
+            // legend_name = TString::Format("%s\\div%.0f",legend_name.Data(),scale_val);
             // legend_name = TString::Format("%s#times%.2f",legend_name.Data(),scale_val);
         }
 
@@ -2184,7 +1934,8 @@ void make_fluct_compare_plots(
         // h_nom->SetBarOffset(bar_offset);
 
         // leg->AddEntry(h_nom,legend_name,"f");
-        leg->AddEntry(h_nom,legend_name,"lp");
+        // leg->AddEntry(h_nom,legend_name,"lp");
+        leg->AddEntry(h_nom,legend_name,"pe");
 
         // h_nom->SetMinimum(-2.0);
         // h_nom->SetMaximum(2.0);
@@ -2219,7 +1970,11 @@ void make_fluct_compare_plots(
     // h_frame->GetYaxis()->SetTitleOffset(1.50);
     // h_frame->GetYaxis()->SetLabelSize(0.055);
 
-    h_frame->GetXaxis()->SetLabelSize(0.065);
+    // h_frame->GetXaxis()->SetLabelSize(0.065);//0.065
+
+    h_frame->GetXaxis()->SetLabelSize(0.270*0.30);
+    h_frame->GetXaxis()->SetLabelOffset(0.030*0.30);// I don't know why 0.040 doesn't match exactly with the other plot
+
     h_frame->GetYaxis()->SetTitleSize(0.045);
     h_frame->GetYaxis()->SetTitleOffset(1.10);
     h_frame->GetYaxis()->SetLabelSize(0.055);
@@ -2315,12 +2070,8 @@ void make_fluct_compare_plots(
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-    std::vector<TArrow*> arrows;
     for (OffScalePoint& pt: off_scale_pts) {
         get_offscale_arrow(pt);
-        // TArrow* arrow = get_offscale_arrow(pt);
-        // arrows.push_back(arrow);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2386,18 +2137,26 @@ void make_fluct_compare_plots(
     }
 
     // 2nd argument makes the CMS text slightly bigger then default (0.75)
-    add_cms_text((TPad*)c->GetPad(1),0.85,0.80);
+    // add_cms_text((TPad*)c->GetPad(1),1,0.85,0.80);
+    add_cms_text((TPad*)c->GetPad(1),cms_style);
 
     TString base_str, save_format, save_name;
     base_str = "fluct_compare";
 
-    save_format = "png";
-    save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_format.Data());
-    c->Print(save_name,save_format);
+    // save_format = "png";
+    // save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
 
-    save_format = "pdf";
-    save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_format.Data());
-    c->Print(save_name,save_format);
+    save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_type1.Data());
+    c->Print(save_name,save_type1);
+
+    // save_format = "pdf";
+    // save_format = "eps";
+    // save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
+
+    save_name = TString::Format("%s_%s.%s",base_str.Data(),title.Data(),save_type2.Data());
+    c->Print(save_name,save_type2);
 
     save_name = TString::Format("ext_leg_flc");
     make_external_legend(leg,save_name);
@@ -2423,6 +2182,30 @@ void make_fluct_compare_plots(
     return;
 }
 
+/*
+Desc:
+    Tries to open up a file specified by 'fpath', if successful it will set the TFile pointer 'f' to
+    the opened TFile object and then extract and return the RooFitResult object from the opened file
+Note:
+    This function will modify the pointer 'f'. It also sets 'f' to a nullptr at the start, so it shouldn't
+    be set to anything before being passed to this function! Also, for some reason the saveSnapshot()
+    method of RooWorkspace doesn't work properly when called within this function, so I have to do that
+    outside of the function.
+*/
+RooFitResult* load_fitresult(TString fpath, TString fr_key, TFile* f) {
+    RooFitResult* fr = nullptr;
+    f = TFile::Open(fpath);
+    if (!f) {
+        std::cout << TString::Format("[WARNING] %s not found",fpath.Data()) << std::endl;
+        return nullptr;
+    }
+    fr = (RooFitResult*) f->Get(fr_key);
+    if (!fr) {
+        std::cout << TString::Format("[WARNING] Missing fitresult: %s",fr_key.Data()) << std::endl;
+        return nullptr;
+    }
+    return fr;
+}
 
 void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::set<std::string> keep_wcs) {
     TH1::SetDefaultSumw2(1);
@@ -2447,69 +2230,30 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
 
-    // A fitresult for getting the prefit uncertainties coming from the NP
-    TString prefit_fname = "fitDiagnosticsPrefit.root";
-    TFile* prefit_file   = TFile::Open(in_dir + prefit_fname);
-    RooFitResult* prefit = 0;
-    if (prefit_file) {
-        prefit = (RooFitResult*) prefit_file->Get(FR_DIAGKEY);
-    }
+    // Note: We currently don't make use of the 'FreezeUp'/'FreezeDown' fitresult files
+    TFile* prefit_file = nullptr;
+    TFile* postfit_file = nullptr;
+    TFile* bestfit_file = nullptr;
+    TFile* nuisfit_file = nullptr;
+    TFile* freeze_nom_file = nullptr;
+
+    RooFitResult* prefit = nullptr;
+    RooFitResult* postfit = nullptr;
+    RooFitResult* bestfit = nullptr;
+    RooFitResult* nuisfit = nullptr;
+    RooFitResult* freezefit_nom = nullptr;
+
+    prefit  = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,prefit_file);
+    postfit = load_fitresult(in_dir + "multidimfitPostfit.root"  ,FR_MDKEY,postfit_file);
+    bestfit = load_fitresult(in_dir + "multidimfitBestfit.root"  ,FR_MDKEY,bestfit_file);
+    nuisfit = load_fitresult(in_dir + "multidimfitNuisOnly.root" ,FR_MDKEY,nuisfit_file);
+    freezefit_nom = load_fitresult(in_dir + "multidimfitFreezeNom.root",FR_MDKEY,freeze_nom_file);
     
-    // The fitresult from starting at SM
-    TString postfit_fname = "multidimfitPostfit.root";
-    TFile* postfit_file   = TFile::Open(in_dir + postfit_fname);
-    RooFitResult* postfit = 0;
-    if (postfit_file) {
-        postfit = (RooFitResult*) postfit_file->Get(FR_MDKEY);
-    }
-
-    // The fitresult from starting at a 'bestfit' point (e.g. from 1d profiled scans)
-    TString bestfit_fname = "multidimfitBestfit.root";
-    TFile* bestfit_file   = TFile::Open(in_dir + bestfit_fname);
-    RooFitResult* bestfit = 0;
-    if (bestfit_file) {
-        bestfit = (RooFitResult*) bestfit_file->Get(FR_MDKEY);
-    }
-
-    // The fitresult from freezing all POIs to SM values (i.e. NP only fit)
-    TString nuisfit_fname = "multidimfitNuisOnly.root";
-    TFile* nuisfit_file   = TFile::Open(in_dir + nuisfit_fname);
-    RooFitResult* nuisfit = 0;
-    if (nuisfit_file) {
-        nuisfit = (RooFitResult*) nuisfit_file->Get(FR_MDKEY);
-    }
-
-    // The fitresult from freezing all POIs to a 'bestfit' point
-    TString freeze_nom_fname = "multidimfitFreezeNom.root";
-    // TString freeze_nom_fname = "multidimfitFreeze.root";
-    TFile* freeze_nom_file   = TFile::Open(in_dir + freeze_nom_fname);
-    RooFitResult* freezefit_nom = 0;
-    if (freeze_nom_file) {
-        freezefit_nom = (RooFitResult*) freeze_nom_file->Get(FR_MDKEY);
-    }
-
-    // The fitresult from freezing all POIs to the +1sigma 'bestfit' point
-    TString freeze_up_fname = "multidimfitFreezeUp.root";
-    TFile* freeze_up_file   = TFile::Open(in_dir + freeze_up_fname);
-    RooFitResult* freezefit_up = 0;
-    if (freeze_up_file) {
-        freezefit_up = (RooFitResult*) freeze_up_file->Get(FR_MDKEY);
-    }
-
-    // The fitresult from freezing all POIs to the -1sigma 'bestfit' point
-    TString freeze_down_fname = "multidimfitFreezeDown.root";
-    TFile* freeze_down_file   = TFile::Open(in_dir + freeze_down_fname);
-    RooFitResult* freezefit_down = 0;
-    if (freeze_down_file) {
-        freezefit_down = (RooFitResult*) freeze_down_file->Get(FR_MDKEY);
-    }
-
-    // Note: The prefit RooFitResult only contains the nuis. parameters, so uncertainties from the
-    //          POIs are not included when calculating the propagated error
     if (prefit) {
         ws->saveSnapshot("prefit_i",prefit->floatParsInit(),kTRUE);
+        ws->saveSnapshot("prefit_f",prefit->floatParsFinal(),kTRUE);
     }
-    if (postfit) {    
+    if (postfit) {
         ws->saveSnapshot("postfit_i",postfit->floatParsInit(),kTRUE);
         ws->saveSnapshot("postfit_f",postfit->floatParsFinal(),kTRUE);
     }
@@ -2521,29 +2265,17 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         ws->saveSnapshot("nuisfit_i",nuisfit->floatParsInit(),kTRUE);
         ws->saveSnapshot("nuisfit_f",nuisfit->floatParsFinal(),kTRUE);
     }
-    if (freezefit_nom) {    
+    if (freezefit_nom) {
         ws->saveSnapshot("freeze_nom_i",freezefit_nom->floatParsInit(),kTRUE);
         ws->saveSnapshot("freeze_nom_f",freezefit_nom->floatParsFinal(),kTRUE);
     }
 
     // Create instances of our helper classes
     WSHelper ws_helper = WSHelper();
-
     RooArgSet pois = ws_helper.getPOIs(ws);
     RooArgSet nuis = ws_helper.getNuisances(ws);
 
-    std::vector<TString> cat_names;
-    // NOTE: second part of the map needs to be a ptr, otherwise the map ctor fails horribly!
-    std::unordered_map<std::string,AnalysisCategory*> all_cats;
-    for (RooCatType* c: ws_helper.getTypes(ws)) {
-        TString cat_name(c->GetName());
-        AnalysisCategory* ana_cat = new AnalysisCategory(c->GetName(),ws);
-        all_cats[cat_name.Data()] = ana_cat;
-        cat_names.push_back(cat_name);
-        // std::cout << "cat_name: " << cat_name << std::endl;
-    }
-
-    // All of these categories are built from 'fundamental' categories
+    // All of these categories are built from 'fundamental' categories (i.e. already exist in the 'all_cats' vector)
     std::unordered_map<std::string,std::vector<TString> > cat_groups;
     cat_groups["all"] = {
         "C_2lss_p_2b_4j",
@@ -2659,29 +2391,18 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         // "all",
     };
 
+    
+    CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
     //////////////////////
     // Create some merged categories, i.e. create a new category which is the merger of all
     //  sub-categories of the corresponding 'cat_groups' entry
     //////////////////////
-    std::unordered_map<std::string,AnalysisCategory*> merged_cats;
     for (TString mrg_name: cat_group_names) {
-        std::vector<AnalysisCategory*> to_merge;
-        for (TString s: cat_groups[mrg_name.Data()]) {
-            // TODO: Should probably add a check to make sure the category key actually exists...
-            to_merge.push_back(all_cats[s.Data()]);
-        }
-        merged_cats[mrg_name.Data()] = new AnalysisCategory(mrg_name,to_merge);
-        merged_cats[mrg_name.Data()]->setProcOrder(YIELD_TABLE_ORDER);
-        // TODO: Should probably add a check to make sure the new category name doesn't already exist...
-        all_cats[mrg_name.Data()] = merged_cats[mrg_name.Data()];   // This might be a bit spicy...
+        cat_manager.mergeCategories(mrg_name,cat_groups[mrg_name.Data()],YIELD_TABLE_ORDER);
     }
-
-    std::vector<AnalysisCategory*> cats_to_plot;    // These are basically the bins of the histogram we want to make
-    // Plot the merged categories as the bins
-    for (TString cat_name: cat_group_names) {
-        cats_to_plot.push_back(all_cats[cat_name.Data()]);
-    }
-
+    // These are basically the bins of the histogram we want to make
+    std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
+    
     //////////////////////
     // Print some stuff
     //////////////////////
@@ -2693,14 +2414,14 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         std::cout << "--- prefit ---" << std::endl;
         std::cout << "--------------" << std::endl;
         ws->loadSnapshot("postfit_i");
-        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,prefit);
+        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,prefit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
 
         std::cout << "---------------" << std::endl;
         std::cout << "--- nuisfit ---" << std::endl;
         std::cout << "---------------" << std::endl;
         if (nuisfit) {
             ws->loadSnapshot("nuisfit_f");
-            printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,nuisfit);
+            printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,nuisfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
         } else {
             std::cout << "WARNING: Missing nuisfit" << std::endl;
         }
@@ -2709,10 +2430,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         std::cout << "--- postfit ---" << std::endl;
         std::cout << "---------------" << std::endl;
         ws->loadSnapshot("postfit_f");
-        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,postfit);
+        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,postfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
 
+        // ws->loadSnapshot("postfit_i");
         // for (AnalysisCategory* ana_cat: cats_to_plot) ana_cat->Print(prefit);
-        // prefit->Print("v");
     }
 
     // nuisfit->Print("v");
@@ -2727,20 +2448,20 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
 
     // Options for which plots to make
     bool incl_summary_plots = true;
-    bool incl_summary_gif_plots = false;
-    bool incl_njets_plots = false;
-    bool incl_fluct_plots = false;
+    bool incl_summary_gif_plots = true;
+    bool incl_fluct_plots = true;
+    bool incl_fluct_sum_plots = true;
+    bool incl_njets_plots = true;
 
     // Plot layout options
     bool incl_ratio = true;
     bool incl_leg = false;
     bool incl_ext_leg = true;
-    // int incl_ext_leg = 0;
     
     // Note: Irrelevant if not making fluctuation plots
     // std::vector<TString> wc_to_fluctuate {};
-    // std::vector<TString> wc_to_fluctuate {"ctG","ctW","ctZ","ctp","cpQM","cbW"};
-    std::vector<TString> wc_to_fluctuate {"cbW","ctZ"};
+    std::vector<TString> wc_to_fluctuate {"ctG","ctW","ctZ","ctp","cpQM","cbW"};
+    // std::vector<TString> wc_to_fluctuate {"ctZ"};
 
     // This is kind of a really stupid way to do this, I'm just being lazy and don't want to have to
     //  constantly clear the std::vector a bunch of times and refill it with a fresh TLatex object
@@ -2749,119 +2470,65 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::vector<TLatex*> extra_text;
     extra_text.push_back(latex);
 
+    CMSTextStyle cms_style;
+
+    cms_style.cms_size  = 0.90;//0.85;
+    cms_style.lumi_size = 0.80;
+    cms_style.extra_text = "";
+    // cms_style.extra_text = "Preliminary";
+    cms_style.cms_frame_loc = 0;
+    cms_style.extra_over_cms_text_size = 0.80;//0.76
+
+    CMSTextStyle supp_style(cms_style);
+    supp_style.extra_text = "Supplementary";
+
     // Plot the (potentially merged) categories from 'cats_to_plot' as the bins
     if (incl_summary_plots) {
+        // This doesn't determine the CMS txt position, its just storing the value that we know it is going to be
+        // Puts the bonus text in frame to avoid overlap with the cms_style.extra_text
+        double cms_txt_xpos = 0.12;
+        double cms_txt_ypos = 0.94;
+        double extra_txt_xoffset =  0.03;
+        double extra_txt_yoffset = -0.12;
+        int extra_txt_align = 11;
 
         // Make the prefit histogram stack plot
         ws->loadSnapshot("postfit_i");
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
-        latex->SetTextAlign(13);
-        latex->SetText(0.15,0.78,"Prefit");
-        make_overlay_plot_v2("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg);
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
+        make_overlay_plot_v2("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        
         // Make the postfit histogram stack plot
         ws->loadSnapshot("postfit_f");
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
-        latex->SetTextAlign(13);
-        latex->SetText(0.15,0.78,"Postfit");
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
         for (auto& kv: BEST_FIT_POIS) {
             std::string rrv_poi_name = kv.first;
             double rrv_value = kv.second;
             setRRV(pois,rrv_poi_name,rrv_value);
         }
-        make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg);
+        make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
+        // Make the nuisfit histogram stack plot
         ws->loadSnapshot("nuisfit_f");
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
-        latex->SetTextAlign(13);
-        latex->SetText(0.15,0.78,"NuisOnly");
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"");
         for (auto& kv: BEST_FIT_POIS) {
             std::string rrv_poi_name = kv.first;
             double rrv_value = 0.0;
             setRRV(pois,rrv_poi_name,rrv_value);
         }
-        make_overlay_plot_v2("noflucts_nuisfit",extra_text,cats_to_plot,nuisfit,incl_ratio,incl_leg,incl_ext_leg);
-
-        ////////////////////////////////////////////////////////////////////////////////////
-        // Note: We now make these plots via the dedicated 'make_fluct_compare_plots' function,
-        //       kept around for posterity sake
-        ////////////////////////////////////////////////////////////////////////////////////
-        /*
-        if (incl_fluct_plots) {
-            // Make the postfit WC 2sigma Up/Down fluctuation histogram stack plots
-            for (TString wc_name: wc_to_fluctuate) {
-                TString snapshot_name;
-                TString plot_name, head_name, styled_name;
-                double rrv_val;
-
-                styled_name = wc_name;
-                if (WC_LABEL_MAP.count(wc_name.Data())) {
-                    styled_name = WC_LABEL_MAP[wc_name.Data()];
-                }
-
-                // Note: Hardcoded path here!!!
-                TString dumb_path = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/src/EFTFit/Fitter/test/profiled_fitresults";
-                TString dumb_fname_up = TString::Format("%s/multidimfit%sUpFitResult.root",dumb_path.Data(),wc_name.Data());
-                TString dumb_fname_down = TString::Format("%s/multidimfit%sDownFitResult.root",dumb_path.Data(),wc_name.Data());
-                TFile* fluct_file_up = TFile::Open(dumb_fname_up);
-                TFile* fluct_file_down = TFile::Open(dumb_fname_down);
-
-                fluct_files.push_back(fluct_file_up);
-                fluct_files.push_back(fluct_file_down);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-                // Note: These fitresults were created by freezing a particular WC to a specific value
-                //       so they don't have that specific WC in the 'floatParsFinal()' object and won't
-                //       get set via a 'loadSnapshot' call, need to make sure to set its value explicitly
-                ////////////////////////////////////////////////////////////////////////////////////
-                
-                RooFitResult* fluct_fit_up   = (RooFitResult*)fluct_file_up->Get(FR_MDKEY);
-                RooFitResult* fluct_fit_down = (RooFitResult*)fluct_file_down->Get(FR_MDKEY);
-
-                fluct_fits.push_back(fluct_fit_up);
-                fluct_fits.push_back(fluct_fit_down);
-
-                ////////////////////////////////////////////////////////////////////////////////////
-                // Make the up variation overlaid plots
-                ////////////////////////////////////////////////////////////////////////////////////
-                snapshot_name = TString::Format("%s_up_profiled_f",wc_name.Data());
-                plot_name = TString::Format("%s_up_postfit",wc_name.Data());
-                head_name = TString::Format("%s Up",styled_name.Data());
-                ws->saveSnapshot(snapshot_name,fluct_fit_up->floatParsFinal(),kTRUE);
-                ws->loadSnapshot(snapshot_name);
-                rrv_val = getRRV(fluct_fit_up->constPars(),wc_name.Data());
-                std::cout << TString::Format("%s Up Value: %.2f",wc_name.Data(),rrv_val) << std::endl;
-                setRRV(pois,wc_name.Data(),rrv_val);
-                latex->SetNDC();
-                latex->SetTextFont(42);
-                latex->SetTextSize(0.070);
-                latex->SetText(0.11,0.91,head_name.Data());
-                make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,fluct_fit_up,incl_ratio,incl_leg,incl_ext_leg);
-                
-                ////////////////////////////////////////////////////////////////////////////////////
-                // Make the down variation overlaid plots
-                ////////////////////////////////////////////////////////////////////////////////////
-                snapshot_name = TString::Format("%s_down_profiled_f",wc_name.Data());
-                plot_name = TString::Format("%s_down_postfit",wc_name.Data());
-                head_name = TString::Format("%s Down",styled_name.Data());
-                ws->saveSnapshot(snapshot_name,fluct_fit_down->floatParsFinal(),kTRUE);
-                ws->loadSnapshot(snapshot_name);
-                rrv_val = getRRV(fluct_fit_down->constPars(),wc_name.Data());
-                std::cout << TString::Format("%s Down Value: %.2f",wc_name.Data(),rrv_val) << std::endl;
-                setRRV(pois,wc_name.Data(),rrv_val);
-                latex->SetNDC();
-                latex->SetTextFont(42);
-                latex->SetTextSize(0.070);
-                latex->SetText(0.11,0.91,head_name.Data());
-                make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,fluct_fit_down,incl_ratio,incl_leg,incl_ext_leg);
-            }
-        }
-        */
+        make_overlay_plot_v2("noflucts_nuisfit",extra_text,cats_to_plot,nuisfit,incl_ratio,incl_leg,incl_ext_leg,supp_style);
     }
 
     if (incl_summary_gif_plots) {
@@ -2880,12 +2547,19 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
                 setRRV(pois,rrv_poi_name,rrv_value);
             }
             TString name_prefix = TString::Format("summary_gif_%02d",i);
-            make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg);
+            make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style);
         }
     }
     
     // Make the fancier postfit WC 2sigma Up/Down fluctuation histogram stack plots
     if (incl_fluct_plots) {
+        // This doesn't determine the CMS txt position, its just storing the value that we know it is going to be
+        double cms_txt_xpos = 0.12;
+        double cms_txt_ypos = 0.94;
+        double extra_txt_xoffset =  0.03;
+        double extra_txt_yoffset = -0.10;
+        int extra_txt_align = 11;
+
         for (TString wc_name: wc_to_fluctuate) {
             ////////////////////////////////////////////////////////////////////////////////////////
             // Note: Currently hardcoded path to the directory containing the dedicated fits at all
@@ -2933,103 +2607,101 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             latex->SetNDC();
             latex->SetTextSize(0.060);
             latex->SetTextFont(42);
-            latex->SetTextAlign(13);
-            latex->SetText(0.15,0.85,head_name.Data());
-
-            // latex->SetTextSize(0.050);
-            // latex->SetTextFont(42);
-            // latex->SetTextAlign(13);
-            // latex->SetText(0.20,0.83,head_name.Data());
-
-            make_fluct_compare_plots(plot_name,extra_text,wc_name,extremum_pts);
+            latex->SetTextAlign(extra_txt_align);
+            latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,head_name.Data());
+            make_fluct_compare_plots(plot_name,extra_text,wc_name,extremum_pts,supp_style);
 
             // Make the 'summed process' version of these plots
-            plot_name = TString::Format("sum_%s_flc",wc_name.Data());
-            // make_fluct_compare_plots(plot_name,extra_text,wc_name,sum_extremum_pts);
+            // Note: This will overwrite the external legend file!
+            if (incl_fluct_sum_plots) {            
+                plot_name = TString::Format("sum_%s_flc",wc_name.Data());
+                make_fluct_compare_plots(plot_name,extra_text,wc_name,sum_extremum_pts,supp_style);
+            }
         }
     }
 
 
-    // Plot a specific category with njets as the bins
+    // Plot the pre-merged categories all in one glorious plot
     if (incl_njets_plots) {
-        for (TString cat_group_name: cat_group_names) {
-            TString plot_name, heading_name;
+        PlotPartition part1;
+        PlotPartition part2;
+        PlotPartition part3;
+        PlotPartition part4;
+        PlotPartition part5;
+        PlotPartition part6;
+        PlotPartition part7;
+        PlotPartition part8;
+        PlotPartition part9;
 
-            cats_to_plot.clear();    
-            for (TString cat_name: cat_groups[cat_group_name.Data()]) {
-                cats_to_plot.push_back(all_cats[cat_name.Data()]);
-            }
+        part1.end = 4;
+        part2.end = 8;
+        part3.end = 12;
+        part4.end = 16;
+        part5.end = 20;
+        part6.end = 24;
+        part7.end = 28;
+        part8.end = 32;
+        part9.end = 35;
 
-            ws->loadSnapshot("postfit_i");
-            // for (auto& kv: SM_POIS) setRRV(pois,kv.first,kv.second);
-            plot_name = TString::Format("%s_prefit",cat_group_name.Data());
-            heading_name = TString::Format("Prefit: %s",cat_group_name.Data());
-            if (BIN_LABEL_MAP.count(cat_group_name.Data())) {
-                heading_name = TString::Format("Prefit: %s",BIN_LABEL_MAP[cat_group_name.Data()].c_str());
-            }
-            latex->SetNDC();
-            latex->SetTextFont(42);
-            latex->SetTextSize(0.070);
-            latex->SetText(0.11,0.91,heading_name.Data());
-            make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg);
+        part1.body_txt_1 = "2\\ell\\text{ss}(+)";
+        part2.body_txt_1 = "2\\ell\\text{ss}(-)";
+        part3.body_txt_1 = "3\\ell1\\text{b}(+)";
+        part4.body_txt_1 = "3\\ell1\\text{b}(-)";
+        part5.body_txt_1 = "3\\ell2\\text{b}(+)";
+        part6.body_txt_1 = "3\\ell2\\text{b}(-)";
+        part7.body_txt_1 = "3\\ell1\\text{b}";
+        part8.body_txt_1 = "3\\ell2\\text{b}";
+        part9.body_txt_1 = "4\\ell";
 
-            ws->loadSnapshot("bestfit_f");
-            // for (auto& kv: BEST_FIT_POIS) setRRV(pois,kv.first,kv.second);
-            plot_name = TString::Format("%s_postfit",cat_group_name.Data());
-            heading_name = TString::Format("Postfit: %s",cat_group_name.Data());
-            if (BIN_LABEL_MAP.count(cat_group_name.Data())) {
-                heading_name = TString::Format("Postfit: %s",BIN_LABEL_MAP[cat_group_name.Data()].c_str());
-            }
-            latex->SetNDC();
-            latex->SetTextFont(42);
-            latex->SetTextSize(0.070);
-            latex->SetText(0.11,0.91,heading_name.Data());
-            make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,bestfit,incl_ratio,incl_leg,incl_ext_leg);
+        part7.body_txt_2 = "|m_{\\ell\\ell} - m_{\\mathrm{Z}}| < 10";
+        part8.body_txt_2 = "|m_{\\ell\\ell} - m_{\\mathrm{Z}}| < 10";
 
-            if (incl_fluct_plots) {
-                // Make plots of njets with the WC Up/Down fluctuations
-                for (TString wc_name: wc_to_fluctuate) {
-                    continue; // Skip the njets fluct plots for now
-                    
-                    TString styled_name = wc_name;
-                    if (WC_LABEL_MAP.count(wc_name.Data())) {
-                        styled_name = WC_LABEL_MAP[wc_name.Data()];
-                    }
+        part7.body_offsetX = 0.003;
+        part8.body_offsetX = 0.003;
 
-                    ws->loadSnapshot("postfit_f");
-                    for (auto& kv: BEST_FIT_POIS) setRRV(pois,kv.first,kv.second);
-                    setRRV(pois,wc_name.Data(),HI_POIS[wc_name.Data()]);
-                    plot_name = TString::Format("%s_%s_up_postfit",cat_group_name.Data(),wc_name.Data());
-                    heading_name = TString::Format("Postfit: %s %s Up",cat_group_name.Data(),styled_name.Data());
-                    if (BIN_LABEL_MAP.count(cat_group_name.Data())) {
-                        heading_name = TString::Format("Postfit: %s %s Up",BIN_LABEL_MAP[cat_group_name.Data()].c_str(),styled_name.Data());
-                    }
-                    latex->SetNDC();
-                    latex->SetTextFont(42);
-                    latex->SetTextSize(0.070);
-                    latex->SetText(0.11,0.91,heading_name.Data());
-                    make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg);
+        part7.body_offsetY = -0.07;
+        part8.body_offsetY = -0.07;
 
-                    ws->loadSnapshot("postfit_f");
-                    for (auto& kv: BEST_FIT_POIS) setRRV(pois,kv.first,kv.second);
-                    setRRV(pois,wc_name.Data(),LO_POIS[wc_name.Data()]);
-                    plot_name = TString::Format("%s_%s_down_postfit",cat_group_name.Data(),wc_name.Data());
-                    heading_name = TString::Format("Postfit: %s %s Down",cat_group_name.Data(),styled_name.Data());
-                    if (BIN_LABEL_MAP.count(cat_group_name.Data())) {
-                        heading_name = TString::Format("Postfit: %s %s Down",BIN_LABEL_MAP[cat_group_name.Data()].c_str(),styled_name.Data());
-                    }
-                    latex->SetNDC();
-                    latex->SetTextFont(42);
-                    latex->SetTextSize(0.070);
-                    latex->SetText(0.11,0.91,heading_name.Data());
-                    make_overlay_plot_v2(plot_name,extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg);
-                }
-            }
+        part9.draw_line = false;
+
+        std::vector<PlotPartition> partitions {part1,part2,part3,part4,part5,part6,part7,part8,part9};
+
+
+        cats_to_plot.clear();
+        cats_to_plot = cat_manager.getChildCategories(cat_group_names);
+
+        double cms_txt_xpos = 0.12;
+        double cms_txt_ypos = 0.94;
+        double extra_txt_xoffset = -0.03;
+        double extra_txt_yoffset = -0.12;
+        int extra_txt_align = 11;
+
+        // Make the prefit histogram stack plot
+        ws->loadSnapshot("postfit_i");
+        latex->SetNDC();
+        latex->SetTextFont(42);
+        latex->SetTextSize(0.080);  // Was 0.070
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
+        make_overlay_plot_v2("noflucts_njets_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,supp_style,"",partitions);
+
+        // Make the postfit histogram stack plot
+        ws->loadSnapshot("postfit_f");
+        latex->SetNDC();
+        latex->SetTextFont(42);
+        latex->SetTextSize(0.080);  // Was 0.070
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
+        for (auto& kv: BEST_FIT_POIS) {
+            std::string rrv_poi_name = kv.first;
+            double rrv_value = kv.second;
+            setRRV(pois,rrv_poi_name,rrv_value);
         }
+        make_overlay_plot_v2("noflucts_njets_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style,"",partitions);
     }
+
     return;
 }
-
 
 void overlay_operator_variations(TString input_dir, TString output_dir) {
     // gROOT->LoadMacro("tdrstyle.C");

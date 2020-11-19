@@ -28,11 +28,11 @@ console.setLevel(logging.INFO)
 console.setFormatter(frmt)
 logging.getLogger('').addHandler(console)
 
-helper = CombineHelper(home=os.getcwd())
+helper = CombineHelper(out_dir="test_overlay_wrapper")
 
 web_area = os.path.join(CONST.USER_DIR,'www')
 dir_ver  = 'data2017v1'  # This is sort of versioning for which version of the histogram file is being used
-testing  = True
+testing  = False
 
 dirs = [
     #'SM_fitting_2019-04-04_1051_simultaneous_allcats',
@@ -46,13 +46,16 @@ dirs = [
     # 'SM_fitting_2020-01-10_ana32_central'
     # 'SM_fitting_2020-01-11_ana32_central'
     # 'SM_fitting_2020-01-22_ana32_private_sgnl_Default-PSWeights-Symmetrized_MatchingSyst_moreStats'
+    # 'SM_fitting_2020-10-13_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0',   # SM signal strength fit (for supplementary plots)
     # 'EFT_fitting_testing'
     # 'EFT_fitting_2020-01-10_ana32_private'
     # 'EFT_fitting_2020-01-22_ana32_private_sgnl_Default-PSWeights-Symmetrized_MatchingSyst_moreStats'
     # 'EFT_fitting_2020-03-31_ana32_private_sgnl_Default-PSWeights-Symmetrized_MatchingSyst_moreStats_with-NuisOnly',
     # 'EFT_fitting_2020-04-01_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly',
     'EFT_fitting_2020-04-02_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0', # This is the one most commonly used in the TOP-19-001 Paper
-    # 'EFT_fitting_2020-04-02_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin2'
+    # 'EFT_fitting_2020-04-02_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin2',
+    # 'EFT_fitting_2020-09-04_ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_no-SFZ-bin-mask_cmin0',
+
 ]
 
 for d in dirs:
@@ -71,7 +74,21 @@ for d in dirs:
     root_args = "\"{indir}\",\"{outdir}\"".format(indir=input_dir,outdir=output_dir)
     # subprocess.check_call(['root','-b','-l','-q','overlay_operator_variations.C(\"%s\",\"%s\")' % (input_dir,output_dir)])
     subprocess.check_call(['root','-b','-l','-q','overlay_operator_variations.C({args})'.format(args=root_args)])
-    plots = get_files('.',targets=['.png','.pdf'])
+    
+    to_convert = get_files('.',targets=['.eps','.ps'])
+    # to_convert = []
+    for fn in to_convert:
+        # Note:
+        #   This is so that the "\ell" symbol can get rendered properly when converted to a PDF and
+        #   displayed in the analysis paper built by CMS TeX tools
+        subprocess.check_call(['sed','-i','-e',"s|STIXGeneral-Italic|STIXXGeneral-Italic|g",fn])
+        # The '-dEPSCrop' is to fix the large whitespace caused by bound box
+        subprocess.check_call(['ps2pdf14','-dPDFSETTINGS=/prepress','-dEPSCrop',fn])
+        # print "Removing {fn}".format(fn=fn)
+        # os.remove(fn)
+
+
+    plots = get_files('.',targets=['.png','.pdf','.ps','.eps'])
     if len(plots):
         for fn in plots:
             print "fname: {}".format(fn)

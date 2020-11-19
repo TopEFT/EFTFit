@@ -68,6 +68,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats,category);
     std::vector<RooAbsData*> obs_data = this->helper.getObsData(ws,"data_obs","CMS_channel",tar_cats);
     if (obs_data.size() != 1) {
+        std::cout << TString::Format("[WARNING] obs_data incorrect size: %zu",obs_data.size()) << std::endl;
         throw;
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
@@ -75,14 +76,15 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
 
     TString search("_proc_");
     this->proc_width = 0;
-    for (RooAddition* f: this->helper.toRooAdd(exp_cat)) {
-        TString name(f->GetName());
+    for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
+        TString name(ra->GetName());
         Ssiz_t idx(name.Index(search));
         if (idx == TString::kNPOS) {
+            std::cout << TString::Format("[WARNING] Unable to find %s in %s",search.Data(),name.Data()) << std::endl;
             throw;
         }
         name = name(idx+search.Length(),name.Length());
-        this->exp_proc[name.Data()] = f;
+        this->exp_proc[name.Data()] = ra;
         this->proc_order.push_back(name);
         this->proc_width = std::max(this->proc_width,name.Length());
     }
@@ -249,6 +251,7 @@ void AnalysisCategory::setProcOrder(std::vector<TString> order) {
         new_order.push_back(s);
     }
     this->proc_order = new_order;
+
     // std::cout << "New Process Order:" << std::endl;
     // for (TString s: this->getProcs()) {
     //     std::cout << "\t" << s << std::endl;

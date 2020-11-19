@@ -10,6 +10,11 @@
 
 #include "WSHelper.h"
 
+/*
+    This is old deprecated code, which shouldn't be used anymore. I've since redone most this code
+    via the 'overlay_operator_variations.C' script. At some point should probably delete this code.
+*/
+
 class LabelInfo: public TObject {
     public:
         TString name;
