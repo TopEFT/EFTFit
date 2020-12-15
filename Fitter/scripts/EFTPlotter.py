@@ -290,7 +290,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.31, 0.92, "arXiv:20xx.xxxx")# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.31, 0.92, "arXiv:2012.04120")# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.04)
         self.arXiv_extra.SetTextAlign(30)
@@ -1309,8 +1309,13 @@ class EFTPlot(object):
                     #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = prevnll-nll
                     linPctInterp = (prevnll-4)/interval
-                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
-                    lowedges.append(cross)
+                    if idx == 0:
+                        print 'Range not found, setting to infinity'
+                        lowedges.append(-999)
+                        highedges.append(999)
+                    else:
+                        cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
+                        lowedges.append(cross)
                 # Did we cross a high edge?
                 if prevnll<4 and 4<nll:
                     #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
@@ -1323,8 +1328,13 @@ class EFTPlot(object):
                     #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = prevnll-nll
                     linPctInterp = (prevnll-2)/interval
-                    cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
-                    l1sigma.append(cross)
+                    if idx == 0:
+                        print 'Range not found, setting to infinity'
+                        l1sigma.append(-999)
+                        h1sigma.append(999)
+                    else:
+                        cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
+                        l1sigma.append(cross)
                 # Did we cross a high edge?
                 if prevnll<1 and 1<nll:
                     #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
@@ -1742,7 +1752,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, "arXiv:20xx.xxxx")# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, "arXiv:2012.04120")# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.03)
         self.arXiv_extra.SetTextAlign(30)
