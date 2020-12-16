@@ -94,6 +94,9 @@ class EFTFit(object):
             masks = []
             for m in mask:
                 msk = findMask(m)
+                if not msk:
+                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
                 masks.append(msk)
@@ -219,6 +222,9 @@ class EFTFit(object):
             masks = []
             for m in mask:
                 msk = findMask(m)
+                if not msk:
+                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
                 masks.append(msk)
