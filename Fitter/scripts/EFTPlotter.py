@@ -94,8 +94,8 @@ class EFTPlot(object):
         del graphnlls,graphwcs
 
         # Squeeze X down to whatever range captures the float points
-        xmin = self.wc_ranges[wc][1]
-        xmax = self.wc_ranges[wc][0]
+        xmin = self.wc_ranges[wc][0]
+        xmax = self.wc_ranges[wc][1]
         #for idx in range(graph.GetN()):
         #    if graph.GetY()[idx] < 10 and graph.GetX()[idx] < xmin:
         #        xmin = graph.GetX()[idx]
@@ -222,8 +222,8 @@ class EFTPlot(object):
         #multigraph.GetXaxis().SetNdivisions(7)
 
         # Squeeze X down to whatever range captures the float points
-        xmin = self.wc_ranges[wc][1]
-        xmax = self.wc_ranges[wc][0]
+        xmin = self.wc_ranges[wc][0]
+        xmax = self.wc_ranges[wc][1]
         for idx in range(graph1.GetN()):
             if graph1.GetY()[idx] < 10 and graph1.GetX()[idx] < xmin:
                 xmin = graph1.GetX()[idx]
