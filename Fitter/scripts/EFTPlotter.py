@@ -231,6 +231,16 @@ class EFTPlot(object):
                 xmax = graph1.GetX()[idx]
         multigraph.GetXaxis().SetRangeUser(xmin,xmax)
         multigraph.GetYaxis().SetRangeUser(-0.1,10)
+        h = ROOT.TH1F("h_overlay", "", 100, xmin, xmax)
+        ROOT.gStyle.SetOptStat(0)
+        h.GetXaxis().SetLabelSize(0.05)
+        h.GetYaxis().SetLabelSize(0.05)
+        h.GetXaxis().SetTitleSize(0.05)
+        h.GetXaxis().SetTitleOffset(0.8)
+        h.GetXaxis().SetRangeUser(xmin,xmax)
+        h.GetYaxis().SetRangeUser(-0.1,10)
+        h.Draw()
+        multigraph.Draw("P")
 
         #Change markers from invisible dots to nice triangles
         graph1.SetMarkerColor(1)
