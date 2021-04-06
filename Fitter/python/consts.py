@@ -1,5 +1,8 @@
 import os
 
+if os.path.expandvars("$CMSSW_BASE") == "$CMSSW_BASE":
+    raise RuntimeError("No CMSSW environment found. Please make sure to 'cmsenv' first!")
+
 # Various path related constants
 CMSSW_SRC   = os.path.expandvars("$CMSSW_BASE/src")
 USER_DIR    = os.path.expanduser("~")
