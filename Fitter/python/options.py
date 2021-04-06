@@ -93,6 +93,8 @@ class HelperOptions(OptionsBase):
         # Generic Options
         self.verbosity    = 2       # The verbosity level to use in the combine methods
         self.mass         = 125
+        self.toys         = -1      # Number of toys to generate, value of -1 has special meaning in some cases (e.g. asimov dataset)
+        self.seed         = -1      # Seed for random number generation, -1 uses a random seed
 
         self.fake_data      = True      # If we should use fake or real data when making the datacard
         self.use_central    = False     # Which signal samples to use from the anatest file (Only relevant for signal mu fits)
@@ -113,17 +115,19 @@ class HelperOptions(OptionsBase):
         self.batch_type      = BatchType.NONE
         self.name            = 'EFT'
 
-        self.phys_ops          = []
-        self.drop_model_pois   = []         # A list of POIs to drop from the PhysicsModel when making the RooWorkspace
-        self.freeze_parameters = []         # Parameters for the --freezeParameters option
-        self.redefine_pois     = []         # Parameters for the --redefineSignalPOIs option
-        self.track_parameters  = []         # Parameters for the --trackParameters option
-        self.parameter_values  = []         # Parameter values for the --setParameters option
-        self.auto_bounds_pois  = []         # Adjust bounds for the POIs if they end up close to the boundary
-        self.sm_signals        = []
-        self.exclude_nuisances = []         # A list of parameters to skip when running the Impacts method
-        self.other_options     = []         # A list of additional options. These should be fully
-                                            # formed options e.g. '--cminDefaultMinimizerStrategy=2'
+        self.phys_ops            = []
+        self.drop_model_pois     = []         # A list of POIs to drop from the PhysicsModel when making the RooWorkspace
+        self.freeze_parameters   = []         # Parameters for the --freezeParameters option
+        self.redefine_pois       = []         # Parameters for the --redefineSignalPOIs option
+        self.track_parameters    = []         # Parameters for the --trackParameters option
+        self.parameter_values    = []         # Parameter values for the --setParameters option
+        self.auto_bounds_pois    = []         # Adjust bounds for the POIs if they end up close to the boundary
+        self.sm_signals          = []
+        self.exclude_nuisances   = []         # A list of parameters to skip when running the Impacts method
+        self.parameters_for_eval = []         # A list of POIs to fix to specific values in the GoodnessOfFit method
+        self.batch_list          = []         # A list of tuples with each tuple specifying a set of parameters to scan over
+        self.other_options       = []         # A list of additional options. These should be fully
+                                              # formed options e.g. '--cminDefaultMinimizerStrategy=2'
         # FitDiagnostic Options
         self.prefit_value = 0.0     # The prefit value of the POI used
 

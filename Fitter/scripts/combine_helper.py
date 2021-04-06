@@ -46,6 +46,7 @@ class HelperMode(object):
     EFT_FITTING  = 'EFT_fitting'
     EFT_IMPACTS  = 'EFT_impacts'
     EFT_GRIDSCAN = 'EFT_gridscan'
+    EFT_GOF      = 'EFT_gof'
 
     @classmethod
     def isSM(cls,mode):
@@ -53,7 +54,7 @@ class HelperMode(object):
 
     @classmethod
     def isEFT(cls,mode):
-        return (mode in [cls.EFT_FITTING,cls.EFT_IMPACTS,cls.EFT_GRIDSCAN])
+        return (mode in [cls.EFT_FITTING,cls.EFT_IMPACTS,cls.EFT_GRIDSCAN,cls.EFT_GOF])
 
 # For producing fits with the EFT WCs as the POIs
 EFT_OPS = HelperOptions(
@@ -81,6 +82,7 @@ SM_SIGNAL_OPS = HelperOptions(
         ('ttll', 'mu_ttll', [1]),
         ('ttlnu','mu_ttlnu',[1]),
         ('tHq',  'mu_ttH',  [1]),  # Ties tHq process to be scaled by ttH signal
+        # ('tHq',  'mu_tHq',  [1]),  # Lets tHq be a free parameter in the fit
     ],
     prefit_value = 1.0,
     algo         = FitAlgo.SINGLES
@@ -111,6 +113,7 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
 
     logging.info('group_directory: {}'.format(group_directory))
     logging.info('dir_name: {}'.format(dir_name))
+    logging.info('out_dir: {}'.format(out_name))
     logging.info('hist_file: {}'.format(helper_ops.getOption('histogram_file')))
     logging.info('mode: {}'.format(mode))
     logging.info('testing: {}'.format(testing))
@@ -120,6 +123,7 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
     # TODO: Should make these configurable from outside of the runit() function
     keep_bins = []
     # keep_bins = ['^C_2lss_.*','^C_3l_mix_sfz_.*','^C_4l_.*']
+    keep_bins = ['^C_2lss_.*','^C_3l_.*']
 
     systs_to_remove = []
     # systs_to_remove = [ CombineSystematic(syst_name='FR_stats_.*',procs=['.*'],bins=['.*']) ]
@@ -137,9 +141,18 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
         if modify_datacard:
             helper.loadDatacard()
             helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins,remove_systs=systs_to_remove)
+            helper.make_workspace()
         if not helper.hasWorkspace():
             helper.make_workspace()
     helper.loadDatacard(force=True)
+
+    # for b in helper.dc_reader.getBins(keep=['C_3l_mix_sfz_.*']):
+    #     tmp = helper.dc_reader.cb.cp()
+    #     tmp.bin([b])
+    #     tmp.process(["Diboson","Triboson"])
+    #     # tmp.PrintProcs()
+    #     tmp.PrintSysts()
+    # return
 
     pois = helper.getPOIs()
 
@@ -268,8 +281,20 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
             freeze_parameters=pois
         )
 
-    # NOTE: For the batch submission methods, the main thread won't be locked!
+    # NOTE1: For the batch submission methods, the main thread won't be locked!
+    # NOTE2: When using batch submission, the non-scanned PoIs are automatically added to tracked list
     if mode == HelperMode.EFT_GRIDSCAN:
+        helper.poi_ranges = {
+            'ctW':(-6,6),    'ctZ':(-7,7),
+            'cpt':(-40,30),  'ctp':(-35,65),
+            'ctli':(-20,20), 'ctlSi':(-22,22),
+            'cQl3i':(-20,20),'cptb':(-40,40),
+            'ctG':(-3,3),    'cpQM':(-30,50),  
+            'ctlTi':(-4,4),  'ctei':(-20,20),
+            'cQei':(-16,16), 'cQlMi':(-17,17),
+            'cpQ3':(-20,12), 'cbW':(-10,10)
+        }
+        to_scan = helper.ops.getOption('set_parameters')
         helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='GridScan',
             algo=FitAlgo.GRID,
             save_fitresult=False
@@ -306,6 +331,20 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
             use_poi_ranges=False,
             parameter_values=param_values,
             exclude_nuisances=to_exclude,
+        )
+
+    if mode == HelperMode.EFT_GOF:
+        to_track = pois + helper.getSysts()
+        poi_values = ["{poi}=0.0".format(poi=k) for k in pois]
+        all_values = ["{param}=0.0".format(param=k) for k in to_track]
+        helper.runCombine(method=CombineMethod.GOF,name='GOF',
+            parameter_values=poi_values,
+            parameters_for_eval=poi_values,
+            # parameter_values=all_values,
+            # parameters_for_eval=all_values,
+            track_parameters=to_track,
+
+            freeze_parameters=pois
         )
 
     print os.getcwd()
@@ -350,12 +389,33 @@ if __name__ == "__main__":
     #dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_moreStats'
     # dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_adHoc-MissingPartonSyst_moreStats'
     # dir_name = 'ana32_private_sgnl_Default-PSWeights-Symmetrized_MatchingSyst_moreStats_with-NuisOnly'
-    dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_cmin0'
 
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_with-NuisOnly_no-SFZ-bin-mask_cmin0'
 
     # dir_name = 'ana32_private_sgnl_Asimov_Decorrelated-PS-PDF-Q2RF-QCUT_cmin1-robustHesse1'
     # dir_name = 'ana32_private_sgnl_Asimov_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0-poiRanges'
+
+    # Name for GOF tests
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_5k-toys'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_bypassFrequentistFit_5k-toys'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin2_bypassFrequentistFit_5k-toys'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin2_5k-toys'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_5k-toys'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_50k-toys'
+
+    # Name for gridscan tests
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_2D-ctG-ctW-ctZ-90k-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_setAllRanges_2D-ctp-90k-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_2D-cpt-cptb-ctli-ctlSi-90k-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_2D-ctlTi-cpQM-cQl3i-ctei-cQei-cQlMi-cpQ3-cbW-90k-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGctWctp-ctWctZctp-cpQMcpQ3ctp-1M-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-cpQMcpQ3ctp-10M-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGcpQMctp-1M-pts'
+    dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGcpQMctp-10M-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_3D-cpQMcpQ3ctp-10M-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_2D-AllCombos-90k-pts'
+
     hist_file = a32
     hist_file_merged = "{}_MergeLepFl.root".format(hist_file.strip('.root'))
 
@@ -376,6 +436,8 @@ if __name__ == "__main__":
         print "Making merged anatest file: {fname}".format(fname=hist_file_merged)
         CLF.execute()
 
+    # What type of combine action to take
+    # mode = HelperMode.EFT_GOF
     mode = HelperMode.EFT_GRIDSCAN
 
     if HelperMode.isSM(mode):
@@ -388,23 +450,189 @@ if __name__ == "__main__":
     ops.setOptions(
         verbosity=2,
         fake_data=False,
-        save_fitresult=False,
+        save_fitresult=True,
         use_central=False,
         use_poi_ranges=False,
         histogram_file=hist_file_merged
+        # histogram_file=hist_file
     )
-    # Som grid scan options
+
+    already_done = [
+        ('ctG','ctW'),
+        ('ctG','ctZ'),
+        ('ctG','ctp'),
+        ('ctG','cpt'),
+        ('ctG','cptb'),
+        ('ctG','ctli'),
+        ('ctG','ctlSi'),
+        ('ctG','ctlTi'),
+        ('ctG','cpQM'),
+        ('ctG','cQl3i'),
+        ('ctG','ctei'),
+        ('ctG','cQei'),
+        ('ctG','cQlMi'),
+        ('ctG','cpQ3'),
+        ('ctG','cbW'),
+
+        ('ctW','ctZ'),
+        ('ctW','ctp'),
+        ('ctW','cpt'),
+        ('ctW','cptb'),
+        ('ctW','ctli'),
+        ('ctW','ctlSi'),
+        ('ctW','ctlTi'),
+        ('ctW','cpQM'),
+        ('ctW','cQl3i'),
+        ('ctW','ctei'),
+        ('ctW','cQei'),
+        ('ctW','cQlMi'),
+        ('ctW','cpQ3'),
+        ('ctW','cbW'),
+
+        ('ctZ','ctp'),
+        ('ctZ','cpt'),
+        ('ctZ','cptb'),
+        ('ctZ','ctli'),
+        ('ctZ','ctlSi'),
+        ('ctZ','ctlTi'),
+        ('ctZ','cpQM'),
+        ('ctZ','cQl3i'),
+        ('ctZ','ctei'),
+        ('ctZ','cQei'),
+        ('ctZ','cQlMi'),
+        ('ctZ','cpQ3'),
+        ('ctZ','cbW'),
+
+        ('ctp','cpt'),
+        ('ctp','cptb'),
+        ('ctp','ctli'),
+        ('ctp','ctlSi'),
+        ('ctp','ctlTi'),
+        ('ctp','cpQM'),
+        ('ctp','cQl3i'),
+        ('ctp','ctei'),
+        ('ctp','cQei'),
+        ('ctp','cQlMi'),
+        ('ctp','cpQ3'),
+        ('ctp','cbW'),
+
+        ('cpt','cptb'),
+        ('cpt','ctli'),
+        ('cpt','ctlSi'),
+        ('cpt','ctlTi'),
+        ('cpt','cpQM'),
+        ('cpt','cQl3i'),
+        ('cpt','ctei'),
+        ('cpt','cQei'),
+        ('cpt','cQlMi'),
+        ('cpt','cpQ3'),
+        ('cpt','cbW'),
+
+        ('cptb','ctli'),
+        ('cptb','ctlSi'),
+        ('cptb','ctlTi'),
+        ('cptb','cpQM'),
+        ('cptb','cQl3i'),
+        ('cptb','ctei'),
+        ('cptb','cQei'),
+        ('cptb','cQlMi'),
+        ('cptb','cpQ3'),
+        ('cptb','cbW'),
+
+        ('ctli','ctlSi'),
+        ('ctli','ctlTi'),
+        ('ctli','cpQM'),
+        ('ctli','cQl3i'),
+        ('ctli','ctei'),
+        ('ctli','cQei'),
+        ('ctli','cQlMi'),
+        ('ctli','cpQ3'),
+        ('ctli','cbW'),
+
+        ('ctlSi','ctlTi'),
+        ('ctlSi','cpQM'),
+        ('ctlSi','cQl3i'),
+        ('ctlSi','ctei'),
+        ('ctlSi','cQei'),
+        ('ctlSi','cQlMi'),
+        ('ctlSi','cpQ3'),
+        ('ctlSi','cbW'),
+
+        ('ctlTi','cpQM'),
+        ('ctlTi','cQl3i'),
+        ('ctlTi','ctei'),
+        ('ctlTi','cQei'),
+        ('ctlTi','cQlMi'),
+        ('ctlTi','cpQ3'),
+        ('ctlTi','cbW'),
+
+        ('cpQM','cQl3i'),
+        ('cpQM','ctei'),
+        ('cpQM','cQei'),
+        ('cpQM','cQlMi'),
+        ('cpQM','cpQ3'),
+        ('cpQM','cbW'),
+
+        ('cQl3i','ctei'),
+        ('cQl3i','cQei'),
+        ('cQl3i','cQlMi'),
+        ('cQl3i','cpQ3'),
+        ('cQl3i','cbW'),
+
+        ('ctei','cQei'),
+        ('ctei','cQlMi'),
+        ('ctei','cpQ3'),
+        ('ctei','cbW'),
+
+        ('cQei','cQlMi'),
+        ('cQei','cpQ3'),
+        ('cQei','cbW'),
+
+        ('cQlMi','cpQ3'),
+        ('cQlMi','cbW'),
+
+        ('cpQ3','cbW'),
+    ]
+
+    # Some grid scan options
+    batch_list = [
+        ('ctG','cpQM','ctp')
+        # ('ctG','ctW','ctp'),
+        # ('ctZ','ctW','ctp'),
+        # ('cpQM','cpQ3','ctp'),
+    ]
     ops.setOptions(
-        set_parameters=['ctZ'],
-        scan_points=100
+        # set_parameters=['ctZ','ctW'],
+        batch_list=batch_list,
+        # scan_points=300**2,
+        scan_points=220**3,
+        split_points=30000,
+        float_other_pois=True,
+        use_poi_ranges=True,
+        batch_type=BatchType.CONDOR
     )
-    # Other options
     ops.setOptions(extend=True,other_options=[
         '--cminDefaultMinimizerStrategy=0',
-        # '--cminPoiOnlyFit',
-        # '--autoMaxPOIs=*'
-        # '--robustHesse=1',
+        '--cminPreScan'
     ])
+    # Some options for doing the GoodnessOfFit test
+    # ops.setOptions(extend=True,
+    #     algo=FitAlgo.SATURATED,
+    #     batch_type=BatchType.CONDOR,
+    #     toys=50000,
+    #     seed=5264981,
+    #     other_options=[
+    #         # '--cminDefaultMinimizerStrategy=2',
+    #         # '--bypassFrequentistFit',
+    #         # '--saveToys',
+    # ])
+    # Other options
+    # ops.setOptions(extend=True,other_options=[
+    #     '--cminDefaultMinimizerStrategy=0',
+    #     # '--cminPoiOnlyFit',
+    #     # '--autoMaxPOIs=*'
+    #     # '--robustHesse=1',
+    # ])
 
     runit(
         group_directory='data2017v1',

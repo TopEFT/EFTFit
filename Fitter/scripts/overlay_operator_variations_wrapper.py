@@ -32,7 +32,7 @@ helper = CombineHelper(out_dir="test_overlay_wrapper")
 
 web_area = os.path.join(CONST.USER_DIR,'www')
 dir_ver  = 'data2017v1'  # This is sort of versioning for which version of the histogram file is being used
-testing  = False
+testing  = True
 
 dirs = [
     #'SM_fitting_2019-04-04_1051_simultaneous_allcats',
@@ -72,20 +72,18 @@ for d in dirs:
     helper.cleanDirectory(output_dir)
 
     root_args = "\"{indir}\",\"{outdir}\"".format(indir=input_dir,outdir=output_dir)
-    # subprocess.check_call(['root','-b','-l','-q','overlay_operator_variations.C(\"%s\",\"%s\")' % (input_dir,output_dir)])
     subprocess.check_call(['root','-b','-l','-q','overlay_operator_variations.C({args})'.format(args=root_args)])
     
     to_convert = get_files('.',targets=['.eps','.ps'])
-    # to_convert = []
     for fn in to_convert:
         # Note:
         #   This is so that the "\ell" symbol can get rendered properly when converted to a PDF and
         #   displayed in the analysis paper built by CMS TeX tools
         subprocess.check_call(['sed','-i','-e',"s|STIXGeneral-Italic|STIXXGeneral-Italic|g",fn])
         # The '-dEPSCrop' is to fix the large whitespace caused by bound box
+        # ps_conv_args = ['ps2pdf14','-dPDFSETTINGS=/prepress','-dEPSCrop',fn]
+        # print " ".join(ps_conv_args)
         subprocess.check_call(['ps2pdf14','-dPDFSETTINGS=/prepress','-dEPSCrop',fn])
-        # print "Removing {fn}".format(fn=fn)
-        # os.remove(fn)
 
 
     plots = get_files('.',targets=['.png','.pdf','.ps','.eps'])

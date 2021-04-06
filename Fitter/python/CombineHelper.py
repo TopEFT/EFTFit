@@ -2,6 +2,7 @@ import os
 import logging
 import shutil
 import copy
+import random
 
 import consts as CONST
 
@@ -236,6 +237,8 @@ class CombineHelper(object):
             self.make_multidimfit()
         elif method == CombineMethod.IMPACTS:
             self.make_impact_plots()
+        elif method == CombineMethod.GOF:
+            self.make_gof_test()
         else:
             self.logger.error("Unknown combine method: %s",method)
             raise RuntimeError
@@ -409,12 +412,60 @@ class CombineHelper(object):
             args.extend(['--parameters={}'.format(x) for x in scan_params])
             if fast_scan: args.extend(['--fastScan'])
             if align_edges: args.extend(['--alignEdges=1'])
-            if batch_mode:
-                task_name = name.replace('.','')
-                args = ['combineTool.py'] + args[1:]
+
+        if batch_mode and FitAlgo.GRID: # For now only allow batch mode to be used with GRID
+            to_submit = []
+            to_exec = []
+
+            batch_list = self.ops.getOption('batch_list')
+            if len(batch_list) == 0:
+                batch_list.append(tuple(scan_params))
+
+            for to_scan in batch_list:
+                to_track = [wc for wc in pois if wc not in to_scan]
+
+                task_name = name.replace('.','') + "_{job}".format(job=''.join(to_scan))
+                to_submit.append("condor_{}.sub".format(task_name))
+                to_exec.append("condor_{}.sh".format(task_name))
+                args = ['combineTool.py']
+                args.extend(['-M',method])
+                args.extend(['-d',ws_file])
                 args.extend(['--job-mode',batch_mode])
                 args.extend(['--task-name',task_name])
-                args.extend(['--split-points','{}'.format(split_pts)])
+                if scan_pts > split_pts:
+                    args.extend(['--split-points','{}'.format(split_pts)])
+
+                args.extend(['-n','.{base}.{job}'.format(base=name,job=''.join(to_scan))])
+                args.extend(['-v','{verb}'.format(verb=verb)])
+                args.extend(['--algo={algo}'.format(algo=algo)])
+                if self.ops.getOption('use_poi_ranges'):
+                    # ranges = self.getPOIRangeStr(to_scan)
+                    ranges = self.getPOIRangeStr(pois)
+                    args.extend(['--setParameterRanges',ranges])
+                if frz_lst:
+                    args.extend(['--preFitValue','{:.2f}'.format(pf_val)])
+                    args.extend(['--freezeParameters',','.join(frz_lst)])
+                # if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
+                if redef_pois: args.extend(['--redefineSignalPOIs',','.join(redef_pois)])
+                if float_pois: args.extend(['--floatOtherPOIs','1'])
+                if param_vals: args.extend(['--setParameters',','.join(param_vals)])
+                if save_fr: args.extend(['--saveFitResult'])
+                if save_ws: args.extend(['--saveWorkspace'])
+                if is_robust: args.extend(['--robustFit','1'])
+
+                args.extend(['--points={}'.format(scan_pts)])
+                args.extend(['--parameters={}'.format(x) for x in to_scan])
+                args.extend(['--trackParameters',','.join(to_track)])
+                if fast_scan: args.extend(['--fastScan'])
+                if align_edges: args.extend(['--alignEdges=1'])
+                if other_ops: args.extend([x for x in other_ops])
+
+                # task_name = name.replace('.','')
+                # args = ['combineTool.py'] + args[1:]
+                # args.extend(['--job-mode',batch_mode])
+                # args.extend(['--task-name',task_name])
+                # args.extend(['--split-points','{}'.format(split_pts)])
+
                 if batch_mode == BatchType.CRAB:
                     crab_cfg = self.ops.getOption('crab_config')
                     crab_cfg_path = os.path.join(CONST.EFTFIT_TEST_DIR,crab_cfg)
@@ -427,34 +478,45 @@ class CombineHelper(object):
                 else:
                     raise RuntimeError("Unknown BatchType: {}".format(batch_mode))
 
-        self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
-        run_command(args)
+                self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
+                run_command(args)
 
-        # TODO: NEEDS TO BE ACTUALLY TESTED
-        # Now actually run the condor submit jobs
-        # Note: Pretty sure the condor_submit command won't lock the main thread
-        #   during execution, so if you want to collect the outputs you will need
-        #   to do so in a separate step. It is also important to make sure that if
-        #   you plan to run multiple condor submissions in a row that the named outputs
-        #   have unique names
-        if algo == FitAlgo.GRID and batch_mode == BatchType.CONDOR:
-            condor_output_dir = 'condor{}'.format(name)
-            condor_exec = 'condor_{}.sh'.format(name.replace('.',''))
-            condor_sub = 'condor_{}.sub'.format(name.replace('.',''))
-            if os.path.exists(condor_output_dir):
-                self.logger.info("Making condor output directry: {}".format(condor_output_dir))
-                os.makedirs(condor_output_dir)
-            self.cleanDirectory(condor_output_dir)
-            args = ['chmod','a+x',condor_exec]
-            self.logger.info("Permissions command: {cmd}".format(args))
+            if batch_mode == BatchType.CONDOR:
+                # Now actually run the condor submit jobs
+                # Note: Pretty sure the condor_submit command won't lock the main thread
+                #   during execution, so if you want to collect the outputs you will need
+                #   to do so in a separate step. It is also important to make sure that if
+                #   you plan to run multiple condor submissions in a row that the named outputs
+                #   have unique names
+                condor_output_dir = 'condor{}'.format(name)
+                # condor_exec = 'condor_{}.sh'.format(name.replace('.',''))
+                # condor_sub = 'condor_{}.sub'.format(name.replace('.',''))
+                if not os.path.exists(condor_output_dir):
+                    self.logger.info("Making condor output directry: {}".format(condor_output_dir))
+                    os.makedirs(condor_output_dir)
+                self.cleanDirectory(condor_output_dir)
+
+                for condor_exec,condor_sub in zip(to_exec,to_submit):
+                    # We need to edit the exec script to use the correct directory
+                    old_path = os.path.join(CONST.EFTFIT_DIR,"scripts")
+                    new_path = self.getOutputDirectory()
+                    sed_str = "s|cd {old}|cd {new}|g".format(old=old_path,new=new_path)
+                    args = ['sed','-i','-e',sed_str,condor_exec]
+                    self.logger.info("sed command: {cmd}".format(cmd=' '.join(args)))
+                    run_command(args)
+
+                    args = ['chmod','a+x',condor_exec]
+                    self.logger.info("Permissions command: {cmd}".format(cmd=' '.join(args)))
+                    run_command(args)
+
+                    args = ['condor_submit']
+                    args.extend(['-append','initialdir={}'.format(condor_output_dir)])
+                    args.extend([condor_sub])
+                    self.logger.info("Condor command: {cmd}".format(cmd=' '.join(args)))
+                    run_command(args)
+        else:
+            self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
             run_command(args)
-            args = ['condor_submit']
-            args.extend(['-append','initialdir={}'.format(condor_output_dir)])
-            args.extend([condor_sub])
-            self.logger.info("Condor command: {cmd}".format(cmd=' '.join(condor_args)))
-            run_command(args)
-        if batch_mode:
-            self.logger.info("Finished batch submission")
 
     def make_impact_plots(self):
         '''
@@ -540,6 +602,166 @@ class CombineHelper(object):
             args = ['plotImpacts.py','-i','impacts.json','--POI','%s' % (poi),'-o',outf]
             self.logger.info("%s POI command: %s",poi,' '.join(args))
             run_command(args)
+
+    # Run combine using the GoodnessOfFit method
+    def make_gof_test(self):
+        self.logger.info("Running GoodnessOfFit test...")
+        self.chdir(self.getOutputDirectory())
+
+        ws_file    = self.ops.getOption('ws_file')
+        datacard   = self.ops.getOption('datacard_file')
+        method     = self.ops.getOption('method')
+        verb       = self.ops.getOption('verbosity')
+        name       = self.ops.getOption('name')
+        algo       = self.ops.getOption('algo')
+        frz_lst    = self.ops.getOption('freeze_parameters')
+        trk_pars   = self.ops.getOption('track_parameters')
+        param_vals = self.ops.getOption('parameter_values')
+        for_eval   = self.ops.getOption('parameters_for_eval')
+        num_toys   = self.ops.getOption('toys')
+        rnd_seed   = self.ops.getOption('seed')
+        other_ops  = self.ops.getOption('other_options')
+
+        batch_mode  = self.ops.getOption('batch_type')
+
+        # ws_file = datacard
+
+        pois = self.getPOIs()
+
+        data_name = ".{}_data".format(name)
+        toy_name = ".{}_toys".format(name)
+
+        if algo == FitAlgo.NONE:
+            algo = FitAlgo.SATURATED    # Default to 'saturated' algo
+
+        # Run the first time to get GoF test for the data
+        args = ['combine']
+        args.extend(['-M',method])
+        args.extend(['-d',ws_file])
+        args.extend(['-n',data_name])
+        args.extend(['-v','{verb}'.format(verb=verb)])
+        args.extend(['--algo={algo}'.format(algo=algo)])
+        if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
+        if param_vals: args.extend(['--setParameters',','.join(param_vals)])
+        if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
+        if for_eval: args.extend(['--setParametersForEval',','.join(for_eval)])
+        if other_ops: args.extend([x for x in other_ops])
+
+        self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
+        run_command(args)
+
+        if num_toys < 1:
+            return
+
+        # Re-run GoF test to generate toy test statistics
+        if batch_mode:
+            random.seed(rnd_seed)
+            MAX_JOBS = 200           # Don't let us generate more than this many jobs
+            toys_left = int(num_toys)
+            job_count = 0
+            toys_per_job = max(50,num_toys / MAX_JOBS)
+            to_submit = []
+            to_exec = []
+            job_seeds = []
+            while toys_left > 0:
+                job_toys = min(toys_per_job,toys_left)
+                task_name = toy_name.replace('.','') + "_{job}".format(job=job_count)
+                to_submit.append("condor_{}.sub".format(task_name))
+                to_exec.append("condor_{}.sh".format(task_name))
+                args = ['combineTool.py']
+                args.extend(['-M',method])
+                args.extend(['-d',ws_file])
+                args.extend(['--job-mode',batch_mode])
+                args.extend(['--task-name',task_name])
+
+                job_seed = random.randint(1000,99999999)
+                if job_seed in job_seeds:   # Yes, I know this isn't robust, but the odds of getting a seed clash after one re-try are astronomically low
+                    job_seed = random.randint(1000,99999999)
+                job_seeds.append(job_seed)
+
+                ### Combine pass-through options
+                args.extend(['-n',"{base}.job{job}".format(base=toy_name,job=job_count)])
+                args.extend(['-v','{verb}'.format(verb=verb)])
+                args.extend(['--algo={algo}'.format(algo=algo)])
+                args.extend(['--seed={seed}'.format(seed=job_seed)])
+                args.extend(['--toys={toys}'.format(toys=job_toys)])
+
+                if algo == FitAlgo.SATURATED: args.extend(['--toysFrequentist'])
+                if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
+                if param_vals: args.extend(['--setParameters',','.join(param_vals)])
+                if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
+                if for_eval: args.extend(['--setParametersForEval',','.join(for_eval)])
+                if other_ops: args.extend([x for x in other_ops])
+
+                if batch_mode == BatchType.CRAB:
+                    crab_cfg = self.ops.getOption('crab_config')
+                    crab_cfg_path = os.path.join(CONST.EFTFIT_TEST_DIR,crab_cfg)
+                    args.extend(['--custom-crab',crab_cfg_path])
+                    raise NotImplementedError("Crab based batch submission isn't implemented yet...")
+                elif batch_mode == BatchType.CONDOR:
+                    # This option generates the condor submit files, which we then have to run
+                    #   ourselves due to permission issues on the T3
+                    args.extend(['--dry-run'])
+                else:
+                    raise RuntimeError("Unknown BatchType: {}".format(batch_mode))
+                self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
+                run_command(args)
+                toys_left -= job_toys
+                job_count += 1
+
+            if batch_mode == BatchType.CONDOR:
+                # Now actually run the condor submit jobs
+                # Note1: The condor_submit command won't lock the main thread during execution, so if
+                #   you want to collect the outputs you will need to do so in a separate step. It is
+                #   also important to make sure that if you plan to run multiple condor submissions in
+                #   a row that the named outputs have unique names
+                # Note2: You will want to hadd the root files afterward for easy access
+                #       hadd combined_GOF_toys.root higgsCombine.GOF_toys.job*
+                condor_output_dir = 'condor{}'.format(name)
+                if not os.path.exists(condor_output_dir):
+                    self.logger.info("Making condor output directry: {}".format(condor_output_dir))
+                    os.makedirs(condor_output_dir)
+                self.cleanDirectory(condor_output_dir)
+                for condor_exec,condor_sub in zip(to_exec,to_submit):
+                    # We need to edit the exec script to use the correct directory
+                    old_path = os.path.join(CONST.EFTFIT_DIR,"scripts")
+                    new_path = self.getOutputDirectory()
+                    sed_str = "s|cd {old}|cd {new}|g".format(old=old_path,new=new_path)
+                    args = ['sed','-i','-e',sed_str,condor_exec]
+                    self.logger.info("sed command: {cmd}".format(cmd=' '.join(args)))
+                    run_command(args)
+
+                    # Make the generated bash script executable
+                    args = ['chmod','a+x',condor_exec]
+                    self.logger.info("Permissions command: {cmd}".format(cmd=' '.join(args)))
+                    run_command(args)
+
+                    args = ['condor_submit']
+                    args.extend(['-append','initialdir={}'.format(condor_output_dir)])
+                    args.extend([condor_sub])
+                    self.logger.info("Condor command: {cmd}".format(cmd=' '.join(args)))
+                    self.logger.info("")
+                    run_command(args)
+        else:
+            args = ['combine']
+            args.extend(['-M',method])
+            args.extend(['-d',ws_file])
+            args.extend(['-n',toy_name])
+            args.extend(['-v','{verb}'.format(verb=verb)])
+            args.extend(['--algo={algo}'.format(algo=algo)])
+            args.extend(['--seed={seed}'.format(seed=rnd_seed)])
+            args.extend(['--toys={toys}'.format(toys=num_toys)])
+
+            if algo == FitAlgo.SATURATED: args.extend(['--toysFrequentist'])
+            if frz_lst: args.extend(['--freezeParameters',','.join(frz_lst)])
+            if param_vals: args.extend(['--setParameters',','.join(param_vals)])
+            if trk_pars: args.extend(['--trackParameters',','.join(trk_pars)])
+            if for_eval: args.extend(['--setParametersForEval',','.join(for_eval)])
+            if other_ops: args.extend([x for x in other_ops])
+
+            self.logger.info("Combine command: {cmd}".format(cmd=' '.join(args)))
+            run_command(args)
+        return
 
 if __name__ == "__main__":
     frmt = LvlFormatter()

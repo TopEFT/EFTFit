@@ -68,39 +68,6 @@ typedef std::pair<TString,double> pTStrDbl;
 typedef std::pair<TString,TString> pTStrTStr;
 typedef std::unordered_map<std::string,double> umapStrDbl;  // Apparently a TString isn't a 'hashable' type
 
-// Container for info found by the 'get_extremum_fitresult' function from a particular AnalysisCategory
-struct ExtremumPoint {
-    // Note: Each element in every vector corresponds to a process and the ordering for every vector
-    //       should be identical (at least for a given ExtremumPoint)
-    TString cat_name;
-    TString wc_name;
-    std::vector<TString> procs;
-    std::vector<TString> lo_fnames;
-    std::vector<TString> hi_fnames;
-    std::vector<TString> lo_snps;   // The RooWorkspace snapshot names
-    std::vector<TString> hi_snps;   // The RooWorkspace snapshot names
-    std::vector<double> lo_ylds;    // The actual bin yields
-    std::vector<double> hi_ylds;    // The actual bin yields
-    std::vector<double> lo_vals;    // The WC values
-    std::vector<double> hi_vals;    // The WC values
-
-    // Special data members for holding information related to the sum of processes
-    TString sum_lo_fname;
-    TString sum_hi_fname;
-    TString sum_lo_snp;
-    TString sum_hi_snp;
-    double sum_lo_yld;
-    double sum_hi_yld;
-    double sum_lo_val;
-    double sum_hi_val;
-
-    // This is bonus stuff to aid the making of the ratio fluct plots
-    TString nom_snp;    // The snapshot name for the nominal point
-    TString base_snp;   // The snapshot name for the base point
-    std::vector<double> nom_ylds;   // The nominal bin yields
-    std::vector<double> base_ylds;  // The base bin yields, i.e. the divisor for the ratio calculation
-};
-
 // Fancy structure for containing the info needed to plot an 'off-scale' point in the ratio fluct plots 
 struct OffScalePoint {
     double nom_val;
@@ -164,7 +131,8 @@ struct CMSTextStyle {
         extra_text_font = 52; // default is helvetica-italics
         extra_over_cms_text_size = 0.76;    // ratio of "CMS" and extra text size
 
-        arxiv_text = "arXiv:20xx.xxxxx";
+        // arxiv_text = "arXiv:2012.04120";
+        arxiv_text = "";
         arxiv_font = 42;
         arxiv_offset = 0.28;
     }
@@ -412,7 +380,8 @@ std::unordered_map<std::string,std::string> WC_LABEL_MAP {
     {"cpQM" , "#it{c}^{#font[122]{\55}}_{#varphiQ}"},
     {"ctG"  , "#it{c}_{tG}"},
     {"cbW"  , "#it{c}_{bW}"},
-    {"cpQ3" , "#it{c}^{3(#it{l})}_{#varphiQ}"},
+    // {"cpQ3" , "#it{c}^{3(#it{l})}_{#varphiQ}"},
+    {"cpQ3" , "#it{c}^{3}_{#varphiQ}"},
     {"cptb" , "#it{c}_{#varphitb}"},
     {"cpt"  , "#it{c}_{#varphit}"},
     {"cQl3i", "#it{c}^{3(#it{l})}_{Ql}"},
@@ -693,7 +662,7 @@ void add_cms_text(TPad* pad, CMSTextStyle style) {
     // Out of frame
     //////////////////////
     if (cms_frame_loc == 0) {    
-        posX = l + 0.01*fr_w + cms_ww + 25.0 / W;
+        posX = l + 0.01*fr_w + cms_ww + (25.0 / W);
         posY = 1 - t + lumiTextOffset*t;
     }
 
@@ -701,7 +670,7 @@ void add_cms_text(TPad* pad, CMSTextStyle style) {
     // In frame and inline with "CMS" text
     //////////////////////
     if (cms_frame_loc == 1) {
-        posX = l + relPosX*fr_w + cms_ww + 25.0 / W;
+        posX = l + relPosX*fr_w + cms_ww + (25.0 / W);
         posY = 1 - t - relPosY*fr_h;
     }
 
@@ -717,7 +686,7 @@ void add_cms_text(TPad* pad, CMSTextStyle style) {
     //////////////////////
     // if (strncmp(extraText.Data(),"Supplementary",extraText.Length()) == 0) {
     if (extraText.EqualTo("Supplementary")) {
-        posX = 1 - r - lumi_ww - 25.0 / W;
+        posX = 1 - r - lumi_ww - (25.0 / W);
         posY = 1 - t + lumiTextOffset*t;
         latex.SetTextFont(arxivTextFont);
         latex.SetTextSize(arxivTextSize*t);
@@ -847,8 +816,8 @@ TGraphAsymmErrors* make_ratio_error_band(TH1D* h_data, TH1D* h_mc, TGraphErrors*
     gr_err->SetFillStyle(1001); // Solid color
     // gr_err->SetFillColor(kGreen);
     gr_err->SetFillColor(kGray+1);
-    // gr_err->SetFillColorAlpha(kBlack,0.25); // Don't really seem to work
-    // gr_err->SetFillColorAlpha(kBlack,0.65); // Don't really seem to work
+    // gr_err->SetFillColorAlpha(kBlack,0.25); // Doesn't really seem to work
+    // gr_err->SetFillColorAlpha(kBlack,0.65); // Doesn't really seem to work
 
     return gr_err;
 }
@@ -868,12 +837,6 @@ TGraphAsymmErrors* make_ratio_fluct(TH1D* h_nom, TH1D* h_lo, TH1D* h_hi) {
         gr->GetPoint(i,x_val,y_val);    // GetPointX doesn't exist in ROOT 6.06
 
         val_nom = h_nom->GetBinContent(bin_idx);
-
-        // val_lo = abs(h_lo->GetBinContent(bin_idx) - y_val);
-        // val_hi = abs(h_hi->GetBinContent(bin_idx) - y_val);
-
-        // val_lo = h_lo->GetBinContent(bin_idx) - y_val;
-        // val_hi = h_hi->GetBinContent(bin_idx) - y_val;
 
         bin_lo = h_lo->GetBinContent(bin_idx);
         bin_hi = h_hi->GetBinContent(bin_idx);
@@ -899,20 +862,6 @@ TGraphAsymmErrors* make_ratio_fluct(TH1D* h_nom, TH1D* h_lo, TH1D* h_hi) {
             val_lo = abs(val_lo - val_nom);
             val_hi = abs(val_hi - val_nom);
         }
-
-        /*
-        if (val_lo > val_nom) {
-            val_lo = -1*abs(val_lo - val_nom);
-        } else {
-            val_lo = abs(val_lo - val_nom);
-        }
-
-        if (val_hi < val_nom) {
-            val_hi = -1*abs(val_hi - val_nom);
-        } else {
-            val_hi = abs(val_hi - val_nom);
-        }
-        */
 
         // val_lo = std::max(val_lo,0.001);
         // val_hi = std::max(val_hi,0.001);
@@ -941,86 +890,6 @@ TGraphAsymmErrors* make_ratio_fluct(TH1D* h_nom, TH1D* h_lo, TH1D* h_hi) {
     // gr->SetFillColor(kGray+1);
 
     return gr;
-}
-
-// Turns a vector of ExtremumPoint structs into a histogram for a particular process
-// Note: The histogram style here should attempt to be kept in sync with 'get_process_histogram'
-TH1D* get_extremum_histogram(TString title, TString proc, std::vector<ExtremumPoint> pts, TString pt_type) {
-    bool valid_type = false;
-    if (pt_type == "lo") {
-        valid_type = true;
-    } else if (pt_type == "hi") {
-        valid_type = true;
-    } else if (pt_type == "base") {
-        valid_type = true;
-    } else if (pt_type == "nom") {
-        valid_type = true;
-    }
-
-    if (!valid_type) {
-        std::cout << TString::Format("ERROR: Invalid point type passed to 'get_extremum_histogram': %s",pt_type.Data()) << std::endl;
-        return nullptr;
-    }
-
-    TString plot_title = TString::Format("%s;category;Events",proc.Data());
-    TString hname = TString::Format("%s_%s_yield",title.Data(),proc.Data());
-    TH1D* h = new TH1D(hname,plot_title,pts.size(),0.0,pts.size());
-    h->GetYaxis()->SetTitleSize(0.05);
-    h->GetYaxis()->SetTitleOffset(1.1);
-    h->GetYaxis()->SetLabelSize(0.05);
-
-    Color_t h_clr = kBlack;
-    if (PROCESS_COLOR_MAP.count(proc.Data())) {
-        h_clr = PROCESS_COLOR_MAP[proc.Data()];
-    }
-    // h->SetFillColor(h_clr);
-    // h->SetLineColor(h_clr);
-    // h->SetLineWidth(0);
-
-    h->SetFillColor(h_clr);
-    h->SetLineColor(kBlack);
-    h->SetLineWidth(1);
-
-    // Fill and label the histogram
-    for (uint i = 0; i < pts.size(); i++) {
-        ExtremumPoint pt = pts.at(i);
-        int proc_idx = -1;
-        for (uint j = 0; j < pt.procs.size(); j++) {
-            if (proc == pt.procs.at(j)) {
-                proc_idx = j;
-                break;
-            }
-        }
-        if (proc_idx == -1) {
-            std::cout << TString::Format("ERROR: Unable to find process index of the ExtremumPoint") << std::endl;
-            delete h;
-            return nullptr;
-        }
-        int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
-        TString bin_label = pt.cat_name;
-        if (BIN_LABEL_MAP.count(bin_label.Data())) {
-            bin_label = BIN_LABEL_MAP[bin_label.Data()];
-        }
-        h->GetXaxis()->SetBinLabel(bin_idx,bin_label);
-
-        if (proc_idx != -1) {
-            double bin_yld;
-            if (pt_type == "lo") {
-                bin_yld = pt.lo_ylds.at(proc_idx);
-            } else if (pt_type == "hi") {
-                bin_yld = pt.hi_ylds.at(proc_idx);
-            } else if (pt_type == "base") {
-                bin_yld = pt.base_ylds.at(proc_idx);
-            } else if (pt_type == "nom") {
-                bin_yld = pt.nom_ylds.at(proc_idx);
-            }
-
-            h->SetBinContent(bin_idx,bin_yld);
-        } else {
-            h->SetBinContent(bin_idx,0.0);
-        }
-    }
-    return h;
 }
 
 // Used in: make_overlay_plot_v2
@@ -1299,6 +1168,7 @@ void get_offscale_arrow(OffScalePoint& pt) {
     }
 
 
+    // TString text = TString::Format("%.1f^{%+.1f}_{#font[122]{\55}%.1f}",pt.nom_val,e_hi,abs(e_lo));
     TString text = TString::Format("%.1f^{%+.1f}_{#font[122]{\55}%.1f}",pt.nom_val,e_hi,abs(e_lo));
     TLatex* latex = new TLatex(x1-0.05,y1,text.Data());
 
@@ -1449,8 +1319,8 @@ void make_overlay_plot_v2(
     THStack *hs = new THStack("hs_category_yield","");
 
     std::vector<TH1D*> proc_hists;
-    // TH1D* h_data = get_data_histogram(title,cats);
     TH1D* h_data = builder.buildDataHistogram(title,cats,BIN_LABEL_MAP);
+    h_data->SetLineWidth(1); // Try a thiner line for the full njet histogram PDFs
 
     for (TString proc_name: ALL_PROCS) {
         if (debug) std::cout << "DEBUG: Getting process histogram for " << proc_name << std::endl;
@@ -1488,9 +1358,13 @@ void make_overlay_plot_v2(
         hs->SetTitle(TString::Format(";%s;Events",xtitle.Data()));
     }
 
-    // TH1D* h_exp_sum = get_summed_histogram("expected_sum","",cats);
-    TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP);
+    // TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP);
+    TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP,fr);
     TGraphErrors* gr_err = get_error_graph(h_exp_sum,cats,fr);
+
+    // h_exp_sum->SetFillStyle(1001);
+    // h_exp_sum->SetFillColor(kGray);
+    // h_exp_sum->SetLineColor(kRed);
 
     leg->AddEntry(gr_err,"Total unc.","f");
     leg->AddEntry(h_data,"Obs.","lp");
@@ -1517,7 +1391,8 @@ void make_overlay_plot_v2(
         h_ratio_base->SetLineColor(kRed);
         h_ratio_base->SetLineWidth(2);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
-        h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
+        // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
+        h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
         h_ratio_base->GetYaxis()->SetNdivisions(204,kFALSE);
 
         // h_ratio_base->GetXaxis()->SetLabelSize(0.230);//0.230
@@ -1624,7 +1499,7 @@ void make_overlay_plot_v2(
     //     hmax = TMath::Max(max_val,hmax);
     // }
 
-    if (incl_leg) {    
+    if (incl_leg) {
         h_data->SetMaximum(hmax*1.5);
         hs->SetMaximum(hmax*1.5);
     } else {
@@ -1642,7 +1517,9 @@ void make_overlay_plot_v2(
 
     if (debug) std::cout << "DEBUG: Drawing stuff" << std::endl;
 
-    hs->Draw("hist");
+    hs->Draw("hist");   // draws the stacked histogram
+    // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
+    h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
     for (TLatex* latex: extra_text) latex->Draw();
 
@@ -1726,14 +1603,14 @@ void make_overlay_plot_v2(
         y1 = 0.75 - partition.body_offsetY;
         partition.body_latex_1 = new TLatex(x1,y1,partition.body_txt_1.Data());
         partition.body_latex_1->SetTextAlign(31);
-        partition.body_latex_1->SetTextSize(0.04);
+        partition.body_latex_1->SetTextSize(0.035);
         partition.body_latex_1->SetTextFont(62);
 
         x1 = (L_margin + bin_width*partition.end) - partition.body_offsetX;
         y1 = 0.75 - partition.body_offsetY - partition.body_spacing;
         partition.body_latex_2 = new TLatex(x1,y1,partition.body_txt_2.Data());
         partition.body_latex_2->SetTextAlign(31);
-        partition.body_latex_2->SetTextSize(0.035);
+        partition.body_latex_2->SetTextSize(0.03);
         partition.body_latex_2->SetTextFont(62);
 
         if (partition.draw_body_latex) {
@@ -1819,6 +1696,8 @@ void make_fluct_compare_plots(
     // Get Histograms
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    HistogramBuilder builder = HistogramBuilder();
+
     std::vector<TString> pt_procs = pts.at(0).procs;
 
     std::vector<TH1D*> base_hists;
@@ -1831,19 +1710,23 @@ void make_fluct_compare_plots(
         TString hname;
 
         hname = TString::Format("%s_base",title.Data());
-        h_proc = get_extremum_histogram(hname,proc_name,pts,"base");
+        h_proc = builder.buildExtremumHistogram(hname,proc_name,pts,"base",BIN_LABEL_MAP,PROCESS_COLOR_MAP);
+        // h_proc = get_extremum_histogram(hname,proc_name,pts,"base");
         base_hists.push_back(h_proc);
 
         hname = TString::Format("%s_nom",title.Data());
-        h_proc = get_extremum_histogram(hname,proc_name,pts,"nom");
+        h_proc = builder.buildExtremumHistogram(hname,proc_name,pts,"nom",BIN_LABEL_MAP,PROCESS_COLOR_MAP);
+        // h_proc = get_extremum_histogram(hname,proc_name,pts,"nom");
         nom_hists.push_back(h_proc);
 
         hname = TString::Format("%s_flcLo",title.Data());
-        h_proc = get_extremum_histogram(hname,proc_name,pts,"lo");
+        h_proc = builder.buildExtremumHistogram(hname,proc_name,pts,"lo",BIN_LABEL_MAP,PROCESS_COLOR_MAP);
+        // h_proc = get_extremum_histogram(hname,proc_name,pts,"lo");
         lo_hists.push_back(h_proc);
 
         hname = TString::Format("%s_flcHi",title.Data());
-        h_proc = get_extremum_histogram(hname,proc_name,pts,"hi");
+        h_proc = builder.buildExtremumHistogram(hname,proc_name,pts,"hi",BIN_LABEL_MAP,PROCESS_COLOR_MAP);
+        // h_proc = get_extremum_histogram(hname,proc_name,pts,"hi");
         hi_hists.push_back(h_proc);
     }
 
@@ -2416,21 +2299,34 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         ws->loadSnapshot("postfit_i");
         printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,prefit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
 
-        std::cout << "---------------" << std::endl;
-        std::cout << "--- nuisfit ---" << std::endl;
-        std::cout << "---------------" << std::endl;
-        if (nuisfit) {
-            ws->loadSnapshot("nuisfit_f");
-            printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,nuisfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
-        } else {
-            std::cout << "WARNING: Missing nuisfit" << std::endl;
-        }
 
-        std::cout << "---------------" << std::endl;
-        std::cout << "--- postfit ---" << std::endl;
-        std::cout << "---------------" << std::endl;
-        ws->loadSnapshot("postfit_f");
-        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,postfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
+        std::cout << "-----------------" << std::endl;
+        std::cout << "--- ctG=-1.38 ---" << std::endl;
+        std::cout << "-----------------" << std::endl;
+        setRRV(pois,"ctG",-1.38);
+        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,prefit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
+
+        std::cout << "-----------------" << std::endl;
+        std::cout << "--- ctG=+1.18 ---" << std::endl;
+        std::cout << "-----------------" << std::endl;
+        setRRV(pois,"ctG",1.18);
+        printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,prefit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
+
+        // std::cout << "---------------" << std::endl;
+        // std::cout << "--- nuisfit ---" << std::endl;
+        // std::cout << "---------------" << std::endl;
+        // if (nuisfit) {
+        //     ws->loadSnapshot("nuisfit_f");
+        //     printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,nuisfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
+        // } else {
+        //     std::cout << "WARNING: Missing nuisfit" << std::endl;
+        // }
+
+        // std::cout << "---------------" << std::endl;
+        // std::cout << "--- postfit ---" << std::endl;
+        // std::cout << "---------------" << std::endl;
+        // ws->loadSnapshot("postfit_f");
+        // printLatexYieldTable(cats_to_plot,SIG_PROCS,BKGD_PROCS,postfit,BIN_LABEL_MAP,YIELD_LABEL_MAP);
 
         // ws->loadSnapshot("postfit_i");
         // for (AnalysisCategory* ana_cat: cats_to_plot) ana_cat->Print(prefit);
@@ -2447,11 +2343,11 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = true;
+    bool incl_summary_plots = false;
     bool incl_summary_gif_plots = true;
-    bool incl_fluct_plots = true;
-    bool incl_fluct_sum_plots = true;
-    bool incl_njets_plots = true;
+    bool incl_fluct_plots = false;
+    bool incl_fluct_sum_plots = false;
+    bool incl_njets_plots = false;
 
     // Plot layout options
     bool incl_ratio = true;
@@ -2480,7 +2376,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     cms_style.extra_over_cms_text_size = 0.80;//0.76
 
     CMSTextStyle supp_style(cms_style);
-    supp_style.extra_text = "Supplementary";
+    supp_style.extra_text = "";//"Supplementary";
 
     // Plot the (potentially merged) categories from 'cats_to_plot' as the bins
     if (incl_summary_plots) {
@@ -2492,6 +2388,8 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         double extra_txt_yoffset = -0.12;
         int extra_txt_align = 11;
 
+        std::cout << "--- Prefit ---" << std::endl;
+
         // Make the prefit histogram stack plot
         ws->loadSnapshot("postfit_i");
         latex->SetNDC();
@@ -2500,7 +2398,9 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
         make_overlay_plot_v2("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
-        
+
+        std::cout << "--- Postfit ---" << std::endl;
+
         // Make the postfit histogram stack plot
         ws->loadSnapshot("postfit_f");
         latex->SetNDC();
@@ -2516,13 +2416,15 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
         // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
+        std::cout << "--- NuisOnly ---" << std::endl;
+
         // Make the nuisfit histogram stack plot
         ws->loadSnapshot("nuisfit_f");
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
-        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"");
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Nuis. Only");
         for (auto& kv: BEST_FIT_POIS) {
             std::string rrv_poi_name = kv.first;
             double rrv_value = 0.0;
@@ -2532,8 +2434,13 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     }
 
     if (incl_summary_gif_plots) {
-        int num_steps = 6;
+        int num_steps = 1;
+        ////////////////////////////////////////
+        // GIF for the basic merged categories
+        ////////////////////////////////////////
+        num_steps = 6;  // The number of PNGs to produce for the GIF
         for (int i = 0; i <= num_steps; i++) {
+            continue;   // Currently skipping this
             latex->SetNDC();
             latex->SetTextFont(42);
             latex->SetTextSize(0.080);
@@ -2548,6 +2455,78 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             }
             TString name_prefix = TString::Format("summary_gif_%02d",i);
             make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style);
+        }
+        ////////////////////////////////////////
+        // GIF for the full event selection
+        ////////////////////////////////////////
+        num_steps = 6;  // The number of PNGs to produce for the GIF
+
+        PlotPartition part1;
+        PlotPartition part2;
+        PlotPartition part3;
+        PlotPartition part4;
+        PlotPartition part5;
+        PlotPartition part6;
+        PlotPartition part7;
+        PlotPartition part8;
+        PlotPartition part9;
+
+        // These are positions of the *BINS* that the vertical divider will be placed at
+        part1.end = 4;
+        part2.end = 8;
+        part3.end = 12;
+        part4.end = 16;
+        part5.end = 20;
+        part6.end = 24;
+        part7.end = 28;
+        part8.end = 32;
+        part9.end = 35;
+
+        // The text to display along with the vertical divider line
+        part1.body_txt_1 = "2\\ell\\text{ss}(+)";
+        part2.body_txt_1 = "2\\ell\\text{ss}(-)";
+        part3.body_txt_1 = "3\\ell1\\text{b}(+)";
+        part4.body_txt_1 = "3\\ell1\\text{b}(-)";
+        part5.body_txt_1 = "3\\ell2\\text{b}(+)";
+        part6.body_txt_1 = "3\\ell2\\text{b}(-)";
+        part7.body_txt_1 = "3\\ell1\\text{b}";
+        part8.body_txt_1 = "3\\ell2\\text{b}";
+        part9.body_txt_1 = "4\\ell";
+
+        part7.body_txt_2 = "|m_{\\ell\\ell} - m_{\\mathrm{Z}}| < 10";
+        part8.body_txt_2 = "|m_{\\ell\\ell} - m_{\\mathrm{Z}}| < 10";
+
+        // Adjust the default positioning of the text for certain partitions
+        part7.body_offsetX = 0.003;
+        part8.body_offsetX = 0.003;
+
+        part7.body_offsetY = -0.07;
+        part8.body_offsetY = -0.07;
+
+        part9.draw_line = false;
+
+        // The objects in this vector determine the placement and style of the vertical divider lines in the yield plots
+        std::vector<PlotPartition> partitions {part1,part2,part3,part4,part5,part6,part7,part8,part9};
+
+        cats_to_plot.clear();
+        cats_to_plot = cat_manager.getChildCategories(cat_group_names);
+
+        for (int i = 0; i <= num_steps; i++) {
+            latex->SetNDC();
+            latex->SetTextFont(42);
+            latex->SetTextSize(0.080);
+            latex->SetTextAlign(13);
+            // latex->SetText(0.15,0.78,"Postfit");
+            latex->SetText(0.15,0.78,"");
+            ws->loadSnapshot("postfit_f");
+            for (auto& kv: BEST_FIT_POIS) {
+                std::string rrv_poi_name = kv.first;
+                double rrv_value = i*kv.second / num_steps;
+                setRRV(pois,rrv_poi_name,rrv_value);
+            }
+            TString name_prefix = TString::Format("summary_gif_%02d",i);
+            // make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style);
+            make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style,"",partitions);
         }
     }
     

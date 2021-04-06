@@ -8,9 +8,11 @@ class CombineMethod(object):
     MULTIDIMFIT = "MultiDimFit"
     FITDIAGNOSTIC = "FitDiagnostics"
     IMPACTS = "Impacts"
+    GOF = "GoodnessOfFit"
 
 class FitAlgo(object):
     NONE = "none"
+    # These are for the MultiDimFit method
     SINGLES = "singles"
     CROSS = "cross"
     CONTOUR2D = "contour2d"
@@ -18,6 +20,10 @@ class FitAlgo(object):
     FIXED = "fixed"
     GRID = "grid"
     IMPACT = "impact"
+    # These are for the GoodnessOfFit method
+    SATURATED = "saturated" # Basic chi-sqr test statistic
+    KS = "KS"               # Kolmogorov-Smirnov test statistic
+    AD = "AD"               # Anderson-Darling test statistic
 
 class WorkspaceType(object):
     EFT = "EFT"
@@ -27,6 +33,7 @@ class BatchType(object):
     NONE = None
     CRAB = "crab3"
     CONDOR = "condor"
+    LOCAL = "local"
 
 # Match strings using one or more regular expressions
 def regex_match(lst,regex_lst):
@@ -81,6 +88,8 @@ def clean_dir(tdir,targets,dry_run=False):
     print "\tTargets: {}".format(targets)
     for fn in fnames:
         fpath = os.path.join(tdir,fn)
-        print "\tRemoving {}".format(fn)
         if not dry_run:
+            print "\tRemoving {}".format(fn)
             os.remove(fpath)
+        else:
+            print "\tRemoving {}".format(fpath)
