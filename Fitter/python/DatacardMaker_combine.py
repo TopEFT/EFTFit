@@ -65,10 +65,19 @@ class DatacardMaker:
                         bkgcount = bkgcount+1
                         iproc[proc]=bkgcount
                         
-                allyields[proc]=self.hr.th1Tree[cat][proc][''].Integral()
+                
 
                 for syst in self.hr.th1Tree[cat][proc]: 
                     self.hr.th1Tree[cat][proc][syst]=cropNegativeYields(self.hr.th1Tree[cat][proc][syst])
+                    if syst=="":
+                        allyields[proc]=self.hr.th1Tree[cat][proc][''].Integral()
+
+                    if not self.hr.th1Tree[cat][proc][syst].Integral():
+                        print "Warning: underflow template for %s %s %s. Will take the nominal scaled down by a factor 2" % (cat, proc, syst)
+                        self.hr.th1Tree[cat][proc][syst].Add(self.hr.th1Tree[cat][proc][''])
+                        self.hr.th1Tree[cat][proc][syst].Scale(0.5)
+                        
+
                     inputs.WriteTObject( self.hr.th1Tree[cat][proc][syst], proc if syst== "" else "%s_%s"%(proc,syst.replace("UP","Up").replace("DOWN","Down")))
                     if syst == "" or "DOWN" in syst: continue
                     systName=syst.replace("UP","").replace("DOWN","")
@@ -80,11 +89,12 @@ class DatacardMaker:
                         
             inputs.Close()
             nuisances = [syst for syst in systMap]
+            
 
             datacard = open("ttx_multileptons-%s.txt"%cat, "w"); 
-            datacard.write("shapes *        * %s.root x_$PROCESS x_$PROCESS_$SYSTEMATIC\n" % cat)
+            datacard.write("shapes *        * ttx_multileptons-%s.root $PROCESS $PROCESS_$SYSTEMATIC\n" % cat)
             datacard.write('##----------------------------------\n')
-            datacard.write('bin         %s\n' % cat)
+            datacard.write('bin         bin_%s\n' % cat)
             datacard.write('observation %s\n' % allyields['data_obs'])
             datacard.write('##----------------------------------\n')
             klen = max([7, len(cat)]+[len(p) for p in procs])
@@ -92,18 +102,15 @@ class DatacardMaker:
             fpatt = " %%%d.%df " % (klen,3)
             npatt = "%%-%ds " % max([len('process')]+map(len,nuisances))
             datacard.write('##----------------------------------\n')
-            datacard.write((npatt % 'bin    ')+(" "*6)+(" ".join([kpatt % cat      for p in procs]))+"\n")
+            datacard.write((npatt % 'bin    ')+(" "*6)+(" ".join([kpatt % ('bin_'+cat)      for p in procs]))+"\n")
             datacard.write((npatt % 'process')+(" "*6)+(" ".join([kpatt % p        for p in procs]))+"\n")
             datacard.write((npatt % 'process')+(" "*6)+(" ".join([kpatt % iproc[p] for p in procs]))+"\n")
             datacard.write((npatt % 'rate   ')+(" "*6)+(" ".join([fpatt % allyields[p] for p in procs]))+"\n")
             datacard.write('##----------------------------------\n')
             #towrite = [ report[p].raw() for p in procs ] + [ report["data_obs"].raw() ]
             for name in nuisances:
-                print 'here'
                 systEff = dict((p,"1" if p in systMap[name] else "-") for p in procs)
-                print 'there'
                 datacard.write(('%s %5s' % (npatt % name,'shape')) + " ".join([kpatt % systEff[p]  for p in procs]) +"\n")
-                print 'dowe'
 
 if __name__ == "__main__":
     dm=DatacardMaker()
