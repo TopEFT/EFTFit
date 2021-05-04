@@ -15,7 +15,7 @@ class DatacardMaker:
         self.hr = HistoReader('../hist_files/anatest32_MergeLepFl.root')
         self.hr.readFromPickle('histos.pickle')
         self.cb = ch.CombineHarvester()
-        self.cb.SetVerbosity(0)
+        self.cb.SetVerbosity(3)
         self.eras=['2017']
         self.chan=['multilepton']
         self.outf = "EFT_MultiDim_Datacard_combine.txt"
@@ -50,6 +50,7 @@ class DatacardMaker:
 
         # create file to store inputs
         inputs=r.TFile.Open("ttx_multileptons-inputs.root", 'recreate')
+        systMap={}
         for cat in self.hr.th1Tree:
             inputs.mkdir('bin_'+cat)
             subdir=inputs.Get('bin_'+cat)
@@ -63,21 +64,36 @@ class DatacardMaker:
                 self.cb.AddProcesses( ['*'], ['Top_EFT'], self.eras, self.chan, [proc], [x for x in cats if 'bin_'+cat==x[1]], bool(proc in sig_procs))
                 for syst in self.hr.th1Tree[cat][proc]: 
                     self.hr.th1Tree[cat][proc][syst]=cropNegativeYields(self.hr.th1Tree[cat][proc][syst])
-                    subdir.WriteTObject( self.hr.th1Tree[cat][proc][syst], proc if syst== "" else "%s_%s"%(proc,syst))
-                    #self.cb.cp().process([proc]).AddSyst(self.cb, syst, "shape", ch.SystMap()(1.00))
-        print 'Done'
+                    subdir.WriteTObject( self.hr.th1Tree[cat][proc][syst], proc if syst== "" else "%s_%s"%(proc,syst.replace("UP","Up").replace("DOWN","Down")))
+                    if syst == "" or "DOWN" in syst: continue
+                    systName=syst.replace("UP","").replace("DOWN","")
+                    if systName in systMap:
+                        systMap[systName].append(proc)
+                    else: 
+                        systMap[systName]=[proc]
+                        
         inputs.Close()
-                
+        print 'Done building inputs'
+
+        for syst in systMap:
+            if 'DOWN' in syst: continue
+            self.cb.cp().process(systMap[syst]).AddSyst(self.cb, syst, "shape", ch.SystMap()(1.00))
+
+
+        print 'Extracting background shapes'
         self.cb.cp().backgrounds().ExtractShapes(
             "ttx_multileptons-inputs.root",
             "$BIN/$PROCESS",
             "$BIN/$PROCESS_$SYSTEMATIC");
                
+
+        print 'Extracting signal shapes'
         self.cb.cp().signals().ExtractShapes(
             "ttx_multileptons-inputs.root",
             "$BIN/$PROCESS",
             "$BIN/$PROCESS_$SYSTEMATIC");
 
+        print 'Writing the final card'
         output=r.TFile.Open(self.outf.replace('.txt','.root'),"recreate")
         self.cb.WriteDatacard(self.outf, output)
         output.Close()
