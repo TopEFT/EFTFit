@@ -1,4 +1,3 @@
-import CombineHarvester.CombineTools.ch as ch
 from HistoReader import HistoReader
 import ROOT as r 
 import re 
@@ -14,8 +13,6 @@ class DatacardMaker:
     def __init__(self):
         self.hr = HistoReader('../hist_files/anatest32_MergeLepFl.root')
         self.hr.readFromPickle('histos.pickle')
-        self.cb = ch.CombineHarvester()
-        self.cb.SetVerbosity(0)
         self.eras=['2017']
         self.chan=['multilepton']
         self.outf = "EFT_MultiDim_Datacard_combine.txt"
@@ -27,7 +24,6 @@ class DatacardMaker:
         categories = [ 'bin_'+cat for cat in self.hr.th1Tree]
         cats = list(enumerate(categories))
 
-        self.cb.AddObservations( ['*'], ['Top_EFT'], self.eras, self.chan, cats )
         signalNames=self.hr.sgnl_known
         patterns=[['%s_sm'%process, '%s_lin_(?P<c1>.*)'%process, '%s_quad_(?P<c1>.*)'%process, '%s_quad_mixed_(?P<c1>.*)_(?P<c2>.*)'%process] for process in signalNames]
         patterns=[ re.compile(pattern) for patternlist in patterns for pattern in patternlist ] # :) 
@@ -48,40 +44,66 @@ class DatacardMaker:
 
  
 
-        # create file to store inputs
-        inputs=r.TFile.Open("ttx_multileptons-inputs.root", 'recreate')
+        signalcount=0; bkgcount=0; iproc = {}
         for cat in self.hr.th1Tree:
-            inputs.mkdir('bin_'+cat)
-            subdir=inputs.Get('bin_'+cat)
-            subdir.WriteTObject( self.hr.th1Tree[cat]['data_sm'][''], "data_obs")
+            inputs=r.TFile.Open("ttx_multileptons-%s.root"%cat, 'recreate')
+            inputs.WriteTObject( self.hr.th1Tree[cat]['data_sm'][''], "data_obs")
+            allyields={'data_obs' : self.hr.th1Tree[cat]['data_sm'][''].Integral()  }
+            procs=[]; systMap={}
+
             for proc in self.hr.th1Tree[cat]:
-                print 'Processing', proc
                 if proc == 'data_sm': 
                     continue
                 if self.hr.th1Tree[cat][proc][''].Integral()<1e-3: 
                     continue
-                self.cb.AddProcesses( ['*'], ['Top_EFT'], self.eras, self.chan, [proc], [x for x in cats if 'bin_'+cat==x[1]], bool(proc in sig_procs))
+                procs.append(proc)
+                if proc not in iproc:
+                    if proc in sig_procs:
+                        signalcount=signalcount-1
+                        iproc[proc]=signalcount
+                    else:
+                        bkgcount = bkgcount+1
+                        iproc[proc]=bkgcount
+                        
+                allyields[proc]=self.hr.th1Tree[cat][proc][''].Integral()
+
                 for syst in self.hr.th1Tree[cat][proc]: 
                     self.hr.th1Tree[cat][proc][syst]=cropNegativeYields(self.hr.th1Tree[cat][proc][syst])
-                    subdir.WriteTObject( self.hr.th1Tree[cat][proc][syst], proc if syst== "" else "%s_%s"%(proc,syst))
-                    #self.cb.cp().process([proc]).AddSyst(self.cb, syst, "shape", ch.SystMap()(1.00))
-        print 'Done'
-        inputs.Close()
-                
-        self.cb.cp().backgrounds().ExtractShapes(
-            "ttx_multileptons-inputs.root",
-            "$BIN/$PROCESS",
-            "$BIN/$PROCESS_$SYSTEMATIC");
-               
-        self.cb.cp().signals().ExtractShapes(
-            "ttx_multileptons-inputs.root",
-            "$BIN/$PROCESS",
-            "$BIN/$PROCESS_$SYSTEMATIC");
+                    inputs.WriteTObject( self.hr.th1Tree[cat][proc][syst], proc if syst== "" else "%s_%s"%(proc,syst.replace("UP","Up").replace("DOWN","Down")))
+                    if syst == "" or "DOWN" in syst: continue
+                    systName=syst.replace("UP","").replace("DOWN","")
+                    if systName in systMap:
+                        systMap[systName].append(proc)
+                    else:
+                        systMap[systName]=[proc]
 
-        output=r.TFile.Open(self.outf.replace('.txt','.root'),"recreate")
-        self.cb.WriteDatacard(self.outf, output)
-        output.Close()
+                        
+            inputs.Close()
+            nuisances = [syst for syst in systMap]
 
+            datacard = open("ttx_multileptons-%s.txt"%cat, "w"); 
+            datacard.write("shapes *        * %s.root x_$PROCESS x_$PROCESS_$SYSTEMATIC\n" % cat)
+            datacard.write('##----------------------------------\n')
+            datacard.write('bin         %s\n' % cat)
+            datacard.write('observation %s\n' % allyields['data_obs'])
+            datacard.write('##----------------------------------\n')
+            klen = max([7, len(cat)]+[len(p) for p in procs])
+            kpatt = " %%%ds "  % klen
+            fpatt = " %%%d.%df " % (klen,3)
+            npatt = "%%-%ds " % max([len('process')]+map(len,nuisances))
+            datacard.write('##----------------------------------\n')
+            datacard.write((npatt % 'bin    ')+(" "*6)+(" ".join([kpatt % cat      for p in procs]))+"\n")
+            datacard.write((npatt % 'process')+(" "*6)+(" ".join([kpatt % p        for p in procs]))+"\n")
+            datacard.write((npatt % 'process')+(" "*6)+(" ".join([kpatt % iproc[p] for p in procs]))+"\n")
+            datacard.write((npatt % 'rate   ')+(" "*6)+(" ".join([fpatt % allyields[p] for p in procs]))+"\n")
+            datacard.write('##----------------------------------\n')
+            #towrite = [ report[p].raw() for p in procs ] + [ report["data_obs"].raw() ]
+            for name in nuisances:
+                print 'here'
+                systEff = dict((p,"1" if p in systMap[name] else "-") for p in procs)
+                print 'there'
+                datacard.write(('%s %5s' % (npatt % name,'shape')) + " ".join([kpatt % systEff[p]  for p in procs]) +"\n")
+                print 'dowe'
 
 if __name__ == "__main__":
     dm=DatacardMaker()
