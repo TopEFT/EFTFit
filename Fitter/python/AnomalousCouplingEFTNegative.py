@@ -16,7 +16,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         self.poiNames = []
         self.alternative = False
 
-        self.sgnl_known = ['ttH','tllq','ttll','ttlnu','tHq']
+        self.sgnl_known = ['ttH','tllq','ttll','ttlnu','tHq','tttt']
 
 
 
@@ -38,7 +38,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             'cpQM',
             'ctli',
         ]
-        self.Operators = ['cpt', 'ctp', 'cptb', 'cQlMi', 'cQq81', 'cQq11', 'cQl3i', 'ctq8', 'ctlTi', 'ctq1', 'ctli', 'cQq13', 'cbW', 'cpQM', 'cpQ3', 'ctei', 'cQei', 'ctW', 'ctlSi', 'cQq83', 'ctZ', 'ctG'] # hard coded for now for TopCoffea
+        self.Operators = ['cpt', 'ctp', 'cptb', 'cQlMi', 'cQq81', 'cQq11', 'cQl3i', 'ctq8', 'ctlTi', 'ctq1', 'ctli', 'cQq13', 'cbW', 'cpQM', 'cpQ3', 'ctei', 'cQei', 'ctW', 'ctlSi', 'cQq83', 'ctZ', 'ctG'] # hard coded for now for TopCoffea ,'ctt1','cQQ1','cQt8','cQt1'
 
 
         self.numOperators = len(self.Operators)
@@ -83,14 +83,21 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
 
         if not self.alternative :
-
           if self.numOperators != 1:
+              
+            for op in self.Operators:
+                oplist=self.Operators[self.Operators.index( op ):]
+                formula='@0' + ' '.join([ '-@0*@%d'%(i+1) for i in range(len(oplist[1:]))])
+
+                self.modelBuilder.factory_(
+                    "expr::func_sm_{op}(\"{formula}\", {oplist})".format( op = op, formula=formula, oplist=','.join(oplist))
+                )
+
             self.modelBuilder.factory_(
-                 "expr::func_sm(\"@0*(1-(" +
-                                          "@" + "+@".join([str(i+1) for i in range(len(self.Operators))])  +
-                                          "-@" + "-@".join([str(i+1)+"*@"+str(j+1) for i in range(len(self.Operators)) for j in range(len(self.Operators)) if i<j ]) +
-                                          "))\",r," + "" + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators))]) + ")"
-                 )
+                "expr::func_sm(\"@0*(1-@%s)\", r, %s)"%('-@'.join(str(i+1) for i in range(len(self.Operators))), 
+                                                        ", ".join('func_sm_'+op for op in self.Operators))
+            )
+
           else :
             self.modelBuilder.factory_(
                  "expr::func_sm(\"@0*(1-(" +
