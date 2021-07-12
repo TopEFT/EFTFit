@@ -16,6 +16,7 @@ class EFTPlot(object):
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW', 'ctZ', 'cpt', 'ctp', 'ctli', 'ctlSi', 'cQl3i', 'cptb', 'ctG', 'cpQM', 'ctlTi', 'ctei', 'cQei', 'cQlMi', 'cpQ3', 'cbW']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-30,15),  'ctp':(-25,75), #FIXME frozen only
@@ -26,14 +27,19 @@ class EFTPlot(object):
                             #'ctG':(-2.9,2.9),    'cpQM':(-30,50),
                             'ctlTi':(-4,4),  'ctei':(-19,19),
                             'cQei':(-16,16), 'cQlMi':(-17,17),
-                            'cpQ3':(-19,15), 'cbW':(-9,9)
+                            'cpQ3':(-19,15), 'cbW':(-9,9),
+                            'cQq13': (-5,5),  'cQq83': (-5,5),
+                            'cQq11': (-5,5),'ctq1': (-5,5),
+                            'cQq81': (-50,50),'ctq8': (-50,50),
+                            'ctt1': (-50,50), 'cQQ1': (-50,50),
+                            'cQt8': (-50,50), 'cQt1': (-50,50)
                          }
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
         self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'}
         #self.texdic = {'ctW': '#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]', 'ctZ': '#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]', 'ctp': '#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]', 'cpQM': '#it{c}^{-}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'ctG': '#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]', 'cbW': '#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}/#Lambda^{2} [TeV^{-2}]', 'cptb': '#it{c}_{#varphitb}/#Lambda^{2} [TeV^{-2}]', 'cpt': '#it{c}_{#varphit}/#Lambda^{2} [TeV^{-2}]', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQlM': '#it{c}^{-(#it{l})}_{Ql}/#Lambda^{2} [TeV^{-2}]', 'cQe': '#it{c}^{(#it{l})}_{Qe}/#Lambda^{2} [TeV^{-2}]', 'ctl': '#it{c}^{(#it{l})}_{tl}/#Lambda^{2} [TeV^{-2}]', 'cte': '#it{c}^{(#it{l})}_{te}/#Lambda^{2} [TeV^{-2}]', 'ctlS': '#it{c}^{S(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]', 'ctlT': '#it{c}^{T(#it{l})}_{t}/#Lambda^{2} [TeV^{-2}]'}
-        self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}}', 'ctZ': '\it{c}_{\mathrm{tZ}}}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 'ctG': '\it{c}_{\mathrm{tG}}}', 'cbW': '\it{c}_{\mathrm{bW}}}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}'}
+        self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}}', 'ctZ': '\it{c}_{\mathrm{tZ}}}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 'ctG': '\it{c}_{\mathrm{tG}}}', 'cbW': '\it{c}_{\mathrm{bW}}}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 'cQq81': '\it{c}_{\mathrm{Qq81}}', 'cQq11': '\it{c}_{\mathrm{Qq11}}', 'ctq8': '\it{c}_{\mathrm{tq8}}', 'ctq1': '\it{c}_{\mathrm{tq1}}', 'cQq13': '\it{c}_{\mathrm{Qq13}}', 'cQq83': '\it{c}_{\mathrm{Qq83}}', 'ctt1': '\it{c}_{\mathrm{tt1}}','cQQ1': '\it{c}_{\mathrm{QQ1}}','cQt8': '\it{c}_{\mathrm{Qt8}}','cQt1': '\it{c}_{\mathrm{Qt1}}'}
         #self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}', 'ctZ': '\it{c}_{\mathrm{tZ}}', 'ctp': '\it{c}_{\mathrm{t\\varphi}}', 'cpQM': '\it{c}^{-}_{\mathrm{\\varphi Q}}', 'ctG': '\it{c}_{\mathrm{tG}}', 'cbW': '\it{c}_{\mathrm{bW}}', 'cpQ3': '\it{c}^{\mathrm{3}(\\ell)}_{\mathrm{\\varphi Q}}', 'cptb': '\it{c}_{\mathrm{\\varphi tb}}', 'cpt': '\it{c}_{\mathrm{\\varphi t}}', 'cQl3': '\it{c}^{\mathrm{3}(\\ell)}_{\mathrm{Q}\\ell}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}', 'ctlS': '\it{c}^{\mathrm{S}(\\ell)}_{\mathrm{t}}', 'ctlT': '\it{c}^{\mathrm{T}(\\ell)}_{\mathrm{t}}'}
         #self.texdicfrac = {'ctW': '#it{c}_{tW}', 'ctZ': '#it{c}_{tZ}', 'ctp': '#it{c}_{t#varphi}', 'cpQM': '#it{c}^{#minus}_{#varphiQ}', 'ctG': '#it{c}_{tG}', 'cbW': '#it{c}_{bW}', 'cpQ3': '#it{c}^{3(#it{l})}_{#varphiQ}', 'cptb': '#it{c}_{#varphitb}', 'cpt': '#it{c}_{#varphit}', 'cQl3': '#it{c}^{3(#it{l})}_{Ql}', 'cQlM': '#it{c}^{#minus(#it{l})}_{Ql}', 'cQe': '#it{c}^{(#it{l})}_{Qe}', 'ctl': '#it{c}^{(#it{l})}_{tl}', 'cte': '#it{c}^{(#it{l})}_{te}', 'ctlS': '#it{c}^{S(#it{l})}_{t}', 'ctlT': '#it{c}^{T(#it{l})}_{t}'}
         #self.texdicfrac = {'ctW': '#frac{#it{c}_{tW}}{#Lambda^{2}}', 'ctZ': '#frac{#it{c}_{tZ}}{#Lambda^{2}}', 'ctp': '#frac{#it{c}_{t#varphi}}{#Lambda^{2}}', 'cpQM': '#frac{#it{c}^{-}_{#varphiQ}}{#Lambda^{2}}', 'ctG': '#frac{#it{c}_{tG}}{#Lambda^{2}}', 'cbW': '#frac{#it{c}_{bW}}{#Lambda^{2}}', 'cpQ3': '#frac{#it{c}^{3(#it{l})}_{#varphiQ}}{#Lambda^{2}}', 'cptb': '#frac{#it{c}_{#varphitb}}{#Lambda^{2}}', 'cpt': '#frac{#it{c}_{#varphit}}{#Lambda^{2}}', 'cQl3': '#frac{#it{c}^{3(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQlM': '#frac{#it{c}^{-(#it{l})}_{Ql}}{#Lambda^{2}}', 'cQe': '#frac{#it{c}^{(#it{l})}_{Qe}}{#Lambda^{2}}', 'ctl': '#frac{#it{c}^{(#it{l})}_{tl}}{#Lambda^{2}}', 'cte': '#frac{#it{c}^{(#it{l})}_{te}}{#Lambda^{2}}', 'ctlS': '#frac{#it{c}^{S(#it{l})}_{t}}{#Lambda^{2}}', 'ctlT': '#frac{#it{c}^{T(#it{l})}_{t}}{#Lambda^{2}}'}
@@ -1397,7 +1403,7 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze='', final=False):
+    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ["Others profiled","Others fixed to SM"]):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
@@ -1426,6 +1432,11 @@ class EFTPlot(object):
                 line[1] = line[1]*2
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
+            if line[0]=='cQq13':
+                line[0] = 'cQq13#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1448,6 +1459,11 @@ class EFTPlot(object):
                 line[1] = line[1]*2
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
+            if line[0]=='cQq13':
+                line[0] = 'cQq13#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1470,6 +1486,11 @@ class EFTPlot(object):
                 line[1] = line[1]*2
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
+            if line[0]=='cQq13':
+                line[0] = 'cQq13#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1492,6 +1513,11 @@ class EFTPlot(object):
                 line[1] = line[1]*2
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
+            if line[0]=='cQq13':
+                line[0] = 'cQq13#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1509,7 +1535,7 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
-        numWC=16
+        numWC=26
         if '28redo' in basename_float:
             numWC=15
         y_float = [n*4+3 for n in range(0,numWC)]
@@ -1522,7 +1548,7 @@ class EFTPlot(object):
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
         if 'Asimov' not in basename_float:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 65, 0, 64)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 105, 0, 104)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1722,15 +1748,15 @@ class EFTPlot(object):
                 lines_freeze_1sigma[-1].SetLineStyle(3)
 
         # Add legend
-        legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
+        legend = ROOT.TLegend(0.1,0.9,0.45,0.995)
         graph_float_1sigma = graph_float.Clone("graph_float_1sigma")
         graph_freeze_1sigma = graph_freeze.Clone("graph_freeze_1sigma")
         graph_float_1sigma.SetLineWidth(3)
         graph_freeze_1sigma.SetLineWidth(3)
-        legend.AddEntry(graph_float,"Others profiled (2#sigma)",'l')
-        legend.AddEntry(graph_float_1sigma,"Others profiled (1#sigma)",'l')
-        legend.AddEntry(graph_freeze,"Others fixed to SM (2#sigma)",'l')
-        legend.AddEntry(graph_freeze_1sigma,"Others fixed to SM (1#sigma)",'l')
+        legend.AddEntry(graph_float,titles[0]+" (2#sigma)",'l')
+        legend.AddEntry(graph_float_1sigma,titles[0]+" (1#sigma)",'l')
+        legend.AddEntry(graph_freeze,titles[1]+" (2#sigma)",'l')
+        legend.AddEntry(graph_freeze_1sigma,titles[1]+" (1#sigma)",'l')
         legend.SetTextSize(0.025)
 
         # Draw everything
@@ -1768,7 +1794,7 @@ class EFTPlot(object):
         self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
-        if not final: self.arXiv_extra.Draw('same')
+        #if not final: self.arXiv_extra.Draw('same')
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
@@ -1832,8 +1858,9 @@ class EFTPlot(object):
         ]
 
         # Set y-coordinates for points and lines
-        y_float = [n*4+3 for n in range(0,16)]
-        y_freeze = [n*4+2 for n in range(0,16)]
+        numWC=26
+        y_float = [n*4+3 for n in range(0,numWC)]
+        y_freeze = [n*4+2 for n in range(0,numWC)]
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Best Fit Result (SM Expectation)',500,800)
@@ -1843,7 +1870,7 @@ class EFTPlot(object):
         h_fit.SetStats(0)
         #h_fit.GetXaxis().SetTickLength(0.1)
         h_fit.GetYaxis().SetTickLength(0)
-        h_fit.GetYaxis().SetNdivisions(16,False)
+        h_fit.GetYaxis().SetNdivisions(26,False)
         h_fit.GetYaxis().SetLabelSize(0)
 
         # Add y-axis labels
@@ -1854,12 +1881,12 @@ class EFTPlot(object):
             y_labels[idy].SetTextSize(0.03)
 
         # Set the best fit points
-        graph_float = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
+        graph_float = ROOT.TGraph(26, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
         graph_float.SetMarkerColor(2)
 
-        graph_freeze = ROOT.TGraph(16, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
+        graph_freeze = ROOT.TGraph(26, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(20)
         graph_freeze.SetMarkerSize(0.5)
         graph_freeze.SetMarkerColor(4)

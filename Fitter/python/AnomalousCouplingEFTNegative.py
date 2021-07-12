@@ -38,7 +38,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             'cpQM',
             'ctli',
         ]
-        self.Operators = ['cpt', 'ctp', 'cptb', 'cQlMi', 'cQq81', 'cQq11', 'cQl3i', 'ctq8', 'ctlTi', 'ctq1', 'ctli', 'cQq13', 'cbW', 'cpQM', 'cpQ3', 'ctei', 'cQei', 'ctW', 'ctlSi', 'cQq83', 'ctZ', 'ctG'] # hard coded for now for TopCoffea ,'ctt1','cQQ1','cQt8','cQt1'
+        self.Operators = ['cpt', 'ctp', 'cptb', 'cQlMi', 'cQq81', 'cQq11', 'cQl3i', 'ctq8', 'ctlTi', 'ctq1', 'ctli', 'cQq13', 'cbW', 'cpQM', 'cpQ3', 'ctei', 'cQei', 'ctW', 'ctlSi', 'cQq83', 'ctZ', 'ctG' ,'ctt1','cQQ1','cQt8','cQt1'] # hard coded for now for TopCoffea
 
 
         self.numOperators = len(self.Operators)

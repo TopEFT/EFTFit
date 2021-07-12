@@ -20,20 +20,26 @@ class EFTFit(object):
         # WCs lists for easy use
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['cpt', 'ctp', 'cptb', 'cQlMi', 'cQq81', 'cQq11', 'cQl3i', 'ctq8', 'ctlTi', 'ctq1', 'ctli', 'cQq13', 'cbW', 'cpQM', 'cpQ3', 'ctei', 'cQei', 'ctW', 'ctlSi', 'cQq83', 'ctZ', 'ctG' ,'ctt1','cQQ1','cQt8','cQt1'] # hard coded for now for TopCoffea
         #self.wcs = ['ctW','ctZ','ctp','cpQM','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #anatest28 (no ctG)
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Default wcs to keep track of during 2D scans
         self.wcs_tracked = ['ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         # Scan ranges of the wcs
-        self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
-                            'cpt':(-40,30),  'ctp':(-35,65),
-                            'ctli':(-20,20), 'ctlSi':(-22,22),
-                            'cQl3i':(-20,20),'cptb':(-40,40),
-                            'ctG':(-3,3),    'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),  'ctei':(-20,20),
-                            'cQei':(-16,16), 'cQlMi':(-17,17),
-                            'cpQ3':(-20,12), 'cbW':(-10,10)
+        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-7,7),
+                            'cpt':(-40,30),   'ctp':(-35,65),
+                            'ctli':(-20,20),  'ctlSi':(-22,22),
+                            'cQl3i':(-20,20), 'cptb':(-40,40),
+                            'ctG':(-3,3),     'cpQM':(-30,50),  
+                            'ctlTi':(-4,4),   'ctei':(-20,20),
+                            'cQei':(-16,16),  'cQlMi':(-17,17),
+                            'cpQ3':(-20,12),  'cbW':(-10,10),
+                            'cQq13': (-5,5),  'cQq83': (-5,5),
+                            'cQq11': (-5,5),'ctq1': (-5,5),
+                            'cQq81': (-50,50),'ctq8': (-50,50),
+                            'ctt1': (-50,50), 'cQQ1': (-50,50),
+                            'cQt8': (-50,50), 'cQt1': (-50,50)
                          }
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
@@ -209,7 +215,7 @@ class EFTFit(object):
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/wps_njet.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
