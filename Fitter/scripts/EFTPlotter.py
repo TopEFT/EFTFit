@@ -16,7 +16,7 @@ class EFTPlot(object):
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW', 'ctZ', 'cpt', 'ctp', 'ctli', 'ctlSi', 'cQl3i', 'cptb', 'ctG', 'cpQM', 'ctlTi', 'ctei', 'cQei', 'cQlMi', 'cpQ3', 'cbW']
+        self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
                             'cpt':(-30,15),  'ctp':(-25,75), #FIXME frozen only
@@ -1437,6 +1437,21 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
+            if line[0]=='ctq1':
+                line[0] = 'ctq1#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq11':
+                line[0] = 'cQq11#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq83':
+                line[0] = 'cQq83#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1461,6 +1476,21 @@ class EFTPlot(object):
                 line[3] = [val*2 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='ctq1':
+                line[0] = 'ctq1#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq11':
+                line[0] = 'cQq11#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq83':
+                line[0] = 'cQq83#times5'
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
@@ -1491,6 +1521,21 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
+            if line[0]=='ctq1':
+                line[0] = 'ctq1#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq11':
+                line[0] = 'cQq11#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq83':
+                line[0] = 'cQq83#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1518,6 +1563,21 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
+            if line[0]=='ctq1':
+                line[0] = 'ctq1#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq11':
+                line[0] = 'cQq11#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
+            if line[0]=='cQq83':
+                line[0] = 'cQq83#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
                 line[0] = 'ctp#divide5'
                 line[1] = line[1]/5
@@ -1535,7 +1595,7 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
-        numWC=26
+        numWC=len(self.wcs)
         if '28redo' in basename_float:
             numWC=15
         y_float = [n*4+3 for n in range(0,numWC)]
@@ -1548,7 +1608,7 @@ class EFTPlot(object):
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
         if 'Asimov' not in basename_float:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 105, 0, 104)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1858,7 +1918,7 @@ class EFTPlot(object):
         ]
 
         # Set y-coordinates for points and lines
-        numWC=26
+        numWC=len(self.wcs)
         y_float = [n*4+3 for n in range(0,numWC)]
         y_freeze = [n*4+2 for n in range(0,numWC)]
 
