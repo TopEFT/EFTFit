@@ -94,7 +94,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
                 )
 
             self.modelBuilder.factory_(
-                "expr::func_sm(\"@0*(1-@%s)\", r, %s)"%('-@'.join(str(i+1) for i in range(len(self.Operators))), 
+                "expr::func_sm(\"@0*(1-@%s)\", 1, %s)"%('-@'.join(str(i+1) for i in range(len(self.Operators))), 
                                                         ", ".join('func_sm_'+op for op in self.Operators))
             )
 
@@ -102,7 +102,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             self.modelBuilder.factory_(
                  "expr::func_sm(\"@0*(1-(" +
                                           "@1" +
-                                          "))\",r," + "" + str(self.Operators[0]) + ")"
+                                          "))\", 1," + "" + str(self.Operators[0]) + ")"
                  )
         else :
 
@@ -111,13 +111,13 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             self.modelBuilder.factory_(
                  "expr::func_sm(\"@0*(1-(" +
                                           "@" + "+@".join([str(i+1) for i in range(len(self.Operators))])  +
-                                          "))\",r," + "" + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators))]) + ")"
+                                          "))\", 1," + "" + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators))]) + ")"
                  )
           else :
             self.modelBuilder.factory_(
                  "expr::func_sm(\"@0*(1-(" +
                                           "@1" +
-                                          "))\",r," + "" + str(self.Operators[0]) + ")"
+                                          "))\", 1," + "" + str(self.Operators[0]) + ")"
                  )
 
 
@@ -135,19 +135,19 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
               #print "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +                                           \
                                  #"(\"@0*(" +                                                                                      \
                                  #"@1 * (1-(" + "@" + "+@".join( [str(j+2) for j in range(len(self.Operators) -1) ] ) + ") )" +      \
-                                 #")\",r," + str(self.Operators[operator]) +                                                     \
+                                 #")\", 1," + str(self.Operators[operator]) +                                                     \
                                  #", " + ", ".join( [str(self.Operators[j]) for j in range(len(self.Operators)) if operator!=j ] ) +            \
                                  #")"
               #
               #
-              # expr::func_sm_linear_quadratic_cG("@0*(@1 * (1-2*(@2+@3) ))",r,cG, cGtil, cH)
+              # expr::func_sm_linear_quadratic_cG("@0*(@1 * (1-2*(@2+@3) ))", 1,cG, cGtil, cH)
               #
               #
               self.modelBuilder.factory_(
                       "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +
                                  "(\"@0*(" +
                                  "@1 * (1-(" + "@" + "+@".join( [str(j+2) for j in range(len(self.Operators) -1) ] ) + ") )" +
-                                 ")\",r," + str(self.Operators[operator]) +
+                                 ")\", 1," + str(self.Operators[operator]) +
                                  ", " + ", ".join( [str(self.Operators[j]) for j in range(len(self.Operators)) if operator!=j ] ) +
                                  ")"
                       )
@@ -155,14 +155,14 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             #print "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +                   \
                       #"(\"@0*(" +                                                                      \
                       #"@1" +                                                                           \
-                      #")\",r," + str(self.Operators[0]) +                                           \
+                      #")\", 1," + str(self.Operators[0]) +                                           \
                       #")"
   
             self.modelBuilder.factory_(
                     "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +
                                "(\"@0*(" +
                                "@1" +
-                               ")\",r," + str(self.Operators[0]) +
+                               ")\", 1," + str(self.Operators[0]) +
                                ")"
                     )
 
@@ -171,14 +171,14 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             #print "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +                   \
                       #"(\"@0*(" +                                                                      \
                       #"@1" +                                                                           \
-                      #")\",r," + str(self.Operators[operator]) +                                           \
+                      #")\", 1," + str(self.Operators[operator]) +                                           \
                       #")"
 
             self.modelBuilder.factory_(
                     "expr::func_sm_linear_quadratic_" + str(self.Operators[operator]) +
                                 "(\"@0*(" +
                                 "@1" +
-                                ")\",r," + str(self.Operators[operator]) +
+                                ")\", 1," + str(self.Operators[operator]) +
                                 ")"
                     )
           
@@ -187,7 +187,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         # quadratic term in each Wilson coefficient
         #
         #
-        # e.g. expr::func_sm_linear_quadratic_cH("@0*(@1 * (1-2*(@2+@3) ))",r,cH, cG, cGtil)
+        # e.g. expr::func_sm_linear_quadratic_cH("@0*(@1 * (1-2*(@2+@3) ))", 1,cH, cG, cGtil)
         #
 
         for operator in range(0, self.numOperators):
@@ -198,9 +198,9 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
           
           if not self.alternative :
 
-            #print "expr::func_quadratic_"+ str(self.Operators[operator]) + "(\"@0*(@1*@1-@1)\",r," + str(self.Operators[operator]) + ")"
+            #print "expr::func_quadratic_"+ str(self.Operators[operator]) + "(\"@0*(@1*@1-@1)\", 1," + str(self.Operators[operator]) + ")"
 
-            self.modelBuilder.factory_("expr::func_quadratic_"+ str(self.Operators[operator]) + "(\"@0*(@1*@1-@1)\",r," + str(self.Operators[operator]) + ")")
+            self.modelBuilder.factory_("expr::func_quadratic_"+ str(self.Operators[operator]) + "(\"@0*(@1*@1-@1)\", 1," + str(self.Operators[operator]) + ")")
 
 
           else :
@@ -209,11 +209,11 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
               #print "expr::func_quadratic_"+ str(self.Operators[operator]) +    \
                                         #"(\"@0*(@1*@1-@1-@1*(" + "@" + "+@".join([str(j+1) for j in range(len(self.Operators)) if j != 0 ]) +   \
-                                        #"))\",r," + "" +  str(self.Operators[operator]) + ", " + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators)) if i != operator ]) + ")"
+                                        #"))\", 1," + "" +  str(self.Operators[operator]) + ", " + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators)) if i != operator ]) + ")"
 
               self.modelBuilder.factory_("expr::func_quadratic_"+ str(self.Operators[operator]) +      \
                                         "(\"@0*(@1*@1-@1-@1*(" + "@" + "+@".join([str(j+1) for j in range(len(self.Operators)) if j != 0 ]) +   \
-                                        "))\",r," + "" +  str(self.Operators[operator]) + ", " + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators)) if i != operator ]) + ")"
+                                        "))\", 1," + "" +  str(self.Operators[operator]) + ", " + ", ".join([str(self.Operators[i]) for i in range(len(self.Operators)) if i != operator ]) + ")"
                                         )
                                                                                                                                                                                 
 
@@ -221,11 +221,11 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
               #print "expr::func_quadratic_"+ str(self.Operators[0]) + \
                                         #"(\"@0*(@1*@1-@1" +   \
-                                        #")\",r," + str(self.Operators[0]) + ")"
+                                        #")\", 1," + str(self.Operators[0]) + ")"
 
               self.modelBuilder.factory_("expr::func_quadratic_"+ str(self.Operators[operator]) +  \
                                         "(\"@0*(@1*@1-@1" +   \
-                                        ")\",r," + str(self.Operators[0]) + ")"
+                                        ")\", 1," + str(self.Operators[0]) + ")"
                                         )
 
 
@@ -244,12 +244,12 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
                 # this is the coefficient of "SM + Lin_i + Lin_j + Quad_i + Quad_j + 2 * M_ij"
                 #
                 #print "expr::func_sm_linear_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]) +          \
-                #"(\"@0*@1*@2\",r," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +                      \
+                #"(\"@0*@1*@2\", 1," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +                      \
                 #")"
                 self.quadFactors.append("func_sm_linear_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]))
                 self.modelBuilder.factory_(
                         "expr::func_sm_linear_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]) +
-                        "(\"@0*@1*@2\",r," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +
+                        "(\"@0*@1*@2\", 1," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +
                         ")")
 
         else:
@@ -262,12 +262,12 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
                 # this is the coefficient of "Quad_i + Quad_j + 2 * M_ij"
                 #
                 #print "expr::func_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]) +          \
-                #"(\"@0*@1*@2\",r," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +                      \
+                #"(\"@0*@1*@2\", 1," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +                      \
                 #")"
                 self.quadFactors.append("func_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]))
                 self.modelBuilder.factory_(
                         "expr::func_quadratic_mixed_" + str(self.Operators[operator_sub]) + "_" + str(self.Operators[operator]) +
-                        "(\"@0*@1*@2\",r," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +
+                        "(\"@0*@1*@2\", 1," + str(self.Operators[operator]) + "," + str(self.Operators[operator_sub]) +
                         ")")
 
 
