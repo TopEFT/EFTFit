@@ -1399,7 +1399,7 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ["Others profiled","Others fixed to SM"], filename='', wcs=[]):
+    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ["Others profiled","Others fixed to SM"], filename='', wcs=[], printFOM=False):
         if wcs != []: self.wcs = wcs
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
@@ -1415,6 +1415,9 @@ class EFTPlot(object):
         fits_float = self.getIntervalFits(basename_float)
         print 'freeze'
         fits_freeze = self.getIntervalFits(basename_freeze)
+        if printFOM:
+            print('\n\nFoM (<1 is better)\nWC CI_low CI_high')
+            print('\n'.join([' '.join([lim[0][0], str(lim[1][2][0] / lim[0][2][0]), str(lim[1][3][0] / lim[0][3][0])]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
