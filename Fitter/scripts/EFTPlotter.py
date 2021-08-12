@@ -1417,7 +1417,7 @@ class EFTPlot(object):
         fits_freeze = self.getIntervalFits(basename_freeze)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC CI_low CI_high')
-            print('\n'.join([' '.join([lim[0][0], str(lim[1][2][0] / lim[0][2][0]), str(lim[1][3][0] / lim[0][3][0])]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 2)), str(round(lim[1][3][0] / lim[0][3][0],2))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
