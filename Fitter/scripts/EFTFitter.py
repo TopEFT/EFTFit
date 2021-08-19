@@ -20,23 +20,23 @@ class EFTFit(object):
         # WCs lists for easy use
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ]
-        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ]
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
-        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-7,7),
+        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-5,5),
                             'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-20,20),  'ctlSi':(-22,22),
-                            'cQl3i':(-20,20), 'cptb':(-40,40),
-                            'ctG':(-3,3),     'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),   'ctei':(-20,20),
-                            'cQei':(-16,16),  'cQlMi':(-17,17),
-                            'cpQ3':(-20,12),  'cbW':(-10,10),
-                            'cQq13': (-5,5),  'cQq83': (-5,5),
-                            'cQq11': (-5,5),'ctq1': (-5,5),
-                            'cQq81': (-50,50),'ctq8': (-50,50),
-                            'ctt1': (-50,50), 'cQQ1': (-50,50),
-                            'cQt8': (-50,50), 'cQt1': (-50,50)
+                            'ctli':(-20,20),  'ctlSi':(-10,10),
+                            'cQl3i':(-10,10), 'cptb':(-20,20),
+                            'ctG':(-2,2),     'cpQM':(-30,50),  
+                            'ctlTi':(-4,4),   'ctei':(-10,10),
+                            'cQei':(-10,10),  'cQlMi':(-10,10),
+                            'cpQ3':(-10,10),  'cbW':(-5,5),
+                            'cQq13': (-0.5,0.5),  'cQq83': (-0.7,1.0),
+                            'cQq11': (-0.7,0.7),'ctq1': (-2,2),
+                            'cQq81': (-5,5),'ctq8': (-5,5),
+                            'ctt1': (-5,5), 'cQQ1': (-7,7),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
                          }
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
@@ -235,6 +235,7 @@ class EFTFit(object):
             args.extend(['--setParameters',','.join(masks)])
 
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
+        #if batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         if batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         logging.info(' '.join(args))
@@ -394,7 +395,7 @@ class EFTFit(object):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
-        else: self.wcs = scan_wcs
+        #else: self.wcs = scan_wcs
 
         for wc in scan_wcs:
             self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+other, mask, mask_syst, workspace)
@@ -409,18 +410,19 @@ class EFTFit(object):
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask, mask_syst=mask_syst, workspace=workspace)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=+other, mask=mask, mask_syst=mask_syst, workspace=workspace)
 
         # Use each wc only once
         if not allPairs:
             scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
+            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
  
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask, mask_syst=mask_syst, workspace=workspace)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])]+other, mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[], mask_syst=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
@@ -507,6 +509,7 @@ class EFTFit(object):
             scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
+            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             for wcs in scan_wcs:
                 print wcs
                 print '{}.{}{}'.format(basename,wcs[0],wcs[1]), batch

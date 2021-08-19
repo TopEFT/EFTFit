@@ -18,26 +18,24 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-        self.wc_ranges = {  'ctW':(-6,6),    'ctZ':(-7,7),
-                            'cpt':(-30,15),  'ctp':(-25,75), #FIXME frozen only
-                            #'cpt':(-43,29),  'ctp':(-35,75),
-                            'ctli':(-19,19), 'ctlSi':(-22,22),
-                            'cQl3i':(-19,19),'cptb':(-39,49),
-                            'ctG':(-2.9,2.9),    'cpQM':(-10,30), #FIXME frozen only 
-                            #'ctG':(-2.9,2.9),    'cpQM':(-30,50),
-                            'ctlTi':(-4,4),  'ctei':(-19,19),
-                            'cQei':(-16,16), 'cQlMi':(-17,17),
-                            'cpQ3':(-19,15), 'cbW':(-9,9),
-                            'cQq13': (-5,5),  'cQq83': (-5,5),
-                            'cQq11': (-5,5),'ctq1': (-5,5),
-                            'cQq81': (-50,50),'ctq8': (-50,50),
-                            'ctt1': (-50,50), 'cQQ1': (-50,50),
-                            'cQt8': (-50,50), 'cQt1': (-50,50)
+        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-5,5),
+                            'cpt':(-40,30),   'ctp':(-35,65),
+                            'ctli':(-20,20),  'ctlSi':(-10,10),
+                            'cQl3i':(-10,10), 'cptb':(-20,20),
+                            'ctG':(-2,2),     'cpQM':(-30,50),  
+                            'ctlTi':(-4,4),   'ctei':(-10,10),
+                            'cQei':(-10,10),  'cQlMi':(-10,10),
+                            'cpQ3':(-10,10),  'cbW':(-5,5),
+                            'cQq13': (-0.5,0.5),  'cQq83': (-0.7,1.0),
+                            'cQq11': (-0.7,0.7),'ctq1': (-2,2),
+                            'cQq81': (-5,5),'ctq8': (-5,5),
+                            'ctt1': (-5,5), 'cQQ1': (-7,7),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
                          }
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'}
+        self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}/mathrm{\Lambda^{2} [TeV^{-2}]', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}/mathrm{\Lambda^{2} [TeV^{-2}]','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/mathrm{\Lambda^{2} [TeV^{-2}]','cQt8': '\it{c}^{8}_{\mathrm{Qt}}/mathrm{\Lambda^{2} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/mathrm{\Lambda^{2} [TeV^{-2}]'}
         self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}}', 'ctZ': '\it{c}_{\mathrm{tZ}}}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 'ctG': '\it{c}_{\mathrm{tG}}}', 'cbW': '\it{c}_{\mathrm{bW}}}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}','cQt8': '\it{c}^{8}_{\mathrm{Qt}}','cQt1': '\it{c}^{1}_{\mathrm{Qt}}'}
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
@@ -135,21 +133,27 @@ class EFTPlot(object):
         graph.GetXaxis().SetTitle(wc)
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.9, 0.93, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.17, 0.95, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
-        self.CMS_text.SetTextSize(0.02)
-        self.CMS_text.SetTextAlign(30)
+        self.CMS_text.SetTextSize(0.04)
+        self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.19, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
-        self.CMS_extra.SetTextSize(0.02)
-        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextSize(0.03)
+        #self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, "arXiv:2012.04120")# Simulation")
+        self.arXiv_extra.SetNDC(1)
+        self.arXiv_extra.SetTextSize(0.03)
+        #self.arXiv_extra.SetTextAlign(30)
+        self.arXiv_extra.SetTextFont(42)
+        self.Lumi_text = ROOT.TLatex(0.34, 0.92, "41.5 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
-        self.Lumi_text.SetTextSize(0.02)
-        self.Lumi_text.SetTextAlign(30)
+        self.Lumi_text.SetTextSize(0.04)
+        #self.Lumi_text.SetTextAlign(30)
         self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
 
@@ -1238,6 +1242,7 @@ class EFTPlot(object):
             wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
+            wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
 
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
@@ -1417,7 +1422,8 @@ class EFTPlot(object):
         fits_freeze = self.getIntervalFits(basename_freeze)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC CI_low CI_high')
-            print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 2)), str(round(lim[1][3][0] / lim[0][3][0],2))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
