@@ -24,19 +24,19 @@ class EFTFit(object):
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
-        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-5,5),
+        self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
                             'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-20,20),  'ctlSi':(-10,10),
+                            'ctli':(-5,5),  'ctlSi':(-10,10),
                             'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),   'ctei':(-10,10),
+                            'ctG':(-2,2),     'cpQM':(-10,30),  
+                            'ctlTi':(-1,1),   'ctei':(-10,10),
                             'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-10,10),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-0.7,1.0),
-                            'cQq11': (-0.7,0.7),'ctq1': (-2,2),
+                            'cpQ3':(-8,4),  'cbW':(-5,5),
+                            'cQq13': (-0.5,0.5),  'cQq83': (-1,1),
+                            'cQq11': (-2,2),'ctq1': (-2,2),
                             'cQq81': (-5,5),'ctq8': (-5,5),
                             'ctt1': (-5,5), 'cQQ1': (-7,7),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
+                            'cQt8': (-20,20), 'cQt1': (-6,6)
                          }
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
@@ -235,8 +235,8 @@ class EFTFit(object):
             args.extend(['--setParameters',','.join(masks)])
 
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
-        #if batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
-        if batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+        elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         logging.info(' '.join(args))
 
@@ -256,6 +256,7 @@ class EFTFit(object):
                 #return
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=1000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 1GB of RAM
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
@@ -391,14 +392,21 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
+    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', ignore=[]):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
         #else: self.wcs = scan_wcs
 
+        zero_ignore = []
+        freeze_ignore = []
+        if len(ignore)>0:
+            zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore])]
+            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
+            for iwc in ignore:
+                if iwc in scan_wcs: scan_wcs.remove(iwc)
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+other, mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other, mask, mask_syst, workspace)
 
     def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###

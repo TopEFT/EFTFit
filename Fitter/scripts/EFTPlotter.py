@@ -18,19 +18,19 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-        self.wc_ranges = {  'ctW':(-6,6),     'ctZ':(-5,5),
+        self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
                             'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-20,20),  'ctlSi':(-10,10),
+                            'ctli':(-5,5),  'ctlSi':(-10,10),
                             'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-30,50),  
-                            'ctlTi':(-4,4),   'ctei':(-10,10),
+                            'ctG':(-2,2),     'cpQM':(-10,30),  
+                            'ctlTi':(-1,1),   'ctei':(-10,10),
                             'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-10,10),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-0.7,1.0),
-                            'cQq11': (-0.7,0.7),'ctq1': (-2,2),
+                            'cpQ3':(-8,4),  'cbW':(-5,5),
+                            'cQq13': (-0.5,0.5),  'cQq83': (-1,1),
+                            'cQq11': (-2,2),'ctq1': (-2,2),
                             'cQq81': (-5,5),'ctq8': (-5,5),
                             'ctt1': (-5,5), 'cQQ1': (-7,7),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
+                            'cQt8': (-20,20), 'cQt1': (-6,6)
                          }
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
@@ -167,7 +167,7 @@ class EFTPlot(object):
 
         rootFile.Close()
 
-    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, final=False):
+    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
         if not wc:
             logging.error("No wc specified!")
             return
@@ -323,9 +323,10 @@ class EFTPlot(object):
         # Lgend
         legend = ROOT.TLegend(0.,0.,1,1)
         #legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
-        legend.AddEntry(graph1,"Others Profiled",'p')
-        legend.AddEntry(graph2,"Others Fixed to SM",'p')
+        legend.AddEntry(graph1,titles[0],'p')
+        legend.AddEntry(graph2,titles[1],'p')
         legend.SetTextSize(0.35)
+        legend.SetBorderSize(0)
         #legend.SetTextSize(0.035)
         #legend.SetNColumns(1)
         #legend.Draw('same')
@@ -493,14 +494,14 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False, final=False):
+    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
         if not wcs:
             wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
-            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log, final)
+            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log, final, titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
@@ -1243,6 +1244,7 @@ class EFTPlot(object):
             #pairs from AN
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            wcs_pairs = [('ctp', w) for w in self.wcs if w != 'ctp']
 
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
@@ -1278,7 +1280,12 @@ class EFTPlot(object):
             # Get scan TTree
             logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,param))
             fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,param))
-            limit_tree = fit_file.Get('limit')
+            # This is mostly used to compare TOP-19-001 to Run II, it will skip the 10 WCs not in TOP-19-001 only and set them to +/- 999
+            try:
+                limit_tree = fit_file.Get('limit')
+            except:
+                fit_array.append([param,0,[-999 ],[999]])
+                continue
 
             # Extract points
             wc_values = []
@@ -1612,7 +1619,7 @@ class EFTPlot(object):
         if 'Asimov' not in basename_float:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 65, 0, 64)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
         if 'Asimov' not in basename_float:
             h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
@@ -1815,14 +1822,16 @@ class EFTPlot(object):
 
         # Add legend
         legend = ROOT.TLegend(0.1,0.9,0.45,0.995)
+        if len(titles[0])>10 or len(titles[1])>10:
+            legend = ROOT.TLegend(0.1,0.9,0.6,0.995)
         graph_float_1sigma = graph_float.Clone("graph_float_1sigma")
         graph_freeze_1sigma = graph_freeze.Clone("graph_freeze_1sigma")
         graph_float_1sigma.SetLineWidth(3)
         graph_freeze_1sigma.SetLineWidth(3)
-        legend.AddEntry(graph_float,titles[0]+" (2#sigma)",'l')
-        legend.AddEntry(graph_float_1sigma,titles[0]+" (1#sigma)",'l')
-        legend.AddEntry(graph_freeze,titles[1]+" (2#sigma)",'l')
-        legend.AddEntry(graph_freeze_1sigma,titles[1]+" (1#sigma)",'l')
+        legend.AddEntry(graph_float,titles[0]+"\,(2\sigma)",'l')
+        legend.AddEntry(graph_float_1sigma,titles[0]+"\,(1\sigma)",'l')
+        legend.AddEntry(graph_freeze,titles[1]+"\,(2\sigma)",'l')
+        legend.AddEntry(graph_freeze_1sigma,titles[1]+"\,(1\sigma)",'l')
         legend.SetTextSize(0.025)
 
         # Draw everything
