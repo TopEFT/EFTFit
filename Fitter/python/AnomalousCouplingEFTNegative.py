@@ -308,7 +308,8 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
                 c1=match.group('c1')
                 return "func_quadratic_"+c1
             else:
-                raise RuntimeError("Undefined process %s"%process)
+                #raise RuntimeError("Undefined process %s"%process)
+                print("Undefined process %s, probably below threshold and ignored"%process)
 
         else:
             print 'Process %s not a signal'%process
