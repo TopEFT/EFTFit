@@ -1244,7 +1244,6 @@ class EFTPlot(object):
             #pairs from AN
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
-            wcs_pairs = [('ctp', w) for w in self.wcs if w != 'ctp']
 
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
