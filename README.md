@@ -9,7 +9,7 @@ Otherwise, this package should be compatible with most CMSSW releases. It still 
 To install this package:
 
     cd $CMSSW_BASE/src/
-    git clone https://github.com/cms-govner/EFTFit.git EFTFit
+    git clone https://github.com/TopEFT/EFTFit.git EFTFit
 
 # Directory Structure
 **fit_files:** Output files from calls to combine<br/>
