@@ -24,19 +24,35 @@ class EFTFit(object):
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
+        #2017 range
         self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
                             'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-5,5),  'ctlSi':(-10,10),
+                            'ctli':(-10,10),  'ctlSi':(-10,10),
                             'cQl3i':(-10,10), 'cptb':(-20,20),
                             'ctG':(-2,2),     'cpQM':(-10,30),  
-                            'ctlTi':(-1,1),   'ctei':(-10,10),
+                            'ctlTi':(-2,2),   'ctei':(-10,10),
                             'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-8,4),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-1,1),
+                            'cpQ3':(-15,10),  'cbW':(-5,5),
+                            'cQq13': (-1,1),  'cQq83': (-2,2),
                             'cQq11': (-2,2),'ctq1': (-2,2),
                             'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-7,7),
-                            'cQt8': (-20,20), 'cQt1': (-6,6)
+                            'ctt1': (-5,5), 'cQQ1': (-10,10),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
+                         }
+        #ptbl + ht offZ
+        self.wc_ranges = {  'ctW':(-2,2),     'ctZ':(-2,2),
+                            'cpt':(-15,15),   'ctp':(-10,20),
+                            'ctli':(-10,10),  'ctlSi':(-10,10),
+                            'cQl3i':(-10,10), 'cptb':(-20,20),
+                            'ctG':(-0.5,0.5),     'cpQM':(-10,20),  
+                            'ctlTi':(-2,2),   'ctei':(-10,10),
+                            'cQei':(-5,5),    'cQlMi':(-5,5),
+                            'cpQ3':(-10,5),  'cbW':(-5,5),
+                            'cQq13': (-0.5,0.5),  'cQq83': (-0.5,0.5),
+                            'cQq11': (-0.5,0.5),'ctq1': (-0.5,0.5),
+                            'cQq81': (-1,1),  'ctq8': (-1,1),
+                            'ctt1': (-5,5), 'cQQ1': (-4,4),
+                            'cQt8': (-10,10), 'cQt1': (-10,10)
                          }
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
@@ -218,6 +234,9 @@ class EFTFit(object):
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
         if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
+        if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
+            other.append('--setParameters')
+            other.append('=0,'.join([wc for wc in scan_params+params_tracked])+'=0')
         if other:             args.extend(other)
         if mask_syst:
             freeze.append(','.join(mask_syst))
