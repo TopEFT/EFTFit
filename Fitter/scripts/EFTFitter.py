@@ -54,6 +54,7 @@ class EFTFit(object):
                             'ctt1': (-5,5), 'cQQ1': (-4,4),
                             'cQt8': (-10,10), 'cQt1': (-10,10)
                          }
+        #2017 range
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
                             'missing_parton',
@@ -425,7 +426,6 @@ class EFTFit(object):
             for iwc in ignore:
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
         params = ','.join(['{}=0'.format(wc) for wc in scan_wcs])
-        print(params)
         for wc in scan_wcs:
             self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in scan_wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params], mask, mask_syst, workspace)
 
@@ -457,11 +457,12 @@ class EFTFit(object):
                 for wc in wcs:
                     if isinstance(wc, tuple): scan_wcs.append(wc)
                     else: scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
- 
+
+            params = ','.join(['{}=0'.format(w) for wc in scan_wcs for w in wc])
             for wcs in scan_wcs:
-                wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
+                wcs_tracked = [wc for wc in wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])]+other, mask=mask, mask_syst=mask_syst, workspace=workspace)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[], mask_syst=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
