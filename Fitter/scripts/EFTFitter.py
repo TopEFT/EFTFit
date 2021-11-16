@@ -236,7 +236,7 @@ class EFTFit(object):
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
             other.append('--setParameters')
-            other.append('=0,'.join([wc for wc in scan_params+params_tracked])+'=0')
+            other.append(','.join(['{}=0'.format(wc) for wc in scan_params+params_tracked]))
         if other:             args.extend(other)
         if mask_syst:
             freeze.append(','.join(mask_syst))
@@ -275,7 +275,7 @@ class EFTFit(object):
                 #return
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=1000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 1GB of RAM
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=3072\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
@@ -453,8 +453,8 @@ class EFTFit(object):
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
                 for wc in wcs:
-                    if isinstance(wc, tuple): continue
-                    scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
+                    if isinstance(wc, tuple): scan_wcs.append(wc)
+                    else: scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
  
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
@@ -531,7 +531,7 @@ class EFTFit(object):
         for wc in scan_wcs:
             self.retrieveGridScan('{}.{}'.format(basename,wc),batch)
 
-    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False):
+    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False, wcs=[]):
         ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
 
         # Use EVERY combination of wcs
@@ -547,6 +547,12 @@ class EFTFit(object):
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            if len(wcs) > 0:
+                scan_wcs = []
+                if isinstance(wcs, str): wcs = [wcs]
+                for wc in wcs:
+                    if isinstance(wc, tuple): continue
+                    scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
             for wcs in scan_wcs:
                 print wcs
                 print '{}.{}{}'.format(basename,wcs[0],wcs[1]), batch
