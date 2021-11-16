@@ -424,8 +424,10 @@ class EFTFit(object):
             freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
             for iwc in ignore:
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
+        params = ','.join(['{}=0'.format(wc) for wc in scan_wcs])
+        print(params)
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other, mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in scan_wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
