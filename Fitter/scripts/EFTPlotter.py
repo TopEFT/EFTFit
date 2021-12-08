@@ -51,7 +51,9 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
         #self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.lumi = 41.5#137
+        self.arXiv = "arXiv:2012.04120"
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -138,8 +140,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.19, 0.92, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.19, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         #self.CMS_extra.SetTextAlign(33)
@@ -150,7 +152,7 @@ class EFTPlot(object):
         self.arXiv_extra.SetTextSize(0.03)
         #self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
-        self.Lumi_text = ROOT.TLatex(0.34, 0.92, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.34, 0.92, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         #self.Lumi_text.SetTextAlign(30)
@@ -167,7 +169,33 @@ class EFTPlot(object):
 
         rootFile.Close()
 
-    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def duplicates(self, seq, item):
+        start_at = -1
+        locs = []
+        while True:
+            try:
+                loc = seq.index(item,start_at+1)
+            except ValueError:
+                break
+            else:
+                locs.append(loc)
+                start_at = loc
+        return locs
+
+    def clean_duplicates(self, graphwcs, graphnlls):
+        dup = [self.duplicates(graphwcs, x) for x in graphwcs]
+        unique_wcs = []
+        unique_nlls = []
+        for i,_ in enumerate(dup):
+            if isinstance(dup[i], list):
+               unique_wcs.append(graphwcs[dup[i][-1]])
+               unique_nlls.append(graphnlls[dup[i][-1]])
+            else:
+                unique_wcs.append(graphwcs[dup[i]])
+                unique_nlls.append(graphnlls[dup[i]])
+        return [unique_wcs, unique_nlls]
+
+    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, ceiling=10, final=False, titles=['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}']):
         if not wc:
             logging.error("No wc specified!")
             return
@@ -206,10 +234,17 @@ class EFTPlot(object):
             graph2wcs.append(limitTree2.GetLeaf(wc).GetValue(0))
             graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
 
+        dup = [self.duplicates(graph1wcs, x) for x in graph1wcs]
+        graph1wcs, graph1nlls = self.clean_duplicates(graph1wcs, graph1nlls)
+        graph2wcs, graph2nlls = self.clean_duplicates(graph2wcs, graph2nlls)
         # Rezero the y axis and make the tgraphs
-        zero = graph1nlls.index(0)
+        #zero = graph1nlls.index(0)
+        zero = 0
+        for n,z in enumerate(graph1nlls):
+            if abs(z) < abs(graph1nlls[zero]): zero = n
+        #zero = graph1nlls.index(min(graph1nlls))
         print graph1nlls[zero], graph1wcs[zero]
-        graph1nlls[zero] = 11
+        #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
@@ -231,12 +266,12 @@ class EFTPlot(object):
         xmin = self.wc_ranges[wc][0]
         xmax = self.wc_ranges[wc][1]
         for idx in range(graph1.GetN()):
-            if graph1.GetY()[idx] < 10 and graph1.GetX()[idx] < xmin:
+            if graph1.GetY()[idx] < ceiling and graph1.GetX()[idx] < xmin:
                 xmin = graph1.GetX()[idx]
-            if graph1.GetY()[idx] < 10 and graph1.GetX()[idx] > xmax:
+            if graph1.GetY()[idx] < ceiling and graph1.GetX()[idx] > xmax:
                 xmax = graph1.GetX()[idx]
         multigraph.GetXaxis().SetRangeUser(xmin,xmax)
-        multigraph.GetYaxis().SetRangeUser(-0.1,10)
+        multigraph.GetYaxis().SetRangeUser(-0.1,ceiling)
         h = ROOT.TH1F("h_overlay", "", 100, xmin, xmax)
         ROOT.gStyle.SetOptStat(0)
         h.GetXaxis().SetLabelSize(0.05)
@@ -244,7 +279,7 @@ class EFTPlot(object):
         h.GetXaxis().SetTitleSize(0.05)
         h.GetXaxis().SetTitleOffset(0.8)
         h.GetXaxis().SetRangeUser(xmin,xmax)
-        h.GetYaxis().SetRangeUser(-0.1,10)
+        h.GetYaxis().SetRangeUser(-0.1,ceiling)
         h.Draw()
         multigraph.Draw("P")
 
@@ -300,20 +335,20 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        #self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.31, 0.92, "arXiv:2012.04120")# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.31, 0.92, self.arXiv)# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.04)
         self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
-        if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        #if not final: self.arXiv_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -457,7 +492,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -501,6 +536,7 @@ class EFTPlot(object):
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
+            print(wc)
             self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log, final, titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
@@ -539,6 +575,7 @@ class EFTPlot(object):
         #htemp = ROOT.TH2F(hname,hname,200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
         hist.Project3DProfile().Draw('colz')
+        hist.SetTitle(';{};{}'.format(wcs[1],wcs[0]))
         
         #hist = canvas.GetPrimitive(hname)
 
@@ -563,19 +600,22 @@ class EFTPlot(object):
         hist.SetTitle("2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
+        ROOT.gStyle.SetOptStat(0)
+
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.665, 0.93, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.18, 0.96, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
-        self.CMS_text.SetTextSize(0.02)
+        self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.665, 0.90, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -584,6 +624,8 @@ class EFTPlot(object):
 
         # Save plot
         canvas.Print(hname+".png",'png')
+        canvas.Print(hname+".eps",'eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(hname,hname))
 
         # Save to root file
         # Log settings don't save to the histogram, so redundant to save those
@@ -697,7 +739,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -737,9 +779,11 @@ class EFTPlot(object):
 
 
         legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
-        legend.AddEntry(hc68,"1#sigma",'l')
-        legend.AddEntry(hc95,"2#sigma",'l')
-        legend.AddEntry(hc997,"3#sigma",'l')
+        # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
+        # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
+        legend.AddEntry(hc68,"68.27%",'l')
+        legend.AddEntry(hc95,"95.45%",'l')
+        legend.AddEntry(hc997,"99.73%",'l')
         legend.AddEntry(hSM,"SM value",'p')
         legend.SetTextSize(0.035)
         #legend.SetTextSize(0.025)
@@ -852,7 +896,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -938,7 +982,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.7, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.7, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -1056,7 +1100,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -1148,10 +1192,12 @@ class EFTPlot(object):
                     matrix.GetYaxis().SetRange(1,2)
                     matrix.GetXaxis().SetRange(nbins-1,nbins)
                 else:
-                    matrix.GetYaxis().SetRange(1,16)
-                    matrix.GetXaxis().SetRange(nbins-15,nbins)
-                    matrix.GetYaxis().SetRangeUser(12,28)
-                    matrix.GetXaxis().SetRangeUser(52,68)
+                    nwcs = len(self.wcs)
+                    matrix.GetYaxis().SetRange(1,nwcs)
+                    matrix.GetXaxis().SetRange(nbins-(nwcs-1),nbins)
+                    matrix.GetXaxis().LabelsOption("v")
+                    #matrix.GetYaxis().SetRangeUser(12,12+nwcs)
+                    #matrix.GetXaxis().SetRangeUser(52,52+nwcs)
 
                 # Change format of plot
                 matrix.SetStats(0)
@@ -1159,6 +1205,8 @@ class EFTPlot(object):
 
                 # Save the plot
                 canvas.Print(matrix.GetName()+'.png','png')
+                canvas.Print(matrix.GetName()+'.eps','eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(matrix.GetName(), matrix.GetName()))
 
                 # Save the plot to the histogram file
                 outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1233,7 +1281,7 @@ class EFTPlot(object):
 
         self.ContourPlotEFT(gridScanName,wcs,final)
 
-    def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False, final=False):
+    def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False, final=False, wcs=[]):
         ROOT.gROOT.SetBatch(True)
         
         wcs_pairs = self.wcs_pairs
@@ -1244,6 +1292,16 @@ class EFTPlot(object):
             #pairs from AN
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            wcs_pairs = [('ctp','cpt'), ('ctp','cQq11'), ('ctp','ctq1'), ('ctp','cQq81'), ('ctp','ctq8')]
+            wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
+            wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
+            wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
+            if len(wcs) > 0:
+                wcs_pairs = []
+                if isinstance(wcs, str): wcs = [wcs]
+                for wc in wcs:
+                    if isinstance(wc, tuple): continue
+                    wcs_pairs = wcs_pairs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
 
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
@@ -1350,7 +1408,7 @@ class EFTPlot(object):
                 if prevnll>1 and 1>nll:
                     #cross = fitfunc.GetX(2, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = prevnll-nll
-                    linPctInterp = (prevnll-2)/interval
+                    linPctInterp = (prevnll-1)/interval
                     if idx == 0:
                         print 'Range not found, setting to infinity'
                         l1sigma.append(-999)
@@ -1374,6 +1432,14 @@ class EFTPlot(object):
                 logging.error("Something is strange! Interval is missing endpoint!")
             if not len(l1sigma) == len(h1sigma):
                 logging.error("Something is strange! Interval is missing endpoint!")
+            if len(l1sigma) == 0:
+                l1sigma.append(-999)
+            if len(lowedges) == 0:
+                lowedges.append(-999)
+            if len(h1sigma) == 0:
+                h1sigma.append(999)
+            if len(highedges) == 0:
+                highedges.append(999)
             ## uncomment for 2 decimal place printing for AN
             #true_minimum = '%.2f' % float(true_minimum)
             #lowedges = ['%.2f' % elem for elem in lowedges]
@@ -1401,16 +1467,16 @@ class EFTPlot(object):
                 two[0] = tmp
                 one = ', '.join(one)
                 two = ', '.join(two)
-                s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
-                #s += str(best) + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
+                #s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
+                s += str(best) + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
             else:
-                s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
-                #s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
+                #s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
+                s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
             print s
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ["Others profiled","Others fixed to SM"], filename='', wcs=[], printFOM=False):
+    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False):
         if wcs != []: self.wcs = wcs
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
@@ -1862,14 +1928,14 @@ class EFTPlot(object):
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, "arXiv:2012.04120")# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, self.arXiv)# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.03)
         self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
         #if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -2026,7 +2092,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.9, "41.5 fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.9, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.03)
         self.Lumi_text.SetTextAlign(30)
