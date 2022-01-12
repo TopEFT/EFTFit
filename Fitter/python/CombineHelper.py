@@ -246,7 +246,7 @@ class CombineHelper(object):
             self.setOptions(preset=orig_ops)
 
     # Call DatacardMaker() to create the initial datacard text file
-    def make_datacard(self):
+    def make_datacard(self,remove_bkgds=[]):
         card_file = self.ops.getOption('datacard_file')
         hist_file = self.ops.getOption('histogram_file')
         fake_data = self.ops.getOption('fake_data')
@@ -257,6 +257,13 @@ class CombineHelper(object):
         self.dc_maker.outf = card_file
         fpath = os.path.join(CONST.TOPEFT_DATA_DIR,hist_file)
         self.logger.info("Using Histogram File: %s" % (fpath))
+        if len(remove_bkgds):
+            to_drop = regex_match(self.dc_maker.getBackgroundProcesses(),remove_bkgds)
+            to_keep = []
+            for bkgd in self.dc_maker.getBackgroundProcesses():
+                if not bkgd in to_drop:
+                    to_keep.append(bkgd)
+            self.dc_maker.setBackgroundProcesses(to_keep)
         self.dc_maker.make(fpath,fake_data,use_central)
         self.loadDatacard()
 
@@ -323,6 +330,8 @@ class CombineHelper(object):
         args = ['text2workspace.py',datacard]
         args.extend(['-o',ws_file])
         args.extend(['-P',model])
+        if len(self.dc_maker.getBackgroundProcesses()) == 0:
+            args.extend(['--X-allow-no-background'])
         for po in phys_ops: args.extend(['--PO',po])
 
         self.logger.info("text2workspace command: %s",' '.join(args))
