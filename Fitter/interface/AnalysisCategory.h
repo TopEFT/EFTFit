@@ -56,6 +56,7 @@ class AnalysisCategory {
         double getExpSum();
         double getExpSumError(RooFitResult* fr=0);
         void setProcOrder(std::vector<TString> order);
+        void mergeProcesses(TRegexp rgx,TString new_name);
         void Print(RooFitResult* fr=0);
 };
 
@@ -258,6 +259,32 @@ void AnalysisCategory::setProcOrder(std::vector<TString> order) {
     // }
 }
 
+// Merges together any processes that match 'rgx' and takes care to update
+//  the 'proc_width' and 'proc_order' data members to reflect mergers
+void AnalysisCategory::mergeProcesses(TRegexp rgx, TString new_name) {
+    std::vector<RooAddition*> procs_to_merge;
+    std::vector<TString> new_order; // We need to overwrite proc_order with only the objects that we are going to keep
+    this->proc_width = 0;   // Reset the width measure
+    for (TString name: this->getProcs()) {
+        RooAddition* ra = this->getRooAdd(name);
+        Ssiz_t len = name.Length();
+        bool chk = (rgx.Index(name,&len) > -1);
+        if (chk) {
+            procs_to_merge.push_back(ra);
+            this->exp_proc.erase(name.Data());  // Remove any procs that we're going to merge together
+        } else {
+            new_order.push_back(name);
+            this->proc_width = std::max(this->proc_width,name.Length());
+        }
+    }
+    new_order.push_back(new_name);
+    this->proc_width = std::max(this->proc_width,new_name.Length());
+
+    RooAddition* merged_process = this->helper.merge(procs_to_merge,new_name);
+    this->exp_proc[new_name.Data()] = merged_process;
+    this->proc_order = new_order;
+} 
+
 void AnalysisCategory::Print(RooFitResult* fr) {
     int pwidth = std::max(5,this->proc_width);
     int dwidth = 5; // Digit width
@@ -269,13 +296,21 @@ void AnalysisCategory::Print(RooFitResult* fr) {
     std::cout << TString::Format("%*s: %*.1f",pwidth,"data",dwidth,this->getData()) << std::endl;
     for (TString p: this->getProcs()) {
         val = this->getExpProc(p);
-        err = this->getExpProcError(p,fr);
+        if (fr) {
+            err = this->getExpProcError(p,fr);
+        } else {
+            err = 0.0;
+        }
         frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
         std::cout << TString::Format("%*s: %s",pwidth,p.Data(),frmt.Data()) << std::endl;
     }
     std::cout << line_break << std::endl;
     val = this->getExpSum();
-    err = this->getExpSumError(fr);
+    if (fr) {
+        err = this->getExpSumError(fr);
+    } else {
+        err = 0.0;
+    }
     frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
     std::cout << TString::Format("%*s: %s",pwidth,"Sum",frmt.Data()) << std::endl;
 

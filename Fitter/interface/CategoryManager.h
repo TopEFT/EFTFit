@@ -34,6 +34,7 @@ class CategoryManager {
         std::vector<AnalysisCategory*> getChildCategories(TString name);
         std::vector<AnalysisCategory*> getChildCategories(std::vector<TString> names);
 
+        void mergeProcesses(TRegexp rgx, TString new_name);
         void mergeCategories(TString mrg_name, std::vector<TString> cat_names, std::vector<TString> proc_order);
 
 };
@@ -101,6 +102,14 @@ std::vector<AnalysisCategory*> CategoryManager::getChildCategories(std::vector<T
         }
     }
     return children;
+}
+
+// Calls the `mergeProcesses` method on each AnalysisCategory owned by the manager
+void CategoryManager::mergeProcesses(TRegexp rgx, TString new_name) {
+    for (TString name: this->cat_names) {
+        AnalysisCategory* ana_cat = this->getCategory(name);
+        ana_cat->mergeProcesses(rgx,new_name);
+    }
 }
 
 /*
