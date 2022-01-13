@@ -123,21 +123,27 @@ def runit(group_directory,dir_name,mode,helper_ops,testing=False,force=False,cop
     # TODO: Should make these configurable from outside of the runit() function
     keep_bins = []
     # keep_bins = ['^C_2lss_.*','^C_3l_mix_sfz_.*','^C_4l_.*']
-    keep_bins = ['^C_2lss_.*','^C_3l_.*']
+    # keep_bins = ['^C_2lss_.*','^C_3l_.*']
 
     systs_to_remove = []
     # systs_to_remove = [ CombineSystematic(syst_name='FR_stats_.*',procs=['.*'],bins=['.*']) ]
+    systs_to_remove = [ CombineSystematic(syst_name='.*',procs=['.*'],bins=['.*']) ]
 
     to_keep = ["^EFT_MultiDim_Datacard.txt","^16D.root","^SMWorkspace.root","^out.log$"]
+
+    remove_bkgds = []
+    remove_bkgds = ['.*']
+    # remove_bkgds = ['fakes']
+
     helper.cleanDirectory(helper.output_dir,keep=to_keep)
     if force:
-        helper.make_datacard()
+        helper.make_datacard(remove_bkgds=remove_bkgds)
         if modify_datacard:
             helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins,remove_systs=systs_to_remove)
         helper.make_workspace()
     else:
         if not helper.hasDatacard():
-            helper.make_datacard()
+            helper.make_datacard(remove_bkgds=remove_bkgds)
         if modify_datacard:
             helper.loadDatacard()
             helper.modifyDatacard("mod_datacard.txt",filter_bins=keep_bins,remove_systs=systs_to_remove)
@@ -412,9 +418,19 @@ if __name__ == "__main__":
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGctWctp-ctWctZctp-cpQMcpQ3ctp-1M-pts'
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-cpQMcpQ3ctp-10M-pts'
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGcpQMctp-1M-pts'
-    dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGcpQMctp-10M-pts'
+    # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_floatPOIs_3D-ctGcpQMctp-10M-pts'
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_3D-cpQMcpQ3ctp-10M-pts'
     # dir_name = 'ana32_private_sgnl_Decorrelated-PS-PDF-Q2RF-QCUT_cmin0_freezePOIs_2D-AllCombos-90k-pts'
+
+    # Name for signal only and signal+bkgd Asimov limits
+    # dir_name = 'ana32_private_sgnl_Asimov_Signal-Only-Fit_cmin0_floatPOIs_1D-All-400-pts'
+    # dir_name = 'ana32_private_sgnl_Asimov_Signal-plus-Background-Fit_cmin0_floatPOIs_1D-All-400-pts'
+    # dir_name = 'ana32_private_sgnl_Asimov_No-Fakes-Fit_cmin0_floatPOIs_1D-All-400-pts'
+
+    # dir_name = 'ana32_private_sgnl_Asimov_Signal-Only-Fit_No-Systs_cmin0_floatPOIs_1D-All-400-pts'
+    # dir_name = 'ana32_private_sgnl_Asimov_Signal-Only-Fit_cmin0_freezePOIs_1D-All-400-pts'
+    dir_name = 'ana32_private_sgnl_Asimov_Signal-Only-Fit_No-Systs_cmin0_freezePOIs_1D-All-400-pts'
+
 
     hist_file = a32
     hist_file_merged = "{}_MergeLepFl.root".format(hist_file.strip('.root'))
@@ -439,6 +455,7 @@ if __name__ == "__main__":
     # What type of combine action to take
     # mode = HelperMode.EFT_GOF
     mode = HelperMode.EFT_GRIDSCAN
+    # mode = HelperMode.EFT_FITTING
 
     if HelperMode.isSM(mode):
         ops = HelperOptions(**SM_SIGNAL_OPS.getCopy())
@@ -594,9 +611,37 @@ if __name__ == "__main__":
         ('cpQ3','cbW'),
     ]
 
+    # Some EFT fitting options
+    # ops.setOptions(
+    #     fake_data=True,
+    #     float_other_pois=True,
+    #     use_poi_ranges=True
+    # )
+    # ops.setOptions(extend=True,other_options=[
+    #     # '--cminDefaultMinimizerStrategy=0',
+    #     # '--cminPreScan',
+    # ])
+
     # Some grid scan options
     batch_list = [
-        ('ctG','cpQM','ctp')
+        ('ctG',),
+        ('ctW',),
+        ('ctZ',),
+        ('ctp',),
+        ('cpt',),
+        ('cptb',),
+        ('ctli',),
+        ('ctlSi',),
+        ('ctlTi',),
+        ('cpQM',),
+        ('cQl3i',),
+        ('ctei',),
+        ('cQei',),
+        ('cQlMi',),
+        ('cpQ3',),
+        ('cbW',),
+
+        # ('ctG','cpQM','ctp')
         # ('ctG','ctW','ctp'),
         # ('ctZ','ctW','ctp'),
         # ('cpQM','cpQ3','ctp'),
@@ -604,17 +649,21 @@ if __name__ == "__main__":
     ops.setOptions(
         # set_parameters=['ctZ','ctW'],
         batch_list=batch_list,
+        scan_points=400,
         # scan_points=300**2,
-        scan_points=220**3,
+        # scan_points=220**3,
         split_points=30000,
-        float_other_pois=True,
+        float_other_pois=False,
         use_poi_ranges=True,
+        fake_data=True,
         batch_type=BatchType.CONDOR
     )
     ops.setOptions(extend=True,other_options=[
         '--cminDefaultMinimizerStrategy=0',
         '--cminPreScan'
     ])
+
+
     # Some options for doing the GoodnessOfFit test
     # ops.setOptions(extend=True,
     #     algo=FitAlgo.SATURATED,
@@ -639,8 +688,8 @@ if __name__ == "__main__":
         dir_name=dir_name,
         helper_ops=ops,
         mode=mode,
-        testing=True,
-        force=False,
+        testing=False,
+        force=True,
         copy_output=False,
-        modify_datacard=False
+        modify_datacard=True
     )
