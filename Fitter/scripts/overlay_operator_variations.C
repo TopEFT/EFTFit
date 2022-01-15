@@ -190,17 +190,17 @@ vTStr ALL_PROCS {
     //"WZ","ZZ","WW",
     //"WWW","WWZ","WZZ","ZZZ",
     //"singlet_tWchan","singletbar_tWchan",
-    "ttH","ttll","ttlnu","tllq","tHq"
-    // "ttlnu","ttll","ttH","tllq","tHq"
+    "ttH","ttll","ttlnu","tllq","tHq","tttt"
+    // "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr YIELD_TABLE_ORDER {
     "Diboson","Triboson","charge_flips","fakes","convs",
-    "ttlnu","ttll","ttH","tllq","tHq"
+    "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr SIG_PROCS {
-    "ttlnu","ttll","ttH","tllq","tHq"
+    "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr BKGD_PROCS {
@@ -294,6 +294,7 @@ std::unordered_map<std::string,Color_t> PROCESS_COLOR_MAP {
     {"tllq",kPink+1},
     // {"tHq",kCyan},
     {"tHq",kCyan+1},
+    {"tttt",kViolet-6},
     {"charge_flips",kAzure-9},
     {"fakes",kYellow-7},
     {"Diboson",kMagenta},
@@ -309,6 +310,7 @@ std::unordered_map<std::string,int> PROCESS_MARKER_MAP {
     {"ttH",kFullTriangleUp},  // kFullTriangleUp
     {"tllq",kFullTriangleDown}, // kFullTriangleDown
     {"tHq",kFullDiamond}   // kFullDiamond
+    {"tttt",kFullStar}   // kFullDiamond
     // {"charge_flips",},
     // {"fakes",},
     // {"Diboson",},
@@ -323,6 +325,7 @@ std::unordered_map<std::string,int> PROCESS_MARKER_SIZE_MAP {
     {"ttH"  ,2},
     {"tllq" ,2},
     {"tHq"  ,2},
+    {"tttt" ,2},
 
     {"charge_flips",1},
     {"fakes",1},
@@ -367,6 +370,7 @@ std::unordered_map<std::string,std::string> YIELD_LABEL_MAP {
     {"ttll","\\ttll"},
     {"tllq","\\tllq"},
     {"ttlnu","\\ttlnu"},
+    {"tttt","\\tttt"},
     {"charge_flips","Charge Flips"},
     {"fakes","Fakes"},
     {"convs","Conversions"}
@@ -2283,6 +2287,15 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     for (TString mrg_name: cat_group_names) {
         cat_manager.mergeCategories(mrg_name,cat_groups[mrg_name.Data()],YIELD_TABLE_ORDER);
     }
+    
+    //////////////////////
+    // Create some merged processes, i.e. create a new process which is the merger of all
+    //  sub-processes of the corresponding 'cat_groups' entry
+    //////////////////////
+    for (TString mrg_name: SIG_PROCS) {
+        cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
+    }
+    
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
     
