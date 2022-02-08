@@ -36,6 +36,7 @@ class CategoryManager {
 
         void mergeProcesses(TRegexp rgx, TString new_name);
         void mergeCategories(TString mrg_name, std::vector<TString> cat_names, std::vector<TString> proc_order);
+        void renameCategory(TString old_name, TString new_names);
 
 };
 
@@ -135,6 +136,22 @@ void CategoryManager::mergeCategories(TString mrg_name, std::vector<TString> cat
     AnalysisCategory* merged_cat = new AnalysisCategory(mrg_name,to_merge);
     merged_cat->setProcOrder(proc_order);
     this->all_cats[mrg_name.Data()] = merged_cat; // This might be a bit spicy...
+}
+
+
+void CategoryManager::renameCategory(TString new_name, TString old_name) {
+    if (this->hasCategory(new_name)) {
+        // Invalid new_name
+        std::cout << TString::Format("[WARNING] Unable to rename category. Category already exists: %s",new_name.Data()) << std::endl;
+        return;
+    }
+    if (!this->hasCategory(old_name)) {
+        std::cout << TString::Format("[WARNING] Unable to find category: %s",old_name.Data()) << std::endl;
+        return;
+    }
+    AnalysisCategory* cat = this->getCategory(old_name.Data());
+    cat->cat_name = new_name.Data();
+    this->all_cats[new_name.Data()] = cat;
 }
 
 #endif

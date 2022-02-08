@@ -6,7 +6,7 @@ import datetime
 import EFTFit.Fitter.consts as CONST
 
 from EFTFit.Fitter.LvlFormatter import LvlFormatter
-from EFTFit.Fitter.CombineHelper import CombineHelper
+#from EFTFit.Fitter.CombineHelper import CombineHelper
 from EFTFit.Fitter.utils import get_files, move_files, clean_dir
 from EFTFit.Fitter.make_html import make_html
 
@@ -28,11 +28,11 @@ console.setLevel(logging.INFO)
 console.setFormatter(frmt)
 logging.getLogger('').addHandler(console)
 
-helper = CombineHelper(out_dir="test_overlay_wrapper")
+#helper = CombineHelper(out_dir="test_overlay_wrapper")
 
 web_area = os.path.join(CONST.USER_DIR,'www')
 dir_ver  = 'data2017v1'  # This is sort of versioning for which version of the histogram file is being used
-testing  = True
+testing  = True 
 
 dirs = [
     #'SM_fitting_2019-04-04_1051_simultaneous_allcats',
@@ -59,23 +59,34 @@ dirs = [
 ]
 
 for d in dirs:
-    print d
-    input_dir  = os.path.join(CONST.EFTFIT_TEST_DIR,dir_ver,d)
-    output_dir = os.path.join(web_area,'eft_stuff/misc/fitting_plots',dir_ver,"{tstamp}_{dir}".format(tstamp=TSTAMP2,dir=d))
+    #print d
+    input_dir  = os.getcwd()#os.path.join(CONST.EFTFIT_TEST_DIR,dir_ver,d)
+    output_dir = os.path.join(web_area,'EFT/fitting_plots',dir_ver,"{tstamp}_{dir}".format(tstamp=TSTAMP2,dir=d))
     if testing:
-        output_dir = os.path.join(web_area,'eft_stuff/misc/fitting_plots','testing')
+        output_dir = os.path.join(web_area,'EFT/fitting_plots','testing')
     # output_dir = helper.getOutputDirectory()
 
     if not os.path.exists(output_dir):
         print "Making output directory: %s" % (output_dir)
         os.makedirs(output_dir)
-    helper.cleanDirectory(output_dir)
-
+    #helper.cleanDirectory(output_dir)
+    for filename in os.listdir(output_dir):
+        file_path = os.path.join(output_dir, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+            
+    macro_dir = os.path.join(CONST.EFTFIT_TEST_DIR,'../scripts/')
     root_args = "\"{indir}\",\"{outdir}\"".format(indir=input_dir,outdir=output_dir)
-    subprocess.check_call(['root','-b','-l','-q','overlay_operator_variations.C({args})'.format(args=root_args)])
+    subprocess.check_call(['root','-b','-l','-q', macro_dir + 'overlay_operator_variations.C({args})'.format(args=root_args)])
     
     to_convert = get_files('.',targets=['.eps','.ps'])
     for fn in to_convert:
+        continue
         # Note:
         #   This is so that the "\ell" symbol can get rendered properly when converted to a PDF and
         #   displayed in the analysis paper built by CMS TeX tools
@@ -87,7 +98,7 @@ for d in dirs:
 
 
     plots = get_files('.',targets=['.png','.pdf','.ps','.eps'])
-    if len(plots):
+    if 0:#len(plots):
         for fn in plots:
             print "fname: {}".format(fn)
         move_files(plots,output_dir)

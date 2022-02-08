@@ -119,7 +119,7 @@ struct CMSTextStyle {
         cms_rel_posX = 0.045;
         cms_rel_posY = 0.100;
 
-        lumi_text = "41.5 fb^{-1} (13 TeV)";
+        lumi_text = "";//"41.5 fb^{-1} (13 TeV)";
         lumi_align = 31;
         lumi_size = 0.60;
         lumi_font = 42;
@@ -309,7 +309,7 @@ std::unordered_map<std::string,int> PROCESS_MARKER_MAP {
     {"ttll",kFullSquare},       // kFullSquare
     {"ttH",kFullTriangleUp},  // kFullTriangleUp
     {"tllq",kFullTriangleDown}, // kFullTriangleDown
-    {"tHq",kFullDiamond}   // kFullDiamond
+    {"tHq",kFullDiamond},   // kFullDiamond
     {"tttt",kFullStar}   // kFullDiamond
     // {"charge_flips",},
     // {"fakes",},
@@ -528,7 +528,7 @@ TString CMSSW_BASE = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0
 TString EFTFIT_TEST_DIR = CMSSW_BASE + "src/EFTFit/Fitter/test/";
 
 TString FR_MDKEY = "fit_mdf";   // The name of the key for the fit result object from a multidimfit file
-TString FR_DIAGKEY = "nuisances_prefit_res";    // Same thing, but for a fitDiagnostics file
+TString FR_DIAGKEY = "fit_s";    // Same thing, but for a fitDiagnostics file
 
 TString save_type1 = "png";
 
@@ -2110,7 +2110,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "16D.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_njets.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
@@ -2131,10 +2131,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     RooFitResult* freezefit_nom = nullptr;
 
     prefit  = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,prefit_file);
-    postfit = load_fitresult(in_dir + "multidimfitPostfit.root"  ,FR_MDKEY,postfit_file);
-    bestfit = load_fitresult(in_dir + "multidimfitBestfit.root"  ,FR_MDKEY,bestfit_file);
-    nuisfit = load_fitresult(in_dir + "multidimfitNuisOnly.root" ,FR_MDKEY,nuisfit_file);
-    freezefit_nom = load_fitresult(in_dir + "multidimfitFreezeNom.root",FR_MDKEY,freeze_nom_file);
+    postfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,postfit_file);
+    bestfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,bestfit_file);
+    nuisfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root" ,FR_DIAGKEY,nuisfit_file);
+    freezefit_nom = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,freeze_nom_file);
     
     if (prefit) {
         ws->saveSnapshot("prefit_i",prefit->floatParsInit(),kTRUE);
@@ -2160,7 +2160,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     // Create instances of our helper classes
     WSHelper ws_helper = WSHelper();
     RooArgSet pois = ws_helper.getPOIs(ws);
-    RooArgSet nuis = ws_helper.getNuisances(ws);
+    //RooArgSet nuis = ws_helper.getNuisances(ws);
 
     // All of these categories are built from 'fundamental' categories (i.e. already exist in the 'all_cats' vector)
     std::unordered_map<std::string,std::vector<TString> > cat_groups;
@@ -2261,6 +2261,18 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         "C_4l_2b_3j",
         "C_2lss_m_2b_5j"
     };
+    
+    // The mapping from the actual categories to the channel names in the Run II workspace
+    std::unordered_map<std::string, TString> ch_groups;
+    ch_groups["2lss_m"]       = "ch1";
+    ch_groups["2lss_p"]       = "ch2";
+    ch_groups["3l_m_nsfz_1b"] = "ch3";
+    ch_groups["3l_p_nsfz_1b"] = "ch4";
+    ch_groups["3l_m_nsfz_2b"] = "ch5";
+    ch_groups["3l_p_nsfz_2b"] = "ch6";
+    ch_groups["3l_sfz_1b"]    = "ch7";
+    ch_groups["3l_sfz_2b"]    = "ch8";
+    ch_groups["4l"]           = "ch9";
 
     // For the njet merged plots, this determines the bin order
     std::vector<TString> cat_group_names {
@@ -2285,19 +2297,27 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //  sub-categories of the corresponding 'cat_groups' entry
     //////////////////////
     for (TString mrg_name: cat_group_names) {
-        cat_manager.mergeCategories(mrg_name,cat_groups[mrg_name.Data()],YIELD_TABLE_ORDER);
+        cat_manager.renameCategory(mrg_name.Data(),ch_groups[mrg_name.Data()].Data());
     }
     
     //////////////////////
     // Create some merged processes, i.e. create a new process which is the merger of all
     //  sub-processes of the corresponding 'cat_groups' entry
     //////////////////////
-    for (TString mrg_name: SIG_PROCS) {
+    for (TString mrg_name: ALL_PROCS) {
         cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
+    }
+    
+    for (TString name: cat_group_names) {
+        AnalysisCategory* ana_cat = cat_manager.getCategory(name);
+        ana_cat->Print(nullptr);
     }
     
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
+    for (AnalysisCategory* ana_cat: cats_to_plot) {
+        ana_cat->setAsimov();
+    }
     
     //////////////////////
     // Print some stuff
@@ -2356,16 +2376,16 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = false;
-    bool incl_summary_gif_plots = true;
+    bool incl_summary_plots = true;
+    bool incl_summary_gif_plots = false;
     bool incl_fluct_plots = false;
     bool incl_fluct_sum_plots = false;
     bool incl_njets_plots = false;
 
     // Plot layout options
     bool incl_ratio = true;
-    bool incl_leg = false;
-    bool incl_ext_leg = true;
+    bool incl_leg = true;
+    bool incl_ext_leg = false;
     
     // Note: Irrelevant if not making fluctuation plots
     // std::vector<TString> wc_to_fluctuate {};
@@ -2397,8 +2417,8 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         // Puts the bonus text in frame to avoid overlap with the cms_style.extra_text
         double cms_txt_xpos = 0.12;
         double cms_txt_ypos = 0.94;
-        double extra_txt_xoffset =  0.03;
-        double extra_txt_yoffset = -0.12;
+        double extra_txt_xoffset =  0.10;
+        double extra_txt_yoffset = -0.02;
         int extra_txt_align = 11;
 
         std::cout << "--- Prefit ---" << std::endl;

@@ -29,6 +29,8 @@ class AnalysisCategory {
         Int_t proc_width;
         TString cat_name;
         RooDataSet* roo_data;
+        RooDataSet* asimov_data;
+        bool use_asimov;
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
 
@@ -58,6 +60,7 @@ class AnalysisCategory {
         void setProcOrder(std::vector<TString> order);
         void mergeProcesses(TRegexp rgx,TString new_name);
         void Print(RooFitResult* fr=0);
+        void setAsimov();
 };
 
 // Normal constructor
@@ -73,6 +76,20 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         throw;
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
+    this->asimov_data = (RooDataSet*)obs_data.at(0);
+    
+    //AnalysisCategory* ana_cat = this;
+    //ana_cat->mergeProcesses(".*","merged");
+    /*
+    RooCategory roo_cat("asimov","asimov");
+    roo_cat.defineType("asimov");
+    RooRealVar rrv("_weight_","_weight_",0);
+    RooDataSet* rds = new RooDataSet("asimov_data","asimov_data",RooArgSet(rrv,roo_cat),"_weight_");
+    rds->add(roo_cat, this->getExpSum());
+    this->asimov_data = rds;
+    */
+    
+    this->use_asimov = false;   // Determine if getData() function return asimov data or real data
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
     TString search("_proc_");
@@ -127,6 +144,12 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
             this->roo_data = (RooDataSet*)other_data->Clone(category);
         } else {
             this->roo_data->append(*other_data);
+        }
+        RooDataSet* other_asimov_data = ana_cat.asimov_data;
+        if (!this->asimov_data) {
+            this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
+        } else {
+            this->asimov_data->append(*other_asimov_data);
         }
         for (TString p: ana_cat.getProcs()) {
             if (!this->hasProc(p)) {
@@ -184,10 +207,18 @@ RooAddition* AnalysisCategory::getRooAdd(TString proc) {
 
 // Returns the number of events in this category (which may be a merged category)
 double AnalysisCategory::getData() {
-    if (this->roo_data) {
-        return this->roo_data->sumEntries();
+    if (this->use_asimov) {
+        return this->asimov_data->sumEntries();
     }
-    return 0.0;
+    else {
+        if (this->roo_data) {
+            return this->roo_data->sumEntries();
+        }
+        else {
+            return 0.0;
+        }
+    }
+    return this->roo_data->sumEntries();
 }
 
 // Return the expected yield for a specific process
@@ -322,6 +353,16 @@ void AnalysisCategory::Print(RooFitResult* fr) {
     // this->roo_data->Print();
     // this->roo_data->printArgs(std::cout);
     // this->roo_data->printMultiline(std::cout,1);
+}
+
+void AnalysisCategory::setAsimov() {
+    this->use_asimov = true;
+    RooCategory roo_cat("asimov","asimov");
+    roo_cat.defineType("asimov");
+    RooRealVar rrv("_weight_","_weight_",0);
+    RooDataSet* rds = new RooDataSet("asimov_data","asimov_data",RooArgSet(rrv,roo_cat),"_weight_");
+    rds->add(roo_cat, this->getExpSum());
+    this->asimov_data = rds;
 }
 
 #endif
