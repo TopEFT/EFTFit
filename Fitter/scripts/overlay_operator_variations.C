@@ -2308,11 +2308,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
     }
     
-    for (TString name: cat_group_names) {
-        AnalysisCategory* ana_cat = cat_manager.getCategory(name);
-        ana_cat->Print(nullptr);
-    }
-    
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
     for (AnalysisCategory* ana_cat: cats_to_plot) {

@@ -77,18 +77,6 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
     this->asimov_data = (RooDataSet*)obs_data.at(0);
-    
-    //AnalysisCategory* ana_cat = this;
-    //ana_cat->mergeProcesses(".*","merged");
-    /*
-    RooCategory roo_cat("asimov","asimov");
-    roo_cat.defineType("asimov");
-    RooRealVar rrv("_weight_","_weight_",0);
-    RooDataSet* rds = new RooDataSet("asimov_data","asimov_data",RooArgSet(rrv,roo_cat),"_weight_");
-    rds->add(roo_cat, this->getExpSum());
-    this->asimov_data = rds;
-    */
-    
     this->use_asimov = false;   // Determine if getData() function return asimov data or real data
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
