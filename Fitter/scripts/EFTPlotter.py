@@ -7,6 +7,7 @@ import itertools
 import subprocess as sp
 import os
 from EFTFit.Fitter.ContourHelper import ContourHelper
+from scipy.signal import argrelextrema
 
 class EFTPlot(object):
     def __init__(self):
@@ -20,18 +21,35 @@ class EFTPlot(object):
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
                             'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-5,5),  'ctlSi':(-10,10),
-                            'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-10,30),  
-                            'ctlTi':(-1,1),   'ctei':(-10,10),
+                            'ctli':(-10,10),  'ctlSi':(-15,15),
+                            'cQl3i':(-15,15), 'cptb':(-20,20),
+                            'ctG':(-2,2),     'cpQM':(-10,10),  
+                            'ctlTi':(-2,2),   'ctei':(-10,10),
                             'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-8,4),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-1,1),
+                            'cpQ3':(-15,10),  'cbW':(-5,5),
+                            'cQq13': (-1,2),  'cQq83': (-2,2),
+                            'cQq11': (-2,2),'ctq1': (-2,5),
+                            'cQq81': (-5,5),'ctq8': (-5,5),
+                            'ctt1': (-5,5), 'cQQ1': (-10,10),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
+                         }
+        #2017 range
+        '''
+        self.wc_ranges = {  'ctW':(-5,5),     'ctZ':(-10,10),
+                            'cpt':(-20,20),   'ctp':(-20,50),
+                            'ctli':(-10,10),  'ctlSi':(-10,10),
+                            'cQl3i':(-20,20), 'cptb':(-50,50),
+                            'ctG':(-2,2),     'cpQM':(-10,30),
+                            'ctlTi':(-2,2),   'ctei':(-10,10),
+                            'cQei':(-10,10),  'cQlMi':(-10,10),
+                            'cpQ3':(-15,10),  'cbW':(-20,20),
+                            'cQq13': (-1,1),  'cQq83': (-2,2),
                             'cQq11': (-2,2),'ctq1': (-2,2),
                             'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-7,7),
-                            'cQt8': (-20,20), 'cQt1': (-6,6)
+                            'ctt1': (-5,5), 'cQQ1': (-10,10),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
                          }
+        '''
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
@@ -51,7 +69,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
         #self.CMS_extra.Draw('same')
-        self.lumi = 41.5#137
+        self.lumi = 137
         self.arXiv = "arXiv:2012.04120"
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
@@ -195,7 +213,18 @@ class EFTPlot(object):
                 unique_nlls.append(graphnlls[dup[i]])
         return [unique_wcs, unique_nlls]
 
-    def OverlayLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False, ceiling=10, final=False, titles=['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}']):
+    def OverlayLLPlot1DEFT(self,**kwargs):
+        name1 = kwargs.pop('name1','.test')
+        name2 = kwargs.pop('name2','.test')
+        wc  = kwargs.pop('wc','')
+        d1  = kwargs.pop('dir1','../fit_files')
+        d2  = kwargs.pop('dir2','../fit_files')
+        pf1 = kwargs.pop('pf1','')
+        pf2 = kwargs.pop('pf2','')
+        log = kwargs.pop('log',False)
+        ceiling = kwargs.pop('log',10)
+        final = kwargs.pop('final',False)
+        titles = kwargs.pop('titles',['Others Profiled', 'Others Fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
             return
@@ -537,7 +566,7 @@ class EFTPlot(object):
 
         for wc in wcs:
             print(wc)
-            self.OverlayLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log, final, titles)
+            self.OverlayLLPlot1DEFT(name1=basename1+'.'+wc, name2=basename2+'.'+wc, wc=wc, log=log, final=final, titles=titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
@@ -1461,14 +1490,22 @@ class EFTPlot(object):
             two = pline[3]
             two = ['%.2f' % elem for elem in two]
             s = pline[0] + ' & '
+            minima = []
             if len(one)==2:
                 tmp = one[1]
                 one[1] = two[0]
                 two[0] = tmp
+                ''' Find all local minima '''
+                minima = numpy.where(nll_values<4)
+                dx = numpy.diff(nll_values[minima])
+                idx = dx[1:] * dx[:-1] < 0
+                minima = wc_values[minima][numpy.append(numpy.logical_and(numpy.append(idx, [False]), dx<0), [False])]
+                ''' All local minima found '''
                 one = ', '.join(one)
                 two = ', '.join(two)
                 #s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
-                s += str(best) + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
+                s += str(best) + ' (' + ', '.join([str(round(x,2)) for x in minima]) + ') ' + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
+                line.append([x for x in minima])
             else:
                 #s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
                 s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
@@ -1493,8 +1530,10 @@ class EFTPlot(object):
         print 'freeze'
         fits_freeze = self.getIntervalFits(basename_freeze)
         if printFOM:
-            print('\n\nFoM (<1 is better)\nWC CI_low CI_high')
+            print('\n\nFoM (>1 is better)\nWC\tFoM')
             #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            # `(CI_(freeze high) - CI_(freeze low)) / (CI_(float high) - CI_(float low))`
+            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(basename_freeze, basename_freeze, basename_float, basename_float))
             print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'

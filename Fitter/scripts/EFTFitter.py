@@ -53,8 +53,22 @@ class EFTFit(object):
                             'cQq81': (-1,1),  'ctq8': (-1,1),
                             'ctt1': (-5,5), 'cQQ1': (-4,4),
                             'cQt8': (-10,10), 'cQt1': (-10,10)
-                         }
+                        }
         #2017 range
+        self.wc_ranges = {  'ctW':(-5,5),     'ctZ':(-10,10),
+                            'cpt':(-20,20),   'ctp':(-20,50),
+                            'ctli':(-10,10),  'ctlSi':(-10,10),
+                            'cQl3i':(-20,20), 'cptb':(-50,50),
+                            'ctG':(-2,2),     'cpQM':(-10,50),
+                            'ctlTi':(-2,2),   'ctei':(-10,10),
+                            'cQei':(-10,10),  'cQlMi':(-10,10),
+                            'cpQ3':(-15,10),  'cbW':(-20,20),
+                            'cQq13': (-1,1),  'cQq83': (-2,2),
+                            'cQq11': (-2,2),'ctq1': (-2,2),
+                            'cQq81': (-5,5),'ctq8': (-5,5),
+                            'ctt1': (-5,5), 'cQQ1': (-10,10),
+                            'cQt8': (-20,20), 'cQt1': (-10,10)
+                         }
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
                             'missing_parton',
@@ -554,8 +568,8 @@ class EFTFit(object):
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
                 for wc in wcs:
-                    if isinstance(wc, tuple): continue
-                    scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
+                    if isinstance(wc, tuple): scan_wcs.append(wc)
+                    else: scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
             for wcs in scan_wcs:
                 print wcs
                 print '{}.{}{}'.format(basename,wcs[0],wcs[1]), batch

@@ -28,7 +28,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             self.numOperators[sig]=len(operators[sig])
             self.alloperators.extend(operators[sig])
         self.alloperators=list(set(self.alloperators))
-        print(self.alloperators)
+        print(self.Operators)
         
 
         # regular expressions for process names:
