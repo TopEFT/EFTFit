@@ -223,8 +223,6 @@ class EFTPlot(object):
         pf2 = kwargs.pop('pf2','')
         log = kwargs.pop('log',False)
         ceiling = kwargs.pop('log',10)
-=======
->>>>>>> 3ba14a12f4505d7d73d3ccec8ce9bf90f58de948
         final = kwargs.pop('final',False)
         titles = kwargs.pop('titles',['Others Profiled', 'Others Fixed to SM'])
         if not wc:
