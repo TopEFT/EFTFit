@@ -223,16 +223,18 @@ class EFTPlot(object):
         pf2 = kwargs.pop('pf2','')
         log = kwargs.pop('log',False)
         ceiling = kwargs.pop('log',10)
+=======
+>>>>>>> 3ba14a12f4505d7d73d3ccec8ce9bf90f58de948
         final = kwargs.pop('final',False)
         titles = kwargs.pop('titles',['Others Profiled', 'Others Fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
             return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name1)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name1))
+        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
+            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
             return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name2)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name2))
+        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
+            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
             return
 
         ROOT.gROOT.SetBatch(True)
@@ -243,10 +245,10 @@ class EFTPlot(object):
         p1.cd()
 
         # Get scan trees
-        rootFile1 = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name1))
+        rootFile1 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1))
         limitTree1 = rootFile1.Get('limit')
 
-        rootFile2 = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name2))
+        rootFile2 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2))
         limitTree2 = rootFile2.Get('limit')
 
         # Get coordinates for TGraphs
@@ -1350,7 +1352,13 @@ class EFTPlot(object):
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
-    def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
+    # def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
+    def getIntervalFits(self,**kwargs):
+        basename    = kwargs.pop('basename','.EFT.SM.Float')
+        params      = kwargs.pop('params',[])
+        siginterval = kwargs.pop('siginterval',2)
+        dir_path    = kwargs.pop('dir_path','../fit_files')
+        postfix     = kwargs.pop('postfix','')
         ### Return a table of parameters, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
         if not params:
@@ -1364,8 +1372,8 @@ class EFTPlot(object):
         for param in params:
 
             # Get scan TTree
-            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit.root".format(basename,param))
-            fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,param))
+            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
+            fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
             # This is mostly used to compare TOP-19-001 to Run II, it will skip the 10 WCs not in TOP-19-001 only and set them to +/- 999
             try:
                 limit_tree = fit_file.Get('limit')
