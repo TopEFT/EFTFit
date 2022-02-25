@@ -20,7 +20,7 @@ class EFTPlot(object):
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
-                            'cpt':(-40,30),   'ctp':(-35,65),
+                            'cpt':(-30,30),   'ctp':(-35,65),
                             'ctli':(-10,10),  'ctlSi':(-15,15),
                             'cQl3i':(-15,15), 'cptb':(-20,20),
                             'ctG':(-2,2),     'cpQM':(-10,10),  
@@ -28,7 +28,7 @@ class EFTPlot(object):
                             'cQei':(-10,10),  'cQlMi':(-10,10),
                             'cpQ3':(-15,10),  'cbW':(-5,5),
                             'cQq13': (-1,2),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,5),
+                            'cQq11': (-2,2),'ctq1': (-2,2),
                             'cQq81': (-5,5),'ctq8': (-5,5),
                             'ctt1': (-5,5), 'cQQ1': (-10,10),
                             'cQt8': (-20,20), 'cQt1': (-10,10)
@@ -1278,7 +1278,7 @@ class EFTPlot(object):
     def batchGrid2DWC(self, name=''):
         best = []
 
-        fits_float = self.getIntervalFits(name)
+        fits_float = self.getIntervalFits(basename=name)
         fits = {lst[0] : lst[1] for lst in fits_float}
 
         for wc in self.wcs:
@@ -1532,11 +1532,11 @@ class EFTPlot(object):
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
         print 'float'
-        fits_float = self.getIntervalFits(basename_float)
+        fits_float = self.getIntervalFits(basename=basename_float)
         print 'freeze'
-        fits_freeze = self.getIntervalFits(basename_freeze)
+        fits_freeze = self.getIntervalFits(basename=basename_freeze)
         if printFOM:
-            print('\n\nFoM (>1 is better)\nWC\tFoM')
+            print('\n\nFoM (<1 is better)\nWC\tFoM')
             #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
             # `(CI_(freeze high) - CI_(freeze low)) / (CI_(float high) - CI_(float low))`
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(basename_freeze, basename_freeze, basename_float, basename_float))
@@ -1545,14 +1545,14 @@ class EFTPlot(object):
         print 'one sigma'
         print 'float'
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
-        fits_float1sigma = self.getIntervalFits(basename_float,siginterval=1)
+        fits_float1sigma = self.getIntervalFits(basename=basename_float,siginterval=1)
         print 'freeze'
-        fits_freeze1sigma = self.getIntervalFits(basename_freeze,siginterval=1)
+        fits_freeze1sigma = self.getIntervalFits(basename=basename_freeze,siginterval=1)
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
+                line[0] = 'ctG#times4'
+                line[1] = line[1]*4
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
             if line[0]=='cQq13':
@@ -1575,26 +1575,26 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
+            #if line[0]=='ctp':
+            #    line[0] = 'ctp#divide5'
+            #    line[1] = line[1]/5
+            #    line[2] = [val/5 for val in line[2]]
+            #    line[3] = [val/5 for val in line[3]]
+            #if line[0]=='cpt':
+            #    line[0] = 'cpt#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
+            #if line[0]=='cpQM':
+            #    line[0] = 'cpQM#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
+                line[0] = 'ctG#times4'
+                line[1] = line[1]*4
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
             if line[0]=='cQq13':
@@ -1617,26 +1617,26 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
+            #if line[0]=='ctp':
+            #    line[0] = 'ctp#divide5'
+            #    line[1] = line[1]/5
+            #    line[2] = [val/5 for val in line[2]]
+            #    line[3] = [val/5 for val in line[3]]
+            #if line[0]=='cpt':
+            #    line[0] = 'cpt#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
+            #if line[0]=='cpQM':
+            #    line[0] = 'cpQM#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_float1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
+                line[0] = 'ctG#times4'
+                line[1] = line[1]*4
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
             if line[0]=='cQq13':
@@ -1659,26 +1659,26 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
+            #if line[0]=='ctp':
+            #    line[0] = 'ctp#divide5'
+            #    line[1] = line[1]/5
+            #    line[2] = [val/5 for val in line[2]]
+            #    line[3] = [val/5 for val in line[3]]
+            #if line[0]=='cpt':
+            #    line[0] = 'cpt#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
+            #if line[0]=='cpQM':
+            #    line[0] = 'cpQM#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
+                line[0] = 'ctG#times4'
+                line[1] = line[1]*4
                 line[2] = [val*2 for val in line[2]]
                 line[3] = [val*2 for val in line[3]]
             if line[0]=='cQq13':
@@ -1701,21 +1701,21 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
+            #if line[0]=='ctp':
+            #    line[0] = 'ctp#divide5'
+            #    line[1] = line[1]/5
+            #    line[2] = [val/5 for val in line[2]]
+            #    line[3] = [val/5 for val in line[3]]
+            #if line[0]=='cpt':
+            #    line[0] = 'cpt#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
+            #if line[0]=='cpQM':
+            #    line[0] = 'cpQM#divide2'
+            #    line[1] = line[1]/2
+            #    line[2] = [val/2 for val in line[2]]
+            #    line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
         numWC=len(self.wcs)
@@ -1729,9 +1729,9 @@ class EFTPlot(object):
         if 'Asimov' not in basename_float:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         if 'Asimov' not in basename_float:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1758,7 +1758,7 @@ class EFTPlot(object):
             #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
             y_labels[idy].SetTextAlign(22)
             y_labels[idy].SetTextSize(0.03)
-            if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
+            #if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
@@ -1962,25 +1962,25 @@ class EFTPlot(object):
         for label in y_labels:
             label.Draw('same')
         legend.Draw('same')
-        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
         #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.885, 0.87, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, self.arXiv)# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.03)
         self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
         #if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
