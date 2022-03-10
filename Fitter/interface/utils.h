@@ -1,6 +1,9 @@
+#include <string>
 #include <vector>
 #include <list>
 #include <unordered_map>
+#include <map>
+#include <iostream>
 
 #include "TString.h"
 #include "TText.h"
@@ -11,6 +14,7 @@
 #include "RooRealVar.h"
 #include "RooAbsData.h"
 
+#include "split_string.h"
 #include "AnalysisCategory.h"
 
 /*// See: https://root-forum.cern.ch/t/width-of-a-tlatex-text/20961/13
@@ -564,4 +568,64 @@ void removeErrors(RooArgSet pars,RooArgSet pois) {
             }        
         }
     }
+}
+
+// Returns the mapping of ch <-> long string from a text datacard
+std::map<std::string,TString> get_channel_map(TString fpath, bool reverse=false) {
+    std::map<std::string,TString> ch_map;
+    ifstream inf(fpath);
+    if (!inf) {
+        std::cout << "[ERROR] Unable to open file: " << fpath << std::endl;
+        return ch_map;
+    }
+
+    std::cout << "Parsing: " << fpath << std::endl;
+
+    uint CH_IDX(2);
+    uint NAME_IDX(3);
+
+    std::string line;
+
+    /* Eat the header information */
+    while (!inf.eof()) {
+        std::getline(inf,line);
+        TString t_line(line);
+        if (t_line.BeginsWith("---")) {
+            break;
+        }
+    }
+
+    /* Parse the ch <-> name mapping */
+    while (!inf.eof()) {
+        std::getline(inf,line);
+        TString t_line(line);
+        if (t_line.BeginsWith("---")) {
+            break;
+        }
+
+        std::vector<std::string> split;
+        split_string(line,split);
+
+        /* Remove all blank spaces from the vector */
+        for (auto it = split.begin(); it != split.end();) {
+            TString t_line(*it);
+            if (t_line.EqualTo("")) {
+                it = split.erase(it);
+            } else {
+                it++;
+            }
+        }
+        TString ch = split.at(CH_IDX);
+        TString name = split.at(NAME_IDX);
+        
+        name = name.ReplaceAll("ttx_multileptons-","").ReplaceAll(".root","");
+
+        if (reverse) {
+            ch_map[name.Data()] = ch;
+        } else {
+            ch_map[ch.Data()] = name;
+        }
+    }
+
+    return ch_map;
 }

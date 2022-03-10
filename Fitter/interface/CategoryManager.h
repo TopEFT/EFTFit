@@ -90,7 +90,6 @@ std::vector<AnalysisCategory*> CategoryManager::getChildCategories(TString name)
         AnalysisCategory* child = this->getCategory(s);
         children.push_back(child);
     }
-
     return children;
 }
 
@@ -120,6 +119,7 @@ Desc:
 */
 void CategoryManager::mergeCategories(TString mrg_name, std::vector<TString> cat_names, std::vector<TString> proc_order) {
     std::vector<AnalysisCategory*> to_merge;
+    
     if (this->hasCategory(mrg_name)) {
         // Invalid mrg_name
         std::cout << TString::Format("[WARNING] Unable to merge categories. Invalid merge name: %s",mrg_name.Data()) << std::endl;
@@ -133,9 +133,15 @@ void CategoryManager::mergeCategories(TString mrg_name, std::vector<TString> cat
         AnalysisCategory* cat = this->getCategory(s);
         to_merge.push_back(cat);
     }
+    
+    for (AnalysisCategory* cat_merge: to_merge) {
+        cat_merge->setAsimov();
+    }
+    
     AnalysisCategory* merged_cat = new AnalysisCategory(mrg_name,to_merge);
     merged_cat->setProcOrder(proc_order);
     this->all_cats[mrg_name.Data()] = merged_cat; // This might be a bit spicy...
+    this->cat_names.push_back(mrg_name);
 }
 
 

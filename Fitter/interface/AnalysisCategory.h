@@ -67,13 +67,14 @@ class AnalysisCategory {
 AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->cat_name = category;
     this->helper = WSHelper();
-
+    TRegexp catExp = TRegexp("^"+category+"$");
+    
     std::vector<RooCatType*> all_cats = this->helper.getTypes(ws,"CMS_channel");
-    std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats,category);
+    std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, catExp);
     std::vector<RooAbsData*> obs_data = this->helper.getObsData(ws,"data_obs","CMS_channel",tar_cats);
     if (obs_data.size() != 1) {
         std::cout << TString::Format("[WARNING] obs_data incorrect size: %zu",obs_data.size()) << std::endl;
-        throw;
+        throw;  
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
     this->asimov_data = (RooDataSet*)obs_data.at(0);
@@ -133,12 +134,14 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
         } else {
             this->roo_data->append(*other_data);
         }
-        RooDataSet* other_asimov_data = ana_cat.asimov_data;
+        
+        /*RooDataSet* other_asimov_data = ana_cat.asimov_data;
         if (!this->asimov_data) {
             this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
         } else {
             this->asimov_data->append(*other_asimov_data);
-        }
+        }*/
+        
         for (TString p: ana_cat.getProcs()) {
             if (!this->hasProc(p)) {
                 this->exp_proc[p.Data()] = nullptr;  // Temporarily set to a nullptr
@@ -244,6 +247,7 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     for (TString p: this->getProcs()) {
         to_merge.push_back(this->getRooAdd(p));
     }
+    
     RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
     double err = tmp_mrg->getPropagatedError(*fr);
     // I don't know if this is a good idea or not...
@@ -271,11 +275,6 @@ void AnalysisCategory::setProcOrder(std::vector<TString> order) {
         new_order.push_back(s);
     }
     this->proc_order = new_order;
-
-    // std::cout << "New Process Order:" << std::endl;
-    // for (TString s: this->getProcs()) {
-    //     std::cout << "\t" << s << std::endl;
-    // }
 }
 
 // Merges together any processes that match 'rgx' and takes care to update
@@ -332,15 +331,6 @@ void AnalysisCategory::Print(RooFitResult* fr) {
     }
     frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
     std::cout << TString::Format("%*s: %s",pwidth,"Sum",frmt.Data()) << std::endl;
-
-    // for (TString p: this->getProcs()) {
-    //     RooAddition* r = this->getRooAdd(p);
-    //     r->Print();
-    // }
-    // std::cout << std::endl;
-    // this->roo_data->Print();
-    // this->roo_data->printArgs(std::cout);
-    // this->roo_data->printMultiline(std::cout,1);
 }
 
 void AnalysisCategory::setAsimov() {

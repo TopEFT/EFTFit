@@ -222,6 +222,8 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     // For use with eps and ps save types
     {"2lss_m","2\\ell\\text{ss}(-)"},
     {"2lss_p","2\\ell\\text{ss}(+)"},
+    {"2lss_4t_m","2\\ell\\text{ss 4t}(-)"},
+    {"2lss_4t_p","2\\ell\\text{ss 4t}(+)"},
     {"3l_p_nsfz_1b","3\\ell 1\\text{b}(+)"},
     {"3l_m_nsfz_1b","3\\ell 1\\text{b}(-)"},
     {"3l_p_nsfz_2b","3\\ell 2\\text{b}(+)"},
@@ -2110,12 +2112,29 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "wps_njets.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_lj0pt_nonuis.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
+    
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_feb16/combinedcard.txt";  // hard-coded path for the datacard for now.
+    std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
+    
+    for (const auto & [lstring, ch] : ch_map) {
+        int counter = 0;
+        for(int i = 0; i < lstring.length(); i++) {
+            if(lstring[i] == '_') {
+                counter = i;
+            }
+        }
+        std::string chstring = lstring.substr(0, counter);  // remove the last segment of the channel name, like "_lj0pt"
+        auto nodeHandler = ch_map.extract(lstring);
+        nodeHandler.key() = chstring;
+        ch_map.insert(std::move(nodeHandler));
+    }
+    
 
     // Note: We currently don't make use of the 'FreezeUp'/'FreezeDown' fitresult files
     TFile* prefit_file = nullptr;
@@ -2165,139 +2184,145 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     // All of these categories are built from 'fundamental' categories (i.e. already exist in the 'all_cats' vector)
     std::unordered_map<std::string,std::vector<TString> > cat_groups;
     cat_groups["all"] = {
-        "C_2lss_p_2b_4j",
-        "C_2lss_p_2b_5j",
-        "C_2lss_p_2b_6j",
-        "C_2lss_p_2b_ge7j",
-        "C_2lss_m_2b_4j",
-        "C_2lss_m_2b_5j",
-        "C_2lss_m_2b_6j",
-        "C_2lss_m_2b_ge7j",
-        "C_3l_mix_p_1b_2j",
-        "C_3l_mix_p_1b_3j",
-        "C_3l_mix_p_1b_4j",
-        "C_3l_mix_p_1b_ge5j",
-        "C_3l_mix_m_1b_2j",
-        "C_3l_mix_m_1b_3j",
-        "C_3l_mix_m_1b_4j",
-        "C_3l_mix_m_1b_ge5j",
-        "C_3l_mix_p_2b_2j",
-        "C_3l_mix_p_2b_3j",
-        "C_3l_mix_p_2b_4j",
-        "C_3l_mix_p_2b_ge5j",
-        "C_3l_mix_m_2b_2j",
-        "C_3l_mix_m_2b_3j",
-        "C_3l_mix_m_2b_4j",
-        "C_3l_mix_m_2b_ge5j",
-        "C_3l_mix_sfz_1b_2j",
-        "C_3l_mix_sfz_1b_3j",
-        "C_3l_mix_sfz_1b_4j",
-        "C_3l_mix_sfz_1b_ge5j",
-        "C_3l_mix_sfz_2b_2j",
-        "C_3l_mix_sfz_2b_3j",
-        "C_3l_mix_sfz_2b_4j",
-        "C_3l_mix_sfz_2b_ge5j",
-        "C_4l_2b_2j",
-        "C_4l_2b_3j",
-        "C_4l_2b_ge4j",
+        "2lss_4t_m_4j_2b",
+        "2lss_4t_m_5j_2b",
+        "2lss_4t_m_6j_2b",
+        "2lss_4t_m_7j_2b",
+        "2lss_4t_p_4j_2b",
+        "2lss_4t_p_5j_2b",
+        "2lss_4t_p_6j_2b",
+        "2lss_4t_p_7j_2b",
+        "2lss_m_4j_2b",
+        "2lss_m_5j_2b",
+        "2lss_m_6j_2b",
+        "2lss_m_7j_2b",
+        "2lss_p_4j_2b",
+        "2lss_p_5j_2b",
+        "2lss_p_6j_2b",
+        "2lss_p_7j_2b",
+        "3l_m_offZ_1b_2j",
+        "3l_m_offZ_1b_3j",
+        "3l_m_offZ_1b_4j",
+        "3l_m_offZ_1b_5j",
+        "3l_m_offZ_2b_2j",
+        "3l_m_offZ_2b_3j",
+        "3l_m_offZ_2b_4j",
+        "3l_m_offZ_2b_5j",
+        "3l_p_offZ_1b_2j",
+        "3l_p_offZ_1b_3j",
+        "3l_p_offZ_1b_4j",
+        "3l_p_offZ_1b_5j",
+        "3l_p_offZ_2b_2j",
+        "3l_p_offZ_2b_3j",
+        "3l_p_offZ_2b_4j",
+        "3l_p_offZ_2b_5j",
+        "3l_onZ_1b_2j",
+        "3l_onZ_1b_3j",
+        "3l_onZ_1b_4j",
+        "3l_onZ_1b_5j",
+        "3l_onZ_2b_2j",
+        "3l_onZ_2b_3j",
+        "3l_onZ_2b_4j",
+        "3l_onZ_2b_5j",
+        "4l_2j_2b",
+        "4l_3j_2b",
+        "4l_4j_2b",
+    };
+    cat_groups["2lss_4t_m"] = {
+        "2lss_4t_m_4j_2b",
+        "2lss_4t_m_5j_2b",
+        "2lss_4t_m_6j_2b",
+        "2lss_4t_m_7j_2b",
+    };
+    cat_groups["2lss_4t_p"] = {
+        "2lss_4t_p_4j_2b",
+        "2lss_4t_p_5j_2b",
+        "2lss_4t_p_6j_2b",
+        "2lss_4t_p_7j_2b",
     };
     cat_groups["2lss_m"] = {
-        "C_2lss_m_2b_4j",
-        "C_2lss_m_2b_5j",
-        "C_2lss_m_2b_6j",
-        "C_2lss_m_2b_ge7j"
+        "2lss_m_4j_2b",
+        "2lss_m_5j_2b",
+        "2lss_m_6j_2b",
+        "2lss_m_7j_2b",
     };
     cat_groups["2lss_p"] = {
-        "C_2lss_p_2b_4j",
-        "C_2lss_p_2b_5j",
-        "C_2lss_p_2b_6j",
-        "C_2lss_p_2b_ge7j",
+        "2lss_p_4j_2b",
+        "2lss_p_5j_2b",
+        "2lss_p_6j_2b",
+        "2lss_p_7j_2b",
     };
-    cat_groups["3l_p_nsfz_1b"] = {
-        "C_3l_mix_p_1b_2j",
-        "C_3l_mix_p_1b_3j",
-        "C_3l_mix_p_1b_4j",
-        "C_3l_mix_p_1b_ge5j",
+    cat_groups["3l_m_offZ_1b"] = {
+        "3l_m_offZ_1b_2j",
+        "3l_m_offZ_1b_3j",
+        "3l_m_offZ_1b_4j",
+        "3l_m_offZ_1b_5j",
     };
-    cat_groups["3l_m_nsfz_1b"] = {
-        "C_3l_mix_m_1b_2j",
-        "C_3l_mix_m_1b_3j",
-        "C_3l_mix_m_1b_4j",
-        "C_3l_mix_m_1b_ge5j",
+    cat_groups["3l_m_offZ_2b"] = {
+        "3l_m_offZ_2b_2j",
+        "3l_m_offZ_2b_3j",
+        "3l_m_offZ_2b_4j",
+        "3l_m_offZ_2b_5j",
     };
-    cat_groups["3l_p_nsfz_2b"] = {
-        "C_3l_mix_p_2b_2j",
-        "C_3l_mix_p_2b_3j",
-        "C_3l_mix_p_2b_4j",
-        "C_3l_mix_p_2b_ge5j",
+    cat_groups["3l_p_offZ_1b"] = {
+        "3l_p_offZ_1b_2j",
+        "3l_p_offZ_1b_3j",
+        "3l_p_offZ_1b_4j",
+        "3l_p_offZ_1b_5j",
     };
-    cat_groups["3l_m_nsfz_2b"] = {
-        "C_3l_mix_m_2b_2j",
-        "C_3l_mix_m_2b_3j",
-        "C_3l_mix_m_2b_4j",
-        "C_3l_mix_m_2b_ge5j",
+    cat_groups["3l_p_offZ_2b"] = {
+        "3l_p_offZ_2b_2j",
+        "3l_p_offZ_2b_3j",
+        "3l_p_offZ_2b_4j",
+        "3l_p_offZ_2b_5j",
     };
-    cat_groups["3l_sfz_1b"] = {
-        "C_3l_mix_sfz_1b_2j",
-        "C_3l_mix_sfz_1b_3j",
-        "C_3l_mix_sfz_1b_4j",
-        "C_3l_mix_sfz_1b_ge5j",
+    cat_groups["3l_onZ_1b"] = {
+        "3l_onZ_1b_2j",
+        "3l_onZ_1b_3j",
+        "3l_onZ_1b_4j",
+        "3l_onZ_1b_5j",
     };
-    cat_groups["3l_sfz_2b"] = {
-        "C_3l_mix_sfz_2b_2j",
-        "C_3l_mix_sfz_2b_3j",
-        "C_3l_mix_sfz_2b_4j",
-        "C_3l_mix_sfz_2b_ge5j",
+    cat_groups["3l_onZ_2b"] = {
+        "3l_onZ_2b_2j",
+        "3l_onZ_2b_3j",
+        "3l_onZ_2b_4j",
+        "3l_onZ_2b_5j",
     };
     cat_groups["4l"] = {
-        "C_4l_2b_2j",
-        "C_4l_2b_3j",
-        "C_4l_2b_ge4j",
-    };
-
-    // Can of course have groups of any arbitrary combination
-    cat_groups["wacky"] = {
-        "C_3l_mix_p_1b_2j",
-        "C_4l_2b_3j",
-        "C_2lss_m_2b_5j"
+        "4l_2j_2b",
+        "4l_3j_2b",
+        "4l_4j_2b",
     };
     
-    // The mapping from the actual categories to the channel names in the Run II workspace
-    std::unordered_map<std::string, TString> ch_groups;
-    ch_groups["2lss_m"]       = "ch1";
-    ch_groups["2lss_p"]       = "ch2";
-    ch_groups["3l_m_nsfz_1b"] = "ch3";
-    ch_groups["3l_p_nsfz_1b"] = "ch4";
-    ch_groups["3l_m_nsfz_2b"] = "ch5";
-    ch_groups["3l_p_nsfz_2b"] = "ch6";
-    ch_groups["3l_sfz_1b"]    = "ch7";
-    ch_groups["3l_sfz_2b"]    = "ch8";
-    ch_groups["4l"]           = "ch9";
-
     // For the njet merged plots, this determines the bin order
     std::vector<TString> cat_group_names {
         "2lss_p",
         "2lss_m",
-        "3l_p_nsfz_1b",
-        "3l_m_nsfz_1b",
-        "3l_p_nsfz_2b",
-        "3l_m_nsfz_2b",
-        "3l_sfz_1b",
-        "3l_sfz_2b",
+        "2lss_4t_p",
+        "2lss_4t_m",
+        "3l_p_offZ_1b",
+        "3l_m_offZ_1b",
+        "3l_p_offZ_2b",
+        "3l_m_offZ_2b",
+        "3l_onZ_1b",
+        "3l_onZ_2b",
         "4l",
-
-        // "wacky",
-        // "all",
     };
 
     
     CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
-    //////////////////////
-    // Create some merged categories, i.e. create a new category which is the merger of all
-    //  sub-categories of the corresponding 'cat_groups' entry
-    //////////////////////
+    
+    // Set up the child categories and merge them into the parent category
     for (TString mrg_name: cat_group_names) {
-        cat_manager.renameCategory(mrg_name.Data(),ch_groups[mrg_name.Data()].Data());
+        std::vector<TString> mrg_groups = {};
+        for (TString cat_name: cat_groups[mrg_name.Data()]) {
+            for (auto const& x : ch_map) {
+                if (x.first == cat_name) {
+                    mrg_groups.push_back(x.second);
+                }
+            }
+        }
+        cat_manager.mergeCategories(mrg_name.Data(), mrg_groups, YIELD_TABLE_ORDER);
     }
     
     //////////////////////
@@ -2420,6 +2445,22 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
 
         // Make the prefit histogram stack plot
         ws->loadSnapshot("postfit_i");
+        
+        /*
+        std::vector<TString> wcs {};
+        RooArgSet pdfs = (RooArgSet) ws->allVars();
+        RooAbsReal* pdf;
+        TIterator *it_pdf = pdfs.createIterator();
+        while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
+            wcs.push_back(pdf->getTitle());
+        }
+        for (TString wc: wcs) {
+            ws->var(wc)->setVal(0);
+            ws->var(wc)->setError(0);
+            cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
+        }
+        */
+        
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
