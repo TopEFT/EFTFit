@@ -84,7 +84,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             
             else :
               self.modelBuilder.factory_(
-                   "expr::func_%s_sm(\"@0*(1-(" +
+                   "expr::func_%s_sm(\"@0*(1-("%(sig) +
                                             "@1" +
                                             "))\", 1," + "" + str(self.Operators[sig][0]) + ")"
                    )
@@ -110,7 +110,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
             else :
             
               self.modelBuilder.factory_(
-                      "expr::func_%s_sm_linear_quadratic_"%sig + str(self.Operators[sig][operator]) +
+                      "expr::func_%s_sm_linear_quadratic_"%sig + str(self.Operators[sig][0]) +
                                  "(\"@0*(" +
                                  "@1" +
                                  ")\", 1," + str(self.Operators[sig][0]) +
