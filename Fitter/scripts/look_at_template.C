@@ -129,19 +129,12 @@ void look_at_template(){
             // Make plots etc
             cout << "\n" << s << " " << key->GetClassName() << endl;
 
-            // Print out bin vals
-            //bool print_info = false;
-            bool print_info = true;
+            // Keep track of max bin val, and print out bin vals
             float max_binval = 0;
             for (Int_t bin_idx = 0; bin_idx <= h_n->GetNbinsX()+1; bin_idx++) {
                 float v_n = h_n->GetBinContent(bin_idx);
-                if (v_n > max_binval) {
-                    max_binval = v_n;
-                }
-                if (print_info) {
-                    std::cout << "\tBin " << bin_idx << ": " << v_n << std::endl;
-                    std::cout << "\t" << h_n->GetBinLowEdge(bin_idx) << std::endl;
-                }
+                if (v_n > max_binval) { max_binval = v_n; }
+                std::cout << "\tBin " << bin_idx << " (low edge: " << h_n->GetBinLowEdge(bin_idx) << ") " << ": " << v_n << std::endl; // Print some info
             }
             for (Int_t bin_idx = 0; bin_idx <= h_u->GetNbinsX()+1; bin_idx++) {
                 float v_n = h_u->GetBinContent(bin_idx);
