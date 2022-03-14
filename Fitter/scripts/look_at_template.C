@@ -50,11 +50,11 @@ void look_at_template(){
     bool make_plots = false;
 
     // Open the file (could do this in a better way, e.g. pass as an argument, also probably should loop over templates)
-    TString file_path =  "/afs/crc.nd.edu/user/k/kmohrman//CMSSW_Releases/CMSSW_10_2_13/src/EFTFit/Fitter/test/datacards/at_scale_checks/mar06_fullR2-sig_njets-lj0pt_withSys-renormfact/njets/"; // Path to dir with template histos
-    //TString file_name =  "ttx_multileptons-2lss_4t_m_2b.root";
+    TString file_path =  "path/to/your/templates"; // Path to dir with template histos
+    TString file_name =  "ttx_multileptons-2lss_4t_m_2b.root";
     //TString file_name =  "ttx_multileptons-2lss_4t_p_2b.root";
     //TString file_name =  "ttx_multileptons-2lss_m_2b.root";
-    TString file_name =  "ttx_multileptons-2lss_p_2b.root";
+    //TString file_name =  "ttx_multileptons-2lss_p_2b.root";
     //TString file_name =  "ttx_multileptons-3l1b_m.root";
     //TString file_name =  "ttx_multileptons-3l1b_p.root";
     //TString file_name =  "ttx_multileptons-3l2b_m.root";
