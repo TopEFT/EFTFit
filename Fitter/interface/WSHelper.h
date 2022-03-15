@@ -267,7 +267,8 @@ std::vector<RooAbsReal*> WSHelper::getExpCatFuncs(RooWorkspace* ws,std::vector<R
             continue;
         }
         for (auto ctype: cat_types) {
-            if (str.Contains(ctype->GetName())) {                    
+            TString match = TString::Format("_bin%s_",ctype->GetName());
+              if (str.Contains(match)) {
                 RooAbsReal* f = ws->function(str);
                 r.push_back(f);
             }
@@ -340,7 +341,7 @@ std::vector<RooAbsData*> WSHelper::getObsData(
         RooAbsData* d = (RooAbsData*)a;
         TString str = d->GetName();
         for (auto ctype: cat_types) {
-            if (str.Contains(ctype->GetName())) {
+            if (str.EqualTo(ctype->GetName())) {
                 r.push_back(d);
             }
         }
