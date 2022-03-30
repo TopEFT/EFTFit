@@ -274,6 +274,25 @@ std::vector<RooAbsReal*> WSHelper::getExpCatFuncs(RooWorkspace* ws,std::vector<R
             }
         }
     }
+
+    // If a process is made as a constant, it won't show up in allFunctions(), but rather all_Vars()
+    RooArgSet vars = ws->allVars();
+    it = vars.fwdIterator();
+    next = 0;
+    while ((next=it.next())) {
+        TString str = next->GetName();
+        if (!str.BeginsWith(this->n_exp_search_str)) {
+            continue;
+        }
+        for (auto ctype: cat_types) {
+            TString match = TString::Format("_bin%s_",ctype->GetName());
+              if (str.Contains(match)) {
+                RooAbsReal* f = ws->function(str);
+                r.push_back(f);
+            }
+        }
+    }
+
     return r;
 }
 
