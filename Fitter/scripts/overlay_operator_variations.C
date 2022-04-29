@@ -2112,14 +2112,14 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "wps_lj0pt_nonuis.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_l0pt.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
     
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_feb16/combinedcard.txt";  // hard-coded path for the datacard for now.
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_apr26/combinedcard.txt";  // hard-coded path for the datacard for now.
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
     
     for (const auto & [lstring, ch] : ch_map) {
@@ -2150,10 +2150,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     RooFitResult* freezefit_nom = nullptr;
 
     prefit  = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,prefit_file);
-    postfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,postfit_file);
-    bestfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,bestfit_file);
-    nuisfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root" ,FR_DIAGKEY,nuisfit_file);
-    freezefit_nom = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,freeze_nom_file);
+    postfit = load_fitresult(in_dir + "multidimfitPrefit.root"  ,FR_MDKEY,postfit_file);
+    //bestfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,bestfit_file);
+    //nuisfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root" ,FR_DIAGKEY,nuisfit_file);
+    //freezefit_nom = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,freeze_nom_file);
     
     if (prefit) {
         ws->saveSnapshot("prefit_i",prefit->floatParsInit(),kTRUE);
@@ -2323,6 +2323,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             }
         }
         cat_manager.mergeCategories(mrg_name.Data(), mrg_groups, YIELD_TABLE_ORDER);
+        cout << mrg_name.Data() << ": " << cat_manager.getCategory(mrg_name)->getExpSum() << endl;
     }
     
     //////////////////////
@@ -2335,9 +2336,13 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
+    
     for (AnalysisCategory* ana_cat: cats_to_plot) {
         ana_cat->setAsimov();
     }
+    
+    // For testing purpose, REMOVE THIS AFTER TESTING!!!
+    return;
     
     //////////////////////
     // Print some stuff
@@ -2442,22 +2447,68 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         int extra_txt_align = 11;
 
         std::cout << "--- Prefit ---" << std::endl;
-
-        // Make the prefit histogram stack plot
-        ws->loadSnapshot("postfit_i");
         
-        /*
         std::vector<TString> wcs {};
         RooArgSet pdfs = (RooArgSet) ws->allVars();
         RooAbsReal* pdf;
         TIterator *it_pdf = pdfs.createIterator();
+        TString wc_name;
         while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
-            wcs.push_back(pdf->getTitle());
+            wc_name = pdf->getTitle();
+            if (wc_name.Data()[0] == 'c')
+            {
+                cout << wc_name.Data() << endl;
+                wcs.push_back(wc_name);
+            }
         }
+
+        /*
+        cout << "Default values: " << endl;
+        for (TString wc: wcs) {
+            //ws->var(wc)->setVal(0);
+            //ws->var(wc)->setError(0);
+            //cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
+            cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
+        }
+
         for (TString wc: wcs) {
             ws->var(wc)->setVal(0);
             ws->var(wc)->setError(0);
-            cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
+        }
+        */
+
+        // Make the prefit histogram stack plot
+        ws->loadSnapshot("prefit_i");
+        
+        cout << "Prefit values: " << endl;
+        
+        for (TString wc: wcs) {
+            //cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
+        }
+        
+        for (auto const& x : ch_map) {
+            //cout << x.second.Data() << " expected sum: " << cat_manager.getCategory(x.second)->getExpSum() << endl;
+            cat_manager.getCategory(x.second)->setAsimov();
+            //cout << x.second.Data() << " Asimov data: " << cat_manager.getCategory(x.second)->getData() << "\n" << endl;
+        }
+        
+        for (TString wc: wcs) {
+            //cout << wc.Data() << " Val: " << ws->var(wc)->getVal() << endl;
+            ws->var(wc)->setVal(0);
+            ws->var(wc)->setError(0);
+            //cout << wc.Data() << " Val(0): " << ws->var(wc)->getVal() << endl;
+        }
+        
+        /*
+        for (TString wc: wcs) {
+            ws->var(wc)->setError(0);
+        }
+        */
+        /*
+        for (auto const& x : ch_map) {
+            cout << x.second.Data() << " expected sum(0): " << cat_manager.getCategory(x.second)->getExpSum() << endl;
+            cat_manager.getCategory(x.second)->setAsimov();
+            cout << x.second.Data() << " Asimov data(0): " << cat_manager.getCategory(x.second)->getData() << "\n" << endl;
         }
         */
         
@@ -2470,8 +2521,23 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
 
         std::cout << "--- Postfit ---" << std::endl;
 
+        /*
+        for (TString wc: wcs) {
+            ws->var(wc)->setVal(0);
+            ws->var(wc)->setError(0);
+        }
+        */
+
         // Make the postfit histogram stack plot
+        
         ws->loadSnapshot("postfit_f");
+        
+        cout << "Postfit values: " << endl;
+        
+        for (TString wc: wcs) {
+            cout << wc.Data() << " Val: " << ws->var(wc)->getVal() << endl;
+        }
+        
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
@@ -2483,8 +2549,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             setRRV(pois,rrv_poi_name,rrv_value);
         }
         make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        
         // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
+        /*
         std::cout << "--- NuisOnly ---" << std::endl;
 
         // Make the nuisfit histogram stack plot
@@ -2500,6 +2568,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             setRRV(pois,rrv_poi_name,rrv_value);
         }
         make_overlay_plot_v2("noflucts_nuisfit",extra_text,cats_to_plot,nuisfit,incl_ratio,incl_leg,incl_ext_leg,supp_style);
+        */
     }
 
     if (incl_summary_gif_plots) {

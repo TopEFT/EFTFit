@@ -21,6 +21,7 @@ class WSHelper {
         typedef std::vector<TString> vTStr;
         typedef std::pair<TString,double> pTStrDbl;
         TString n_exp_search_str = "n_exp_bin";
+        TString n_exp_search_str_pdf = "shape";        
     public:
         WSHelper();
         ~WSHelper();
@@ -57,6 +58,7 @@ class WSHelper {
         void printSnapshot(RooWorkspace* ws,TString name);
         std::vector<RooAddition*> toRooAdd(std::vector<RooAbsReal*> funcs);
         std::vector<TString> toCatStr(std::vector<RooCatType*> cats);
+        TString searchPdf(RooWorkspace* ws, TString name);
 
         // Define the templated member functions inline
 
@@ -500,6 +502,23 @@ std::vector<TString> WSHelper::toCatStr(std::vector<RooCatType*> cats) {
     std::vector<TString> r;
     for (auto c: cats) r.push_back(c->GetName());
     return r;
+}
+
+TString WSHelper::searchPdf(RooWorkspace* ws, TString name) {
+    RooArgSet Pdfs = ws->allPdfs();
+    RooFIter it = Pdfs.fwdIterator();
+    RooAbsArg* next = 0;
+    while ((next=it.next())) {
+        TString str = next->GetName();
+        if (!str.BeginsWith(this->n_exp_search_str_pdf)) {
+            continue;
+        }
+        if (str.Contains(name)) {
+            return ws->function(str)->GetName();
+        }
+    }
+    std::cout << TString::Format("[WARNING] Unable to find PDF %s",name.Data()) << std::endl;
+    throw;
 }
 
 void WSHelper::printSnapshot(RooWorkspace* ws, TString name) {

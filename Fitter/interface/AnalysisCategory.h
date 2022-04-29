@@ -33,6 +33,7 @@ class AnalysisCategory {
         bool use_asimov;
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
+        RooAddition Pdf;
 
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
         std::vector<TString> children;      // Contains the names of the categories merged into this one
@@ -69,6 +70,8 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->helper = WSHelper();
     TRegexp catExp = TRegexp("^"+category+"$");
     
+    std::cout << category.Data() << std::endl;
+    
     std::vector<RooCatType*> all_cats = this->helper.getTypes(ws,"CMS_channel");
     std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, catExp);
     std::vector<RooAbsData*> obs_data = this->helper.getObsData(ws,"data_obs","CMS_channel",tar_cats);
@@ -81,20 +84,44 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->use_asimov = false;   // Determine if getData() function return asimov data or real data
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
+    RooArgSet setProc;
+    RooArgSet setPdf;
+
     TString search("_proc_");
+    TString search_channel("n_exp_bin");
     this->proc_width = 0;
     for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
         TString name(ra->GetName());
+        
+        std::cout << name.Data() << std::endl;
+        
         Ssiz_t idx(name.Index(search));
         if (idx == TString::kNPOS) {
             std::cout << TString::Format("[WARNING] Unable to find %s in %s",search.Data(),name.Data()) << std::endl;
             throw;
         }
-        name = name(idx+search.Length(),name.Length());
-        this->exp_proc[name.Data()] = ra;
-        this->proc_order.push_back(name);
-        this->proc_width = std::max(this->proc_width,name.Length());
+        Ssiz_t idch(name.Index(search_channel));
+        if (idch == TString::kNPOS) {
+            std::cout << TString::Format("[WARNING] Unable to find %s in %s",search_channel.Data(),name.Data()) << std::endl;
+            throw;
+        }
+        TString nameCh   = name(idch+search_channel.Length(), idx+1-search_channel.Length());
+        std::cout << nameCh.Data() << std::endl;
+        TString nameProc = name(idx+search.Length(), name.Length());
+        std::cout << nameProc.Data() << std::endl;
+        TString nameSPdf = nameCh + nameProc; // Construct the name of the PDF as "ch1_ttll_quad_mixed_ctp_cpt", used for searching the full name of PDF.
+        TString namePdf  = this->helper.searchPdf(ws, nameSPdf); // Full name of PDF
+        
+        std::cout << namePdf.Data() << std::endl;
+        
+        this->exp_proc[nameProc.Data()] = ra;
+        this->proc_order.push_back(nameProc);
+        this->proc_width = std::max(this->proc_width,nameProc.Length());
+        
+        setProc.add(*(ws->function(name)));
+        setPdf.add(*(ws->function(namePdf)));
     }
+    this->Pdf = RooAddition("name" , "title", setProc, setPdf);
 }
 
 // Construct an AnalysisCategory by merging together everything from 'others'
@@ -234,6 +261,10 @@ double AnalysisCategory::getExpSum() {
     double sum(0.0);
     for (TString p: this->getProcs()) {
         sum += this->getExpProc(p);
+        /*
+        cout << "Proc name: " << p.Data() << endl;
+        cout << "Proc Exp:  " << this->getExpProc(p) << endl;
+        */
     }
     return sum;
 }

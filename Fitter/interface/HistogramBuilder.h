@@ -79,6 +79,10 @@ TH1D* HistogramBuilder::buildDataHistogram(TString title,std::vector<AnalysisCat
         AnalysisCategory* cat = cats.at(i);
         int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
         double bin_val = cat->getData();
+        
+        cout << "Cat name: " << cat->getName() << endl;
+        cout << "Cat data: " << cat->getData() << endl;
+        
         h_data->SetBinContent(bin_idx,bin_val);
         TString bin_label = cat->getName();
         if (bin_labels.count(bin_label.Data())) {
