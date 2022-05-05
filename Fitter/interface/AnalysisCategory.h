@@ -30,7 +30,7 @@ class AnalysisCategory {
         TString cat_name;
         RooDataSet* roo_data;
         RooDataSet* asimov_data;
-        bool use_asimov;
+        bool use_asimov;    // Determine if getData() function return asimov data or real data
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
@@ -66,63 +66,71 @@ class AnalysisCategory {
 AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->cat_name = category;
     this->helper = WSHelper();
-    TRegexp catExp = TRegexp("^"+category+"$");
+    TRegexp cat_rgx = TRegexp("^"+category+"$");
     
     std::cout << category.Data() << std::endl;
     
     std::vector<RooCatType*> all_cats = this->helper.getTypes(ws,"CMS_channel");
-    std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, catExp);
+    std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, cat_rgx);
     std::vector<RooAbsData*> obs_data = this->helper.getObsData(ws,"data_obs","CMS_channel",tar_cats);
     if (obs_data.size() != 1) {
         std::cout << TString::Format("[WARNING] obs_data incorrect size: %zu",obs_data.size()) << std::endl;
-        throw;  
+        throw;
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
     this->asimov_data = (RooDataSet*)obs_data.at(0);
-    this->use_asimov = false;   // Determine if getData() function return asimov data or real data
+    this->use_asimov = false;
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
-    TString search("_proc_");
+    // TODO: We also want to store a pointer to the th1x object from the RooWorkspace
+
+    TString search_proc("_proc_");
     TString search_channel("n_exp_bin");
     this->proc_width = 0;
     for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
+        RooAddition* proc_yield = nullptr;
         TString name(ra->GetName());
         
         std::cout << name.Data() << std::endl;
         
-        Ssiz_t idx(name.Index(search));
+        // Starting index for the process name, e.g. "ttll_quad_mixed_ctp_cpt"
+        Ssiz_t idx_proc(name.Index(search_proc));
         if (idx == TString::kNPOS) {
-            std::cout << TString::Format("[WARNING] Unable to find %s in %s",search.Data(),name.Data()) << std::endl;
+            std::cout << TString::Format("[WARNING] Unable to find %s in %s",search_proc.Data(),name.Data()) << std::endl;
             throw;
         }
-        Ssiz_t idch(name.Index(search_channel));
-        if (idch == TString::kNPOS) {
+        // Starting index for the channel name, e.g. "ch1"
+        Ssiz_t idx_ch(name.Index(search_channel));
+        if (idx_ch == TString::kNPOS) {
             std::cout << TString::Format("[WARNING] Unable to find %s in %s",search_channel.Data(),name.Data()) << std::endl;
             throw;
         }
-        TString nameCh   = name(idch+search_channel.Length(), idx-search_channel.Length());
-        std::cout << nameCh.Data() << std::endl;
-        TString nameProc = name(idx+search.Length(), name.Length());
-        std::cout << nameProc.Data() << std::endl;
-        TString nameSPdf = nameProc + "_" + nameCh; // Construct the name of the PDF as "ch1_ttll_quad_mixed_ctp_cpt", used for searching the full name of PDF.
-        TString namePdf  = "shapeSig_" + nameSPdf + "_rebinPdf"; //this->helper.searchPdf(ws, nameSPdf); // Full name of PDF
+
+        TString name_ch   = name(idx_ch+search_channel.Length(), idx_proc-search_channel.Length());
+        TString name_proc = name(idx_proc+search_proc.Length(), name.Length());
+        TString name_pdf  = TString::Format("shapeSig_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
+
+        std::cout << name_ch.Data() << std::endl;
+        std::cout << name_proc.Data() << std::endl;
+        std::cout << name_pdf.Data() << std::endl;
         
-        if (ws->function(namePdf) == nullptr) {
-            std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s. Skipping...", namePdf.Data(), name.Data()) << std::endl;
-            continue;
+        RooAbsReal* roo_pdf = ws->function(name_pdf);
+        
+        if (roo_pdf == nullptr) {
+            std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s",name_pdf.Data(),name.Data()) << std::endl;
+            proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
+        } else {
+            RooArgSet set_proc;
+            RooArgSet set_pdf;
+
+            set_proc.add(*ra);
+            set_pdf.add(*roo_pdf);
+            proc_yield = new RooAddition(name_proc,name_proc,set_proc,set_pdf);
         }
-        
-        std::cout << namePdf.Data() << std::endl;
-        
-        RooArgSet setProc;
-        RooArgSet setPdf;
-        setProc.add(*(ws->function(name)));
-        setPdf.add(*(ws->function(namePdf)));        
-        RooAddition* diff = new RooAddition(nameProc , "title", setProc, setPdf);
-        
-        this->exp_proc[nameProc.Data()] = diff;
-        this->proc_order.push_back(nameProc);
-        this->proc_width = std::max(this->proc_width,nameProc.Length());
+
+        this->exp_proc[name_proc.Data()] = proc_yield;
+        this->proc_order.push_back(name_proc);
+        this->proc_width = std::max(this->proc_width,name_proc.Length());
     }  
 }
 
@@ -164,12 +172,15 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
             this->roo_data->append(*other_data);
         }
         
-        /*RooDataSet* other_asimov_data = ana_cat.asimov_data;
+        /*
+        // TODO: Figure out how to merge data with shape distributions
+        RooDataSet* other_asimov_data = ana_cat.asimov_data;
         if (!this->asimov_data) {
             this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
         } else {
             this->asimov_data->append(*other_asimov_data);
-        }*/
+        }
+        */
         
         for (TString p: ana_cat.getProcs()) {
             if (!this->hasProc(p)) {
@@ -241,6 +252,8 @@ double AnalysisCategory::getData() {
     return this->roo_data->sumEntries();
 }
 
+// TODO: Need to make these functions aware of PDF dependence or not, can look into using
+//       RooAbsArg::dependsOn() method
 // Return the expected yield for a specific process
 double AnalysisCategory::getExpProc(TString proc) {
     if (this->hasProc(proc)) {
