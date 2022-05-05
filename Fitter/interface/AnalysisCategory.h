@@ -30,6 +30,7 @@ class AnalysisCategory {
         TString cat_name;
         RooDataSet* roo_data;
         RooDataSet* asimov_data;
+        RooRealVar* th1x;
         bool use_asimov;    // Determine if getData() function return asimov data or real data
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
@@ -37,6 +38,8 @@ class AnalysisCategory {
         std::vector<TString> children;      // Contains the names of the categories merged into this one
 
         WSHelper helper;    // Kind of annoying that we have to initialize one helper per Category...
+
+        bool DEBUG = false;
 
         AnalysisCategory(TString category, RooWorkspace* ws);
         AnalysisCategory(TString category, std::vector<AnalysisCategory> others);
@@ -68,8 +71,10 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->helper = WSHelper();
     TRegexp cat_rgx = TRegexp("^"+category+"$");
     
-    std::cout << category.Data() << std::endl;
-    
+    if (this->DEBUG) {
+        std::cout << category.Data() << std::endl;
+    }
+
     std::vector<RooCatType*> all_cats = this->helper.getTypes(ws,"CMS_channel");
     std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, cat_rgx);
     std::vector<RooAbsData*> obs_data = this->helper.getObsData(ws,"data_obs","CMS_channel",tar_cats);
@@ -80,6 +85,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->roo_data = (RooDataSet*)obs_data.at(0);
     this->asimov_data = (RooDataSet*)obs_data.at(0);
     this->use_asimov = false;
+    this->th1x = ws->var("CMS_th1x");
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
     // TODO: We also want to store a pointer to the th1x object from the RooWorkspace
@@ -91,11 +97,9 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         RooAddition* proc_yield = nullptr;
         TString name(ra->GetName());
         
-        std::cout << name.Data() << std::endl;
-        
         // Starting index for the process name, e.g. "ttll_quad_mixed_ctp_cpt"
         Ssiz_t idx_proc(name.Index(search_proc));
-        if (idx == TString::kNPOS) {
+        if (idx_proc == TString::kNPOS) {
             std::cout << TString::Format("[WARNING] Unable to find %s in %s",search_proc.Data(),name.Data()) << std::endl;
             throw;
         }
@@ -110,13 +114,22 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         TString name_proc = name(idx_proc+search_proc.Length(), name.Length());
         TString name_pdf  = TString::Format("shapeSig_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
 
-        std::cout << name_ch.Data() << std::endl;
-        std::cout << name_proc.Data() << std::endl;
-        std::cout << name_pdf.Data() << std::endl;
-        
+        if (this->DEBUG) {
+            std::cout << "Name:      " << name.Data() << std::endl;
+            std::cout << "Name Ch:   " << name_ch.Data() << std::endl;
+            std::cout << "Name Proc: " << name_proc.Data() << std::endl;
+            std::cout << "Name PDF:  " << name_pdf.Data() << std::endl;
+        }
+
         RooAbsReal* roo_pdf = ws->function(name_pdf);
-        
         if (roo_pdf == nullptr) {
+            // Let's try again looking for a matching background shape
+            name_pdf = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
+            roo_pdf = ws->function(name_pdf);
+        }
+
+        if (roo_pdf == nullptr) {
+            // Now we really couldn't find the shape PDF
             std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s",name_pdf.Data(),name.Data()) << std::endl;
             proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
         } else {
