@@ -138,6 +138,9 @@ class WSHelper {
             RooArgSet args;
             for (auto f: funcs) {
                 TString str = f->GetName();
+                
+                std::cout << TString::Format("Merging process %s into %s...", str.Data(), merged_name.Data()) << std::endl;
+                
                 if (pats.size() != 0) {
                     bool add_it = mode;
                     for (auto pat: pats) {

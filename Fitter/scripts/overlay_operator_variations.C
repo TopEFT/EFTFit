@@ -2112,14 +2112,14 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "wps_l0pt.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_lj0pt_may03.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
     
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_apr26/combinedcard.txt";  // hard-coded path for the datacard for now.
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_may03/combinedcard.txt";  // hard-coded path for the datacard for now.
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
     
     for (const auto & [lstring, ch] : ch_map) {

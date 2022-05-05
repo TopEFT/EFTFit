@@ -33,8 +33,6 @@ class AnalysisCategory {
         bool use_asimov;
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
-        RooAddition Pdf;
-
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
         std::vector<TString> children;      // Contains the names of the categories merged into this one
 
@@ -84,9 +82,6 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->use_asimov = false;   // Determine if getData() function return asimov data or real data
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
-    RooArgSet setProc;
-    RooArgSet setPdf;
-
     TString search("_proc_");
     TString search_channel("n_exp_bin");
     this->proc_width = 0;
@@ -105,23 +100,30 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
             std::cout << TString::Format("[WARNING] Unable to find %s in %s",search_channel.Data(),name.Data()) << std::endl;
             throw;
         }
-        TString nameCh   = name(idch+search_channel.Length(), idx+1-search_channel.Length());
+        TString nameCh   = name(idch+search_channel.Length(), idx-search_channel.Length());
         std::cout << nameCh.Data() << std::endl;
         TString nameProc = name(idx+search.Length(), name.Length());
         std::cout << nameProc.Data() << std::endl;
-        TString nameSPdf = nameCh + nameProc; // Construct the name of the PDF as "ch1_ttll_quad_mixed_ctp_cpt", used for searching the full name of PDF.
-        TString namePdf  = this->helper.searchPdf(ws, nameSPdf); // Full name of PDF
+        TString nameSPdf = nameProc + "_" + nameCh; // Construct the name of the PDF as "ch1_ttll_quad_mixed_ctp_cpt", used for searching the full name of PDF.
+        TString namePdf  = "shapeSig_" + nameSPdf + "_rebinPdf"; //this->helper.searchPdf(ws, nameSPdf); // Full name of PDF
+        
+        if (ws->function(namePdf) == nullptr) {
+            std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s. Skipping...", namePdf.Data(), name.Data()) << std::endl;
+            continue;
+        }
         
         std::cout << namePdf.Data() << std::endl;
         
-        this->exp_proc[nameProc.Data()] = ra;
+        RooArgSet setProc;
+        RooArgSet setPdf;
+        setProc.add(*(ws->function(name)));
+        setPdf.add(*(ws->function(namePdf)));        
+        RooAddition* diff = new RooAddition(nameProc , "title", setProc, setPdf);
+        
+        this->exp_proc[nameProc.Data()] = diff;
         this->proc_order.push_back(nameProc);
         this->proc_width = std::max(this->proc_width,nameProc.Length());
-        
-        setProc.add(*(ws->function(name)));
-        setPdf.add(*(ws->function(namePdf)));
-    }
-    this->Pdf = RooAddition("name" , "title", setProc, setPdf);
+    }  
 }
 
 // Construct an AnalysisCategory by merging together everything from 'others'
