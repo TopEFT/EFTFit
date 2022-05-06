@@ -54,15 +54,26 @@ class AnalysisCategory {
         std::vector<TString> getChildren();
         RooDataSet* getRooData();
         RooAddition* getRooAdd(TString proc);
+        
         double getData();
         double getExpProc(TString proc);
         double getExpProcError(TString, RooFitResult* fr=0);
         double getExpSum();
         double getExpSumError(RooFitResult* fr=0);
+        
+        double getDataBin(int bin);
+        double getExpProcBin(TString proc, int bin);
+        double getExpProcErrorBin(TString, RooFitResult* fr=0, int bin=0);
+        double getExpSumBin(int bin);
+        double getExpSumErrorBin(RooFitResult* fr=0, int bin=0);
+        
         void setProcOrder(std::vector<TString> order);
         void mergeProcesses(TRegexp rgx,TString new_name);
         void Print(RooFitResult* fr=0);
         void setAsimov();
+        
+    private:
+        std::vector<double> index_mapping {0.5, 1.5, 2.5, 3.5};
 };
 
 // Normal constructor
@@ -113,6 +124,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         TString name_ch   = name(idx_ch+search_channel.Length(), idx_proc-search_channel.Length());
         TString name_proc = name(idx_proc+search_proc.Length(), name.Length());
         TString name_pdf  = TString::Format("shapeSig_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
+        TString name_pdf2 = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
 
         if (this->DEBUG) {
             std::cout << "Name:      " << name.Data() << std::endl;
@@ -124,13 +136,14 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         RooAbsReal* roo_pdf = ws->function(name_pdf);
         if (roo_pdf == nullptr) {
             // Let's try again looking for a matching background shape
-            name_pdf = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
-            roo_pdf = ws->function(name_pdf);
+            //std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s, looking for %s instead", name_pdf.Data(), name.Data(), name_pdf2.Data()) << std::endl;
+            roo_pdf = ws->function(name_pdf2);
         }
 
         if (roo_pdf == nullptr) {
             // Now we really couldn't find the shape PDF
-            std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s",name_pdf.Data(),name.Data()) << std::endl;
+            //std::cout << TString::Format("[WARNING] Unable to find PDF %s or %s for process %s, ignoring this process", name_pdf.Data(), name_pdf2.Data(), name.Data()) << std::endl;
+            continue;
             proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
         } else {
             RooArgSet set_proc;
@@ -144,6 +157,15 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         this->exp_proc[name_proc.Data()] = proc_yield;
         this->proc_order.push_back(name_proc);
         this->proc_width = std::max(this->proc_width,name_proc.Length());
+        
+        /*
+        for (int i = 0; i <= 3; ++i) {
+            this->th1x->setVal(this->index_mapping[i]);
+            if (proc_yield->getVal()) {
+                std::cout << this->th1x->getVal() << ": " << proc_yield->getVal() << std::endl;
+            }
+        }
+        */
     }  
 }
 
@@ -289,10 +311,6 @@ double AnalysisCategory::getExpSum() {
     double sum(0.0);
     for (TString p: this->getProcs()) {
         sum += this->getExpProc(p);
-        /*
-        cout << "Proc name: " << p.Data() << endl;
-        cout << "Proc Exp:  " << this->getExpProc(p) << endl;
-        */
     }
     return sum;
 }
@@ -310,6 +328,99 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
     double err = tmp_mrg->getPropagatedError(*fr);
     // I don't know if this is a good idea or not...
+    delete tmp_mrg;
+
+    return err;
+}
+
+// Get bin content for data
+double AnalysisCategory::getDataBin(int bin) {
+    if (bin<0 | bin>3) {
+        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
+        throw;
+    }
+    double data_bin;
+    RooDataSet* obj_data;
+    if (this->use_asimov) {
+        obj_data = this->asimov_data;
+    }
+    else {
+        if (this->roo_data) {
+            obj_data = this->roo_data;
+        }
+        else {
+            return 0.0;
+        }
+    }
+    obj_data->get(bin);
+    data_bin = obj_data->weight();
+    return data_bin;
+}
+
+// Return the expected bin yield for a specific process
+double AnalysisCategory::getExpProcBin(TString proc, int bin) {
+    if (bin<0 | bin>3) {
+        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
+        throw;
+    }
+    if (this->hasProc(proc) && this->th1x) {
+        double old_bin = this->th1x->getVal();
+        this->th1x->setVal(this->index_mapping[bin]);
+        double exp_yield = this->getRooAdd(proc)->getVal();
+        this->th1x->setVal(old_bin);
+        return exp_yield;
+    }
+    return 0.0;
+}
+
+// Return the propagated bin error for a specific process
+double AnalysisCategory::getExpProcErrorBin(TString proc, RooFitResult* fr, int bin) {
+    if (bin<0 | bin>3) {
+        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
+        throw;
+    }
+    if (this->hasProc(proc) && fr && this->th1x) {
+        double old_bin = this->th1x->getVal();
+        this->th1x->setVal(this->index_mapping[bin]);
+        RooAddition* roo_add = this->getRooAdd(proc);
+        double exp_error = roo_add->getPropagatedError(*fr);
+        this->th1x->setVal(old_bin);
+        return exp_error;
+    }
+    return 0.0;
+}
+
+// Return the expected bin yield summed over all processes
+double AnalysisCategory::getExpSumBin(int bin) {
+    if (bin<0 | bin>3) {
+        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
+        throw;
+    }
+    double sum(0.0);
+    for (TString p: this->getProcs()) {
+        sum += this->getExpProcBin(p, bin);
+    }
+    return sum;
+}
+
+double AnalysisCategory::getExpSumErrorBin(RooFitResult* fr, int bin) {
+    if (bin<0 | bin>3) {
+        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
+        throw;
+    }
+    if (!fr) {
+        return 0.0;
+    }
+    TString s("tmp_merged");
+    std::vector<RooAddition*> to_merge;
+    double old_bin = this->th1x->getVal();
+    this->th1x->setVal(this->index_mapping[bin]);
+    for (TString p: this->getProcs()) {
+        to_merge.push_back(this->getRooAdd(p));
+    }
+    RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
+    double err = tmp_mrg->getPropagatedError(*fr);
+    this->th1x->setVal(old_bin);
     delete tmp_mrg;
 
     return err;
