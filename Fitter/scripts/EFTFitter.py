@@ -24,51 +24,68 @@ class EFTFit(object):
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
-        #2017 range
-        self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
-                            'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-10,30),  
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-5,5),
-                            'cQq13': (-1,1),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
-        #ptbl + ht offZ
-        self.wc_ranges = {  'ctW':(-2,2),     'ctZ':(-2,2),
-                            'cpt':(-15,15),   'ctp':(-10,20),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-0.5,0.5),     'cpQM':(-10,20),  
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-5,5),    'cQlMi':(-5,5),
-                            'cpQ3':(-10,5),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-0.5,0.5),
-                            'cQq11': (-0.5,0.5),'ctq1': (-0.5,0.5),
-                            'cQq81': (-1,1),  'ctq8': (-1,1),
-                            'ctt1': (-5,5), 'cQQ1': (-4,4),
-                            'cQt8': (-10,10), 'cQt1': (-10,10)
-                        }
-        #2017 range
-        self.wc_ranges = {  'ctW':(-5,5),     'ctZ':(-10,10),
-                            'cpt':(-20,20),   'ctp':(-20,50),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-20,20), 'cptb':(-50,50),
-                            'ctG':(-2,2),     'cpQM':(-10,50),
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-20,20),
-                            'cQq13': (-1,1),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
+
+        # Limits appropriate for asimov ptz-lj0pt fits (for prof, but can be used for frozen too)
+        self.wc_ranges = {
+            'cQQ1' : (-4.0,4.0),
+            'cQei' : (-4.0,4.0),
+            'cQl3i': (-5.5,5.5),
+            'cQlMi': (-4.0,4.0),
+            'cQq11': (-0.7,0.7),
+            'cQq13': (-0.35,0.35),
+            'cQq81': (-1.7,1.5),
+            'cQq83': (-0.6,0.6),
+            'cQt1' : (-4.0,4.0),
+            'cQt8' : (-8.0,8.0),
+            'cbW'  : (-3.0,3.0),
+            'cpQ3' : (-4.0,4.0),
+            'cpQM' : (-10.0,17.0),
+            'cpt'  : (-15.0,15.0),
+            'cptb' : (-9.0,9.0),
+            'ctG'  : (-0.8,0.8),
+            'ctW'  : (-1.5,1.5),
+            'ctZ'  : (-2.0,2.0),
+            'ctei' : (-4.0,4.0),
+            'ctlSi': (-5.0,5.0),
+            'ctlTi': (-0.9,0.9),
+            'ctli' : (-4.0,4.0),
+            'ctp'  : (-11.0,35.0),
+            'ctq1' : (-0.6,0.6),
+            'ctq8' : (-1.4,1.4),
+            'ctt1' : (-2.1,2.1),
+        }
+
+        # Limits appropriate for asimov njets fits (for prof, but can be used for frozen too)
+        #self.wc_ranges = {
+        #    'cQQ1' : (-6.0,6.0),
+        #    'cQei' : (-7.0,7.0),
+        #    'cQl3i': (-10.0,10.0),
+        #    'cQlMi': (-8.0,8.0),
+        #    'cQq11': (-1.5,1.5),
+        #    'cQq13': (-0.6,0.6),
+        #    'cQq81': (-4.0,3.0),
+        #    'cQq83': (-1.2,1.2),
+        #    'cQt1' : (-5.0,5.0),
+        #    'cQt8' : (-10.0,10.0),
+        #    'cbW'  : (-5.0,5.0),
+        #    'cpQ3' : (-10.0,7.0),
+        #    'cpQM' : (-11.0,30.0),
+        #    'cpt'  : (-25.0,20.0),
+        #    'cptb' : (-17.0,17.0),
+        #    'ctG'  : (-1.5,1.5),
+        #    'ctW'  : (-4.0,3.0),
+        #    'ctZ'  : (-4.0,4.0),
+        #    'ctei' : (-8.0,8.0),
+        #    'ctlSi': (-8.0,8.0),
+        #    'ctlTi': (-1.4,1.4),
+        #    'ctli' : (-8.0,8.0),
+        #    'ctp'  : (-11.0,35.0),
+        #    'ctq1' : (-1.4,1.4),
+        #    'ctq8' : (-3.0,3.0),
+        #    'ctt1' : (-3.0,3.0),
+        #}
+
+
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
                             'missing_parton',
