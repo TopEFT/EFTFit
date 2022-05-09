@@ -1350,7 +1350,6 @@ class EFTPlot(object):
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
-    # def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
     def getIntervalFits(self,**kwargs):
         basename    = kwargs.pop('basename','.EFT.SM.Float')
         params      = kwargs.pop('params',[])
@@ -1532,9 +1531,9 @@ class EFTPlot(object):
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
         print 'float'
-        fits_float = self.getIntervalFits(basename_float)
+        fits_float = self.getIntervalFits(basename=basename_float)
         print 'freeze'
-        fits_freeze = self.getIntervalFits(basename_freeze)
+        fits_freeze = self.getIntervalFits(basename=basename_freeze)
         if printFOM:
             print('\n\nFoM (>1 is better)\nWC\tFoM')
             #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
@@ -1545,9 +1544,9 @@ class EFTPlot(object):
         print 'one sigma'
         print 'float'
         #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
-        fits_float1sigma = self.getIntervalFits(basename_float,siginterval=1)
+        fits_float1sigma = self.getIntervalFits(basename=basename_float,siginterval=1)
         print 'freeze'
-        fits_freeze1sigma = self.getIntervalFits(basename_freeze,siginterval=1)
+        fits_freeze1sigma = self.getIntervalFits(basename=basename_freeze,siginterval=1)
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
@@ -1729,9 +1728,9 @@ class EFTPlot(object):
         if 'Asimov' not in basename_float:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         if 'Asimov' not in basename_float:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -20, 20, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
