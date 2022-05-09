@@ -2342,7 +2342,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     }
     
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
-    return;
+    //return;
     
     //////////////////////
     // Print some stuff

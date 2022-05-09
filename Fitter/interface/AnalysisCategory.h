@@ -63,9 +63,9 @@ class AnalysisCategory {
         
         double getDataBin(int bin);
         double getExpProcBin(TString proc, int bin);
-        double getExpProcErrorBin(TString, RooFitResult* fr=0, int bin=0);
+        double getExpProcErrorBin(TString, int bin, RooFitResult* fr=0);
         double getExpSumBin(int bin);
-        double getExpSumErrorBin(RooFitResult* fr=0, int bin=0);
+        double getExpSumErrorBin(int bin, RooFitResult* fr=0);
         
         void setProcOrder(std::vector<TString> order);
         void mergeProcesses(TRegexp rgx,TString new_name);
@@ -292,7 +292,17 @@ double AnalysisCategory::getData() {
 // Return the expected yield for a specific process
 double AnalysisCategory::getExpProc(TString proc) {
     if (this->hasProc(proc)) {
-        return this->getRooAdd(proc)->getVal();
+        RooAddition* Proc = this->getRooAdd(proc);
+        if (Proc->dependsOn(*this->th1x)) {
+            double sum(0.0);
+            for (int idx=0; idx < this->index_mapping.size(); idx++) {
+                sum += this->getExpProcBin(proc, idx);
+            }
+            return sum;
+        }
+        else {
+            return Proc->getVal();
+        }
     }
     return 0.0;
 }
@@ -300,8 +310,17 @@ double AnalysisCategory::getExpProc(TString proc) {
 // Return the propagated error for a specific process
 double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
     if (this->hasProc(proc) && fr) {
-        RooAddition* roo_add = this->getRooAdd(proc);
-        return roo_add->getPropagatedError(*fr);
+        RooAddition* Proc = this->getRooAdd(proc);
+        if (Proc->dependsOn(*this->th1x)) {
+            double err(0.0);
+            for (int idx=0; idx < this->index_mapping.size(); idx++) {
+                err += this->getExpProcErrorBin(proc, idx, fr);
+            }
+            return err;
+        }
+        else {
+            return Proc->getPropagatedError(*fr);
+        }
     }
     return 0.0;
 }
@@ -326,7 +345,15 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     }
     
     RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
-    double err = tmp_mrg->getPropagatedError(*fr);
+    double err(0.0);
+    if (tmp_mrg->dependsOn(*this->th1x)) {
+        for (int idx=0; idx < this->index_mapping.size(); idx++) {
+            err += tmp_mrg->getPropagatedError(*fr);
+        }
+    }
+    else {
+        err = tmp_mrg->getPropagatedError(*fr);
+    }
     // I don't know if this is a good idea or not...
     delete tmp_mrg;
 
@@ -374,7 +401,7 @@ double AnalysisCategory::getExpProcBin(TString proc, int bin) {
 }
 
 // Return the propagated bin error for a specific process
-double AnalysisCategory::getExpProcErrorBin(TString proc, RooFitResult* fr, int bin) {
+double AnalysisCategory::getExpProcErrorBin(TString proc, int bin, RooFitResult* fr) {
     if (bin<0 | bin>3) {
         std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
         throw;
@@ -403,7 +430,7 @@ double AnalysisCategory::getExpSumBin(int bin) {
     return sum;
 }
 
-double AnalysisCategory::getExpSumErrorBin(RooFitResult* fr, int bin) {
+double AnalysisCategory::getExpSumErrorBin(int bin, RooFitResult* fr) {
     if (bin<0 | bin>3) {
         std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
         throw;
