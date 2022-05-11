@@ -67,6 +67,7 @@ typedef std::vector<RooCatType*> vRooCat;
 typedef std::pair<TString,double> pTStrDbl;
 typedef std::pair<TString,TString> pTStrTStr;
 typedef std::unordered_map<std::string,double> umapStrDbl;  // Apparently a TString isn't a 'hashable' type
+RooRealVar* AnalysisCategory::th1x = nullptr;
 
 // Fancy structure for containing the info needed to plot an 'off-scale' point in the ratio fluct plots 
 struct OffScalePoint {
@@ -2309,6 +2310,9 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         "4l",
     };
 
+    cout << "Initializing th1x" << endl;
+    AnalysisCategory::th1x = ws->var("CMS_th1x");
+    cout << "Initialized!" << endl;
     
     CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
     

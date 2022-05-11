@@ -30,7 +30,7 @@ class AnalysisCategory {
         TString cat_name;
         RooDataSet* roo_data;
         RooDataSet* asimov_data;
-        RooRealVar* th1x;
+        static RooRealVar* th1x;
         bool use_asimov;    // Determine if getData() function return asimov data or real data
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
@@ -96,7 +96,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     this->roo_data = (RooDataSet*)obs_data.at(0);
     this->asimov_data = (RooDataSet*)obs_data.at(0);
     this->use_asimov = false;
-    this->th1x = ws->var("CMS_th1x");
+    //this->th1x = ws->var("CMS_th1x");
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
     // TODO: We also want to store a pointer to the th1x object from the RooWorkspace
@@ -151,7 +151,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
 
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
-            proc_yield = new RooAddition(name_proc,name_proc,set_proc,set_pdf);
+            proc_yield = new RooAddition(name_ch + name_proc, name, set_proc, set_pdf);
         }
 
         this->exp_proc[name_proc.Data()] = proc_yield;
@@ -291,18 +291,21 @@ double AnalysisCategory::getData() {
 //       RooAbsArg::dependsOn() method
 // Return the expected yield for a specific process
 double AnalysisCategory::getExpProc(TString proc) {
+    cout << proc << endl;
+    cout << (this->th1x) << endl;
     if (this->hasProc(proc)) {
         RooAddition* Proc = this->getRooAdd(proc);
-        if (Proc->dependsOn(*this->th1x)) {
-            double sum(0.0);
-            for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                sum += this->getExpProcBin(proc, idx);
-            }
-            return sum;
-        }
-        else {
+        if (this->th1x == nullptr) {
             return Proc->getVal();
         }
+        if (Proc->dependsOn(*(this->th1x))) {
+            double sum(0.0);
+            for (int idx=0; idx < this->index_mapping.size(); idx++) {
+            sum += this->getExpProcBin(proc, idx);
+            }
+        return sum;
+        }
+        return Proc->getVal();
     }
     return 0.0;
 }
@@ -311,7 +314,10 @@ double AnalysisCategory::getExpProc(TString proc) {
 double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
     if (this->hasProc(proc) && fr) {
         RooAddition* Proc = this->getRooAdd(proc);
-        if (Proc->dependsOn(*this->th1x)) {
+        if (this->th1x == nullptr) {
+            return Proc->getPropagatedError(*fr);
+        }
+        if (Proc->dependsOn(*(this->th1x))) {
             double err(0.0);
             for (int idx=0; idx < this->index_mapping.size(); idx++) {
                 err += this->getExpProcErrorBin(proc, idx, fr);
@@ -343,12 +349,13 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     for (TString p: this->getProcs()) {
         to_merge.push_back(this->getRooAdd(p));
     }
-    
     RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
     double err(0.0);
-    if (tmp_mrg->dependsOn(*this->th1x)) {
-        for (int idx=0; idx < this->index_mapping.size(); idx++) {
-            err += tmp_mrg->getPropagatedError(*fr);
+    if (this->th1x) {
+        if (tmp_mrg->dependsOn(*(this->th1x))) {
+            for (int idx=0; idx < this->index_mapping.size(); idx++) {
+                err += tmp_mrg->getPropagatedError(*fr);
+            }
         }
     }
     else {
