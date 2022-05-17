@@ -2309,10 +2309,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         "3l_onZ_2b",
         "4l",
     };
-
-    cout << "Initializing th1x" << endl;
-    AnalysisCategory::th1x = ws->var("CMS_th1x");
-    cout << "Initialized!" << endl;
     
     CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
     
@@ -2327,7 +2323,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             }
         }
         cat_manager.mergeCategories(mrg_name.Data(), mrg_groups, YIELD_TABLE_ORDER);
-        cout << mrg_name.Data() << ": " << cat_manager.getCategory(mrg_name)->getExpSum() << endl;
     }
     
     //////////////////////
@@ -2345,8 +2340,25 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         ana_cat->setAsimov();
     }
     
+    cout << "Before loading the fit results:" << endl;
+    for (AnalysisCategory* ana_cat: cats_to_plot) {
+        cout << "Proc: " << ana_cat->getName() << endl;
+        cout << "Data: " << ana_cat->getData() << endl;
+        cout << "Sum:  " << ana_cat->getExpSum() << endl;
+    }
+    
+    ws->loadSnapshot("prefit_f");
+    
+    cout << "After loading the fit results:" << endl;
+    for (AnalysisCategory* ana_cat: cats_to_plot) {
+        cout << "Proc: " << ana_cat->getName() << endl;
+        cout << "Data: " << ana_cat->getData() << endl;
+        cout << "Sum:  " << ana_cat->getExpSum() << endl;
+    }
+    
+    
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
-    //return;
+    return;
     
     //////////////////////
     // Print some stuff

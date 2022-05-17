@@ -291,8 +291,6 @@ double AnalysisCategory::getData() {
 //       RooAbsArg::dependsOn() method
 // Return the expected yield for a specific process
 double AnalysisCategory::getExpProc(TString proc) {
-    cout << proc << endl;
-    cout << (this->th1x) << endl;
     if (this->hasProc(proc)) {
         RooAddition* Proc = this->getRooAdd(proc);
         if (this->th1x == nullptr) {
