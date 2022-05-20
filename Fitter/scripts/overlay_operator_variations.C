@@ -2119,6 +2119,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
+    AnalysisCategory::th1x = ws->var("CMS_th1x");
     
     TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_may03/combinedcard.txt";  // hard-coded path for the datacard for now.
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
@@ -2339,7 +2340,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     for (AnalysisCategory* ana_cat: cats_to_plot) {
         ana_cat->setAsimov();
     }
-    
+    /*
     cout << "Before loading the fit results:" << endl;
     for (AnalysisCategory* ana_cat: cats_to_plot) {
         cout << "Proc: " << ana_cat->getName() << endl;
@@ -2355,10 +2356,44 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         cout << "Data: " << ana_cat->getData() << endl;
         cout << "Sum:  " << ana_cat->getExpSum() << endl;
     }
-    
-    
+    */
+    /*
+    double value;
+    double err;
+    double ratio;
+    ws->loadSnapshot("prefit_f");
+    for (AnalysisCategory* ana_cat: cats_to_plot) {
+        cout << "Cat name: " << ana_cat->getName() << endl;
+        for (TString proc_name: ALL_PROCS) {
+           cout << "Proc name: " << proc_name.Data() << endl;
+          if (ana_cat == nullptr) { continue; }
+          if (ana_cat->hasProc(proc_name)) {
+            RooAddition* roo_add = ana_cat->getRooAdd(proc_name);
+            ana_cat->th1x->setVal(0.5);
+            value = roo_add->getVal();
+            err   = roo_add->getPropagatedError(*prefit);
+            ratio = err/value;
+            cout << "th1x: " << ana_cat->th1x->getVal() << endl;
+            cout << "Value: " << value << endl;
+            cout << "Error: " << err << endl;
+            cout << "Ratio: " << ratio << endl;
+            
+            cout << "Setting th1x..." << endl;
+            ana_cat->th1x->setVal(1.5);
+            value = roo_add->getVal();
+            err   = roo_add->getPropagatedError(*prefit);
+            ratio = err/value;
+            cout << "th1x: " << ana_cat->th1x->getVal() << endl;
+            cout << "Value: " << value << endl;
+            cout << "Error: " << err << endl;
+            cout << "Ratio: " << ratio << endl;
+          }
+        }
+    }
+    */
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
-    return;
+    //return;
+    
     
     //////////////////////
     // Print some stuff
@@ -2498,35 +2533,9 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         
         cout << "Prefit values: " << endl;
         
-        for (TString wc: wcs) {
-            //cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
-        }
-        
         for (auto const& x : ch_map) {
-            //cout << x.second.Data() << " expected sum: " << cat_manager.getCategory(x.second)->getExpSum() << endl;
             cat_manager.getCategory(x.second)->setAsimov();
-            //cout << x.second.Data() << " Asimov data: " << cat_manager.getCategory(x.second)->getData() << "\n" << endl;
         }
-        
-        for (TString wc: wcs) {
-            //cout << wc.Data() << " Val: " << ws->var(wc)->getVal() << endl;
-            ws->var(wc)->setVal(0);
-            ws->var(wc)->setError(0);
-            //cout << wc.Data() << " Val(0): " << ws->var(wc)->getVal() << endl;
-        }
-        
-        /*
-        for (TString wc: wcs) {
-            ws->var(wc)->setError(0);
-        }
-        */
-        /*
-        for (auto const& x : ch_map) {
-            cout << x.second.Data() << " expected sum(0): " << cat_manager.getCategory(x.second)->getExpSum() << endl;
-            cat_manager.getCategory(x.second)->setAsimov();
-            cout << x.second.Data() << " Asimov data(0): " << cat_manager.getCategory(x.second)->getData() << "\n" << endl;
-        }
-        */
         
         latex->SetNDC();
         latex->SetTextFont(42);
@@ -2536,13 +2545,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         make_overlay_plot_v2("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
         std::cout << "--- Postfit ---" << std::endl;
-
-        /*
-        for (TString wc: wcs) {
-            ws->var(wc)->setVal(0);
-            ws->var(wc)->setError(0);
-        }
-        */
 
         // Make the postfit histogram stack plot
         
