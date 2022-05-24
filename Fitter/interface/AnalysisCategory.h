@@ -318,7 +318,7 @@ double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
         if (Proc->dependsOn(*(this->th1x))) {
             double err(0.0);
             for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                err += this->getExpProcErrorBin(proc, idx, fr);
+                err += this->getExpProcErrorBin(proc, idx, fr);  // This is questionable. We can't simply sum the error over bins.
             }
             return err;
         }
@@ -357,7 +357,7 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
         }
     }
     else {
-        err = tmp_mrg->getPropagatedError(*fr);
+        err = tmp_mrg->getPropagatedError(*fr);  // Again, this is questionable.
     }
     // I don't know if this is a good idea or not...
     delete tmp_mrg;
@@ -386,6 +386,10 @@ double AnalysisCategory::getDataBin(int bin) {
     }
     obj_data->get(bin);
     data_bin = obj_data->weight();
+    
+    cout << "bin idx:  " << bin << endl;
+    cout << "data bin: " << data_bin << endl;
+    
     return data_bin;
 }
 

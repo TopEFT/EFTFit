@@ -1674,6 +1674,394 @@ void make_overlay_plot_v2(
     return;
 }
 
+
+void make_overlay_diff_plot(
+    TString title,
+    std::vector<TLatex*> extra_text,
+    std::vector<AnalysisCategory*> cats,
+    RooFitResult* fr,
+    bool incl_ratio,
+    bool incl_leg,
+    bool ext_leg,
+    CMSTextStyle cms_style,
+    TString xtitle="",
+    // std::vector<TH1D*> overlay_hists={}
+    std::vector<PlotPartition> partitions={}
+) {
+    bool debug = true;
+
+    // Some configuration settings
+    Float_t small = 1.e-5;
+    const float padding = 1e-5;
+    const float xpad = small;   // Pad spacing left to right
+    const float ypad = small;   // Pad spacing top to bottom
+    const float ygap = 0.11;    // Gap between the main plot and ratio plot
+    const float ydiv = 0.3;     // Height of the second pad when making plots with ratios
+
+    HistogramBuilder builder = HistogramBuilder();
+
+    int c_hh = 640;
+    int c_ww = 3840;
+
+    if (cats.size() > 9) {
+        c_ww += (cats.size() - 9)*35;
+        // c_ww = std::min(c_ww,1550);
+    }
+
+    TCanvas* c = new TCanvas("canv","canv",150,10,c_ww,c_hh);
+    // TCanvas* c = new TCanvas("canv","canv",150,10,960*4,640);
+    TLegend *leg = new TLegend(0.14,0.75,0.94,0.89);
+    THStack *hs = new THStack("hs_category_yield","");
+
+    std::vector<TH1D*> proc_hists;
+    TH1D* h_data = builder.buildDataDifferentialHistogram(title,cats,BIN_LABEL_MAP);
+    h_data->SetLineWidth(1); // Try a thiner line for the full njet histogram PDFs
+
+    for (TString proc_name: ALL_PROCS) {
+        if (debug) std::cout << "DEBUG: Getting process histogram for " << proc_name << std::endl;
+        // TH1D* h_proc = get_process_histogram(title,proc_name,cats);
+        TH1D* h_proc = builder.buildProcessDifferentialHistogram(title,proc_name,cats,BIN_LABEL_MAP,PROCESS_COLOR_MAP);
+        if (debug) std::cout << "DEBUG: Adding process histogram to legend: " << proc_name << std::endl;
+        TString legend_name = proc_name;
+        if (PROCESS_LABEL_MAP.count(proc_name.Data())) {
+            legend_name = PROCESS_LABEL_MAP[proc_name.Data()];
+        }
+        if (incl_ratio) {
+            // Hide the x-axis labels for the stack plot
+            // Note: For some reason this can't be done using the THStack histogram
+            for (int i=1; i <= h_proc->GetXaxis()->GetNbins(); i++) {
+                h_proc->GetXaxis()->SetBinLabel(i,"");
+            }
+        }
+        leg->AddEntry(h_proc,legend_name,"f");
+        proc_hists.push_back(h_proc);
+    }
+
+    // for (TH1D* h: overlay_hists) {
+    //     leg->AddEntry(h,h->GetTitle(),"f");
+    // }
+
+    for (TH1D* h: proc_hists) {
+        if (debug) std::cout << "DEBUG: Adding histogram to stack: " << h->GetName() << std::endl;
+        hs->Add(h);
+    }
+
+    // hs->SetTitle(";Category;Events");
+    if (incl_ratio) {
+        hs->SetTitle(";;Events");
+    } else {
+        hs->SetTitle(TString::Format(";%s;Events",xtitle.Data()));
+    }
+
+    // TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP);
+    TH1D* h_exp_sum = builder.buildSummedDifferentialHistogram("expected_sum","",cats,BIN_LABEL_MAP,fr);
+    TGraphErrors* gr_err = get_error_graph(h_exp_sum,cats,fr);
+
+    // h_exp_sum->SetFillStyle(1001);
+    // h_exp_sum->SetFillColor(kGray);
+    // h_exp_sum->SetLineColor(kRed);
+
+    leg->AddEntry(gr_err,"Total unc.","f");
+    leg->AddEntry(h_data,"Obs.","lp");
+
+    TH1D* h_ratio;
+    TH1D* h_ratio_base;
+    TGraphAsymmErrors* h_ratio_band;
+    if (incl_ratio) {
+        TString ratio_name = "r_" + title;
+        h_ratio = make_ratio_histogram(ratio_name,h_data,h_exp_sum);
+        h_ratio_base = make_ratio_histogram("r_base",h_data,h_data);
+        h_ratio_band = make_ratio_error_band(h_data,h_exp_sum,gr_err);
+
+        h_ratio->SetLineColor(kBlack);
+        h_ratio->SetMarkerStyle(20);
+        h_ratio->SetMarkerSize(0.75);
+        h_ratio->GetYaxis()->SetTitleSize(0.1);
+        h_ratio->GetYaxis()->SetTitleOffset(0.25);
+        // h_ratio->SetTitle(";;data/MC");
+        // h_ratio->SetTitle(";;Data/MC");
+        // h_ratio->SetTitle(TString::Format(";%s;Data/MC",xtitle.Data()));
+        // h_ratio->SetTitle(TString::Format(";%s;data/pred.",xtitle.Data()));
+
+        h_ratio_base->SetLineColor(kRed);
+        h_ratio_base->SetLineWidth(2);
+        // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
+        // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
+        h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
+        h_ratio_base->GetYaxis()->SetNdivisions(204,kFALSE);
+
+        // h_ratio_base->GetXaxis()->SetLabelSize(0.230);//0.230
+        // h_ratio_base->GetXaxis()->SetLabelOffset(0.020);  // Default is 0.005
+        h_ratio_base->GetXaxis()->SetLabelSize(0.270);//0.230
+        h_ratio_base->GetXaxis()->SetLabelOffset(0.040);  // Default is 0.005
+        if (cats.size() > 9) {
+            h_ratio_base->GetXaxis()->SetLabelSize(0.200);
+            h_ratio_base->GetXaxis()->SetLabelOffset(0.015);
+        }
+
+        // h_ratio_base->SetTitle(TString::Format(";%s;#frac{Data}{Pred}",xtitle.Data()));
+        // h_ratio_base->GetYaxis()->SetTitleSize(0.150);
+        // h_ratio_base->GetYaxis()->SetTitleOffset(0.300);  // Default is 1.0
+        h_ratio_base->SetTitle(TString::Format(";%s;Obs. / pred.",xtitle.Data()));
+        h_ratio_base->GetYaxis()->SetTitleSize(0.180);
+        h_ratio_base->GetYaxis()->SetTitleOffset(0.220);  // Default is 1.0
+        h_ratio_base->GetYaxis()->SetLabelSize(0.163);// 0.140
+        if (cats.size() > 9) {
+            h_ratio_base->GetYaxis()->SetTitleSize(0.180);
+            h_ratio_base->GetYaxis()->SetTitleOffset(0.130);
+            h_ratio_base->GetYaxis()->SetLabelSize(0.163);
+        }
+
+        // std::cout << "X-Label Size: " << h_ratio_base->GetXaxis()->GetLabelSize() << std::endl;
+        // std::cout << "X-Label Offset: " << h_ratio_base->GetXaxis()->GetLabelOffset() << std::endl;
+
+        // std::cout << "Y-Title Size: " << h_ratio->GetYaxis()->GetTitleSize() << std::endl;
+        // std::cout << "Y-Title Offset: " << h_ratio_base->GetYaxis()->GetTitleOffset() << std::endl;
+        // std::cout << "Y-Label Offset: " << h_ratio_base->GetYaxis()->GetLabelOffset() << std::endl;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Actual plotting and Drawing section
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    if (debug) std::cout << "DEBUG: Edit canvas object" << std::endl;
+    gStyle->SetPadBorderMode(0);
+    gStyle->SetFrameBorderMode(0);
+
+    float L = xpad;
+    float B = ypad;
+    float R = 1-xpad;
+    float T = 1-ypad;
+    double L_margin = 105.6 / c->GetWw();   // Targets 0.11 at 960 width
+    double R_margin =  24.0 / c->GetWw();   // Targets 0.025 at 960 width
+    if (incl_ratio) {
+        c->Divide(1,2,small,small);
+        c->GetPad(1)->SetPad(L,B+ydiv,R,T); // Order: (L B R T)
+        c->GetPad(1)->SetLeftMargin(L_margin);
+        c->GetPad(1)->SetRightMargin(R_margin);//0.05
+        c->GetPad(1)->SetBottomMargin(ygap / 2);
+        c->GetPad(1)->Modified();
+
+        c->GetPad(2)->SetPad(L,B,R,ydiv);   // Order: (L B R T)
+        c->GetPad(2)->SetTopMargin(ygap / 2);
+        c->GetPad(2)->SetLeftMargin(L_margin);
+        c->GetPad(2)->SetRightMargin(R_margin);//0.05
+        c->GetPad(2)->SetBottomMargin(0.333);//0.3
+        c->GetPad(2)->SetGrid(0,1);
+        c->GetPad(2)->SetTickx();
+        c->GetPad(2)->Modified();
+    } else {
+        c->Divide(1,1,small,small);
+        c->GetPad(1)->SetGrid(0,0);
+        c->GetPad(1)->SetLeftMargin(.11);
+        c->GetPad(1)->SetRightMargin(.05);
+        c->GetPad(1)->SetBottomMargin(.1);
+
+        c->GetPad(1)->SetBottomMargin(.1);
+        c->GetPad(1)->Modified();
+        c->cd(1);
+        gPad->Modified();
+    }
+
+    if (debug) std::cout << "DEBUG: Edit legend object" << std::endl;
+    leg->SetFillColor(kWhite);
+    leg->SetLineColor(kWhite);
+    leg->SetShadowColor(kWhite);
+    leg->SetTextFont(42);
+    leg->SetTextSize(0.035);
+    leg->SetNColumns(5);
+
+    if (debug) std::cout << "DEBUG: Making the Latex object" << std::endl;
+
+    // c->cd();
+    c->cd(1);
+
+    int max_bin;
+    double hmax,max_val,bin_err;
+
+    hmax = 0.0;
+    max_bin = h_data->GetMaximumBin();
+    max_val = h_data->GetBinContent(max_bin);
+    bin_err = h_data->GetBinErrorUp(max_bin);
+    hmax = TMath::Max(max_val+bin_err,hmax);
+
+    max_val = hs->GetMaximum();
+    hmax = TMath::Max(max_val,hmax);
+
+    // for (TH1D* h: overlay_hists) {
+    //     max_bin = h->GetMaximumBin();
+    //     max_val = h->GetBinContent(max_bin);
+    //     hmax = TMath::Max(max_val,hmax);
+    // }
+
+    if (incl_leg) {
+        h_data->SetMaximum(hmax*1.5);
+        hs->SetMaximum(hmax*1.5);
+    } else {
+        h_data->SetMaximum(hmax*1.01);
+        hs->SetMaximum(hmax*1.01);
+    }
+
+    if (incl_ratio) {
+        // hs->SetMinimum(0.01);   // This will avoid drawing the 0 on the y-axis
+        hs->SetMinimum(0.0);
+    } else {
+        hs->SetMinimum(0.0);
+        h_data->SetMinimum(0.0);
+    }
+
+    if (debug) std::cout << "DEBUG: Drawing stuff" << std::endl;
+
+    hs->Draw("hist");   // draws the stacked histogram
+    // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
+    h_exp_sum->Draw("same,e");
+    if (incl_leg) leg->Draw();
+    for (TLatex* latex: extra_text) latex->Draw();
+
+    h_data->Draw("same,e,p");
+    gr_err->Draw("same,2");
+    // for (TH1D* h: overlay_hists) h->Draw("same,hist");
+
+    add_cms_text((TPad*)c->GetPad(1),cms_style);
+    if (incl_ratio) {
+        c->cd(1);
+
+        hs->GetYaxis()->SetTitleSize(0.08);
+        hs->GetYaxis()->SetTitleOffset(0.63);
+        hs->GetYaxis()->SetLabelSize(0.070);
+        if (cats.size() > 9) {
+            hs->GetYaxis()->SetTitleSize(0.08);
+            hs->GetYaxis()->SetTitleOffset(0.30);
+            hs->GetYaxis()->SetLabelSize(0.070);
+        }
+
+        c->cd(2);
+
+        h_ratio_base->Draw();
+        h_ratio_band->Draw("same,2");
+        h_ratio->Draw("same,e,p");
+
+        // The x-axis labeling is determined by the ratio plot
+        // if (hs->GetXaxis()->GetNbins() <= 4) {// Likely an njet histogram
+        //     h_ratio->GetXaxis()->SetLabelSize(0.250);
+        // }
+
+        c->GetPad(1)->RedrawAxis();
+        c->GetPad(2)->RedrawAxis();
+    } else {
+        hs->GetXaxis()->SetLabelFont(42);   //Default: 62
+        if (hs->GetXaxis()->GetNbins() <= 4) {// Likely an njet histogram
+            hs->GetXaxis()->SetLabelSize(0.05); //Default: 0.04
+        } else {
+            hs->GetXaxis()->SetLabelSize(0.04); //Default: 0.04
+        }
+
+        c->GetPad(1)->RedrawAxis();
+    }
+
+    c->cd();
+    for (uint idx=0; idx < partitions.size(); idx++) {
+        double x1,x2,y1,y2;
+        PlotPartition partition = partitions.at(idx);
+        Int_t bin_idx = partition.end;
+        double bin_width = (1.0 - L_margin - R_margin) / cats.size();
+
+        x1 = L_margin + bin_width*partition.end;
+        x2 = L_margin + bin_width*partition.end;
+
+        y1 = 0.03;
+        y2 = 0.85;
+
+        partition.line = new TLine(x1,y1,x2,y2);
+        partition.line->SetLineStyle(9);
+
+        if (partition.draw_line) {
+            partition.line->Draw();
+        }
+
+        x1 = (L_margin + bin_width*partition.end) - partition.axis_offsetX;
+        y1 = 0.055;
+        partition.axis_latex = new TLatex(x1,y1,partition.axis_txt.Data());
+
+        // partition.axis_latex->SetTextAlign(23); // H-centered+right adjusted
+        // partition.axis_latex->SetTextAlign(13); // left+top adjusted
+        // partition.axis_latex->SetTextAlign(31); // right+bottom adjusted
+        partition.axis_latex->SetTextAlign(33); // right+top adjusted
+        partition.axis_latex->SetTextSize(0.04);
+        partition.axis_latex->SetTextFont(62);
+
+        if (partition.draw_axis_latex) {
+            partition.axis_latex->Draw();
+        }
+
+        x1 = (L_margin + bin_width*partition.end) - partition.body_offsetX;
+        y1 = 0.75 - partition.body_offsetY;
+        partition.body_latex_1 = new TLatex(x1,y1,partition.body_txt_1.Data());
+        partition.body_latex_1->SetTextAlign(31);
+        partition.body_latex_1->SetTextSize(0.035);
+        partition.body_latex_1->SetTextFont(62);
+
+        x1 = (L_margin + bin_width*partition.end) - partition.body_offsetX;
+        y1 = 0.75 - partition.body_offsetY - partition.body_spacing;
+        partition.body_latex_2 = new TLatex(x1,y1,partition.body_txt_2.Data());
+        partition.body_latex_2->SetTextAlign(31);
+        partition.body_latex_2->SetTextSize(0.03);
+        partition.body_latex_2->SetTextFont(62);
+
+        if (partition.draw_body_latex) {
+            partition.body_latex_1->Draw();
+            if (!partition.body_txt_2.EqualTo("")) {
+                partition.body_latex_2->Draw();
+            }
+        }
+    }
+
+    TString save_format, save_name;
+
+    // save_format = "png";
+    // save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
+
+    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_type1.Data());
+    c->Print(save_name,save_type1);
+
+    // save_format = "pdf";
+    // save_format = "eps";
+    // save_name = TString::Format("overlayed_%s.%s",title.Data(),save_format.Data());
+    // c->Print(save_name,save_format);
+
+    save_name = TString::Format("overlayed_%s.%s",title.Data(),save_type2.Data());
+    c->Print(save_name,save_type2);
+
+    // Print an external legend
+    if (ext_leg) {
+        // save_name = TString::Format("ext_leg_%s",title.Data());
+        save_name = TString::Format("ext_leg_ylds");
+        make_external_legend(leg,save_name);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Clean up section
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    delete c;
+    delete h_data;
+    // delete CMSInfoLatex;
+    delete leg;
+    delete hs;
+    delete gr_err;
+    delete h_exp_sum;
+    for (TH1D* h: proc_hists) {
+        delete h;
+    }
+    if (incl_ratio) {
+        delete h_ratio;
+        delete h_ratio_base;
+        delete h_ratio_band;
+    }
+
+    return;
+}
+
 /*
 Desc:
     Creates ratio style histograms from event yields computed by combine fits with WCs scanned to find
@@ -2340,57 +2728,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     for (AnalysisCategory* ana_cat: cats_to_plot) {
         ana_cat->setAsimov();
     }
-    /*
-    cout << "Before loading the fit results:" << endl;
-    for (AnalysisCategory* ana_cat: cats_to_plot) {
-        cout << "Proc: " << ana_cat->getName() << endl;
-        cout << "Data: " << ana_cat->getData() << endl;
-        cout << "Sum:  " << ana_cat->getExpSum() << endl;
-    }
     
-    ws->loadSnapshot("prefit_f");
-    
-    cout << "After loading the fit results:" << endl;
-    for (AnalysisCategory* ana_cat: cats_to_plot) {
-        cout << "Proc: " << ana_cat->getName() << endl;
-        cout << "Data: " << ana_cat->getData() << endl;
-        cout << "Sum:  " << ana_cat->getExpSum() << endl;
-    }
-    */
-    /*
-    double value;
-    double err;
-    double ratio;
-    ws->loadSnapshot("prefit_f");
-    for (AnalysisCategory* ana_cat: cats_to_plot) {
-        cout << "Cat name: " << ana_cat->getName() << endl;
-        for (TString proc_name: ALL_PROCS) {
-           cout << "Proc name: " << proc_name.Data() << endl;
-          if (ana_cat == nullptr) { continue; }
-          if (ana_cat->hasProc(proc_name)) {
-            RooAddition* roo_add = ana_cat->getRooAdd(proc_name);
-            ana_cat->th1x->setVal(0.5);
-            value = roo_add->getVal();
-            err   = roo_add->getPropagatedError(*prefit);
-            ratio = err/value;
-            cout << "th1x: " << ana_cat->th1x->getVal() << endl;
-            cout << "Value: " << value << endl;
-            cout << "Error: " << err << endl;
-            cout << "Ratio: " << ratio << endl;
-            
-            cout << "Setting th1x..." << endl;
-            ana_cat->th1x->setVal(1.5);
-            value = roo_add->getVal();
-            err   = roo_add->getPropagatedError(*prefit);
-            ratio = err/value;
-            cout << "th1x: " << ana_cat->th1x->getVal() << endl;
-            cout << "Value: " << value << endl;
-            cout << "Error: " << err << endl;
-            cout << "Ratio: " << ratio << endl;
-          }
-        }
-    }
-    */
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
     //return;
     
@@ -2452,8 +2790,9 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = true;
+    bool incl_summary_plots = false;
     bool incl_summary_gif_plots = false;
+    bool incl_diff_plots = true;
     bool incl_fluct_plots = false;
     bool incl_fluct_sum_plots = false;
     bool incl_njets_plots = false;
@@ -2531,8 +2870,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         // Make the prefit histogram stack plot
         ws->loadSnapshot("prefit_i");
         
-        cout << "Prefit values: " << endl;
-        
         for (auto const& x : ch_map) {
             cat_manager.getCategory(x.second)->setAsimov();
         }
@@ -2547,14 +2884,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         std::cout << "--- Postfit ---" << std::endl;
 
         // Make the postfit histogram stack plot
-        
         ws->loadSnapshot("postfit_f");
-        
-        cout << "Postfit values: " << endl;
-        
-        for (TString wc: wcs) {
-            cout << wc.Data() << " Val: " << ws->var(wc)->getVal() << endl;
-        }
         
         latex->SetNDC();
         latex->SetTextFont(42);
@@ -2684,6 +3014,99 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
             // make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style);
             make_overlay_plot_v2(name_prefix,extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style,"",partitions);
         }
+    }
+    
+    if (incl_diff_plots) {
+        // This doesn't determine the CMS txt position, its just storing the value that we know it is going to be
+        // Puts the bonus text in frame to avoid overlap with the cms_style.extra_text
+        double cms_txt_xpos = 0.12;
+        double cms_txt_ypos = 0.94;
+        double extra_txt_xoffset =  0.10;
+        double extra_txt_yoffset = -0.02;
+        int extra_txt_align = 11;
+
+        std::cout << "--- Prefit ---" << std::endl;
+        
+        std::vector<TString> wcs {};
+        RooArgSet pdfs = (RooArgSet) ws->allVars();
+        RooAbsReal* pdf;
+        TIterator *it_pdf = pdfs.createIterator();
+        TString wc_name;
+        while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
+            wc_name = pdf->getTitle();
+            if (wc_name.Data()[0] == 'c')
+            {
+                cout << wc_name.Data() << endl;
+                wcs.push_back(wc_name);
+            }
+        }
+
+        /*
+        cout << "Default values: " << endl;
+        for (TString wc: wcs) {
+            //ws->var(wc)->setVal(0);
+            //ws->var(wc)->setError(0);
+            //cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
+            cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
+        }
+
+        for (TString wc: wcs) {
+            ws->var(wc)->setVal(0);
+            ws->var(wc)->setError(0);
+        }
+        */
+
+        // Make the prefit histogram stack plot
+        ws->loadSnapshot("prefit_i");
+        
+        for (auto const& x : ch_map) {
+            cat_manager.getCategory(x.second)->setAsimov();
+        }
+        
+        latex->SetNDC();
+        latex->SetTextFont(42);
+        latex->SetTextSize(0.080);  // Was 0.070
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
+        make_overlay_diff_plot("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+
+        std::cout << "--- Postfit ---" << std::endl;
+
+        // Make the postfit histogram stack plot
+        
+        ws->loadSnapshot("postfit_f");
+        
+        latex->SetNDC();
+        latex->SetTextFont(42);
+        latex->SetTextSize(0.080);  // Was 0.070
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
+        for (auto& kv: BEST_FIT_POIS) {
+            std::string rrv_poi_name = kv.first;
+            double rrv_value = kv.second;
+            setRRV(pois,rrv_poi_name,rrv_value);
+        }
+        //make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        
+        // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+
+        /*
+        std::cout << "--- NuisOnly ---" << std::endl;
+
+        // Make the nuisfit histogram stack plot
+        ws->loadSnapshot("nuisfit_f");
+        latex->SetNDC();
+        latex->SetTextFont(42);
+        latex->SetTextSize(0.080);  // Was 0.070
+        latex->SetTextAlign(extra_txt_align);
+        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Nuis. Only");
+        for (auto& kv: BEST_FIT_POIS) {
+            std::string rrv_poi_name = kv.first;
+            double rrv_value = 0.0;
+            setRRV(pois,rrv_poi_name,rrv_value);
+        }
+        make_overlay_plot_v2("noflucts_nuisfit",extra_text,cats_to_plot,nuisfit,incl_ratio,incl_leg,incl_ext_leg,supp_style);
+        */
     }
     
     // Make the fancier postfit WC 2sigma Up/Down fluctuation histogram stack plots
