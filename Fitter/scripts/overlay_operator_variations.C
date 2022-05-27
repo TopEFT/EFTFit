@@ -119,7 +119,7 @@ struct CMSTextStyle {
         cms_rel_posX = 0.045;
         cms_rel_posY = 0.100;
 
-        lumi_text = "41.5 fb^{-1} (13 TeV)";
+        lumi_text = "";//"41.5 fb^{-1} (13 TeV)";
         lumi_align = 31;
         lumi_size = 0.60;
         lumi_font = 42;
@@ -190,17 +190,17 @@ vTStr ALL_PROCS {
     //"WZ","ZZ","WW",
     //"WWW","WWZ","WZZ","ZZZ",
     //"singlet_tWchan","singletbar_tWchan",
-    "ttH","ttll","ttlnu","tllq","tHq"
-    // "ttlnu","ttll","ttH","tllq","tHq"
+    "ttH","ttll","ttlnu","tllq","tHq","tttt"
+    // "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr YIELD_TABLE_ORDER {
     "Diboson","Triboson","charge_flips","fakes","convs",
-    "ttlnu","ttll","ttH","tllq","tHq"
+    "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr SIG_PROCS {
-    "ttlnu","ttll","ttH","tllq","tHq"
+    "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
 vTStr BKGD_PROCS {
@@ -222,6 +222,8 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     // For use with eps and ps save types
     {"2lss_m","2\\ell\\text{ss}(-)"},
     {"2lss_p","2\\ell\\text{ss}(+)"},
+    {"2lss_4t_m","2\\ell\\text{ss 4t}(-)"},
+    {"2lss_4t_p","2\\ell\\text{ss 4t}(+)"},
     {"3l_p_nsfz_1b","3\\ell 1\\text{b}(+)"},
     {"3l_m_nsfz_1b","3\\ell 1\\text{b}(-)"},
     {"3l_p_nsfz_2b","3\\ell 2\\text{b}(+)"},
@@ -294,6 +296,7 @@ std::unordered_map<std::string,Color_t> PROCESS_COLOR_MAP {
     {"tllq",kPink+1},
     // {"tHq",kCyan},
     {"tHq",kCyan+1},
+    {"tttt",kViolet-6},
     {"charge_flips",kAzure-9},
     {"fakes",kYellow-7},
     {"Diboson",kMagenta},
@@ -308,7 +311,8 @@ std::unordered_map<std::string,int> PROCESS_MARKER_MAP {
     {"ttll",kFullSquare},       // kFullSquare
     {"ttH",kFullTriangleUp},  // kFullTriangleUp
     {"tllq",kFullTriangleDown}, // kFullTriangleDown
-    {"tHq",kFullDiamond}   // kFullDiamond
+    {"tHq",kFullDiamond},   // kFullDiamond
+    {"tttt",kFullStar}   // kFullDiamond
     // {"charge_flips",},
     // {"fakes",},
     // {"Diboson",},
@@ -323,6 +327,7 @@ std::unordered_map<std::string,int> PROCESS_MARKER_SIZE_MAP {
     {"ttH"  ,2},
     {"tllq" ,2},
     {"tHq"  ,2},
+    {"tttt" ,2},
 
     {"charge_flips",1},
     {"fakes",1},
@@ -367,6 +372,7 @@ std::unordered_map<std::string,std::string> YIELD_LABEL_MAP {
     {"ttll","\\ttll"},
     {"tllq","\\tllq"},
     {"ttlnu","\\ttlnu"},
+    {"tttt","\\tttt"},
     {"charge_flips","Charge Flips"},
     {"fakes","Fakes"},
     {"convs","Conversions"}
@@ -524,7 +530,7 @@ TString CMSSW_BASE = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0
 TString EFTFIT_TEST_DIR = CMSSW_BASE + "src/EFTFit/Fitter/test/";
 
 TString FR_MDKEY = "fit_mdf";   // The name of the key for the fit result object from a multidimfit file
-TString FR_DIAGKEY = "nuisances_prefit_res";    // Same thing, but for a fitDiagnostics file
+TString FR_DIAGKEY = "fit_s";    // Same thing, but for a fitDiagnostics file
 
 TString save_type1 = "png";
 
@@ -2106,12 +2112,29 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "16D.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_lj0pt_nonuis.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
+    
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_feb16/combinedcard.txt";  // hard-coded path for the datacard for now.
+    std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
+    
+    for (const auto & [lstring, ch] : ch_map) {
+        int counter = 0;
+        for(int i = 0; i < lstring.length(); i++) {
+            if(lstring[i] == '_') {
+                counter = i;
+            }
+        }
+        std::string chstring = lstring.substr(0, counter);  // remove the last segment of the channel name, like "_lj0pt"
+        auto nodeHandler = ch_map.extract(lstring);
+        nodeHandler.key() = chstring;
+        ch_map.insert(std::move(nodeHandler));
+    }
+    
 
     // Note: We currently don't make use of the 'FreezeUp'/'FreezeDown' fitresult files
     TFile* prefit_file = nullptr;
@@ -2127,10 +2150,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     RooFitResult* freezefit_nom = nullptr;
 
     prefit  = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,prefit_file);
-    postfit = load_fitresult(in_dir + "multidimfitPostfit.root"  ,FR_MDKEY,postfit_file);
-    bestfit = load_fitresult(in_dir + "multidimfitBestfit.root"  ,FR_MDKEY,bestfit_file);
-    nuisfit = load_fitresult(in_dir + "multidimfitNuisOnly.root" ,FR_MDKEY,nuisfit_file);
-    freezefit_nom = load_fitresult(in_dir + "multidimfitFreezeNom.root",FR_MDKEY,freeze_nom_file);
+    postfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,postfit_file);
+    bestfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,bestfit_file);
+    nuisfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root" ,FR_DIAGKEY,nuisfit_file);
+    freezefit_nom = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,freeze_nom_file);
     
     if (prefit) {
         ws->saveSnapshot("prefit_i",prefit->floatParsInit(),kTRUE);
@@ -2156,135 +2179,165 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     // Create instances of our helper classes
     WSHelper ws_helper = WSHelper();
     RooArgSet pois = ws_helper.getPOIs(ws);
-    RooArgSet nuis = ws_helper.getNuisances(ws);
+    //RooArgSet nuis = ws_helper.getNuisances(ws);
 
     // All of these categories are built from 'fundamental' categories (i.e. already exist in the 'all_cats' vector)
     std::unordered_map<std::string,std::vector<TString> > cat_groups;
     cat_groups["all"] = {
-        "C_2lss_p_2b_4j",
-        "C_2lss_p_2b_5j",
-        "C_2lss_p_2b_6j",
-        "C_2lss_p_2b_ge7j",
-        "C_2lss_m_2b_4j",
-        "C_2lss_m_2b_5j",
-        "C_2lss_m_2b_6j",
-        "C_2lss_m_2b_ge7j",
-        "C_3l_mix_p_1b_2j",
-        "C_3l_mix_p_1b_3j",
-        "C_3l_mix_p_1b_4j",
-        "C_3l_mix_p_1b_ge5j",
-        "C_3l_mix_m_1b_2j",
-        "C_3l_mix_m_1b_3j",
-        "C_3l_mix_m_1b_4j",
-        "C_3l_mix_m_1b_ge5j",
-        "C_3l_mix_p_2b_2j",
-        "C_3l_mix_p_2b_3j",
-        "C_3l_mix_p_2b_4j",
-        "C_3l_mix_p_2b_ge5j",
-        "C_3l_mix_m_2b_2j",
-        "C_3l_mix_m_2b_3j",
-        "C_3l_mix_m_2b_4j",
-        "C_3l_mix_m_2b_ge5j",
-        "C_3l_mix_sfz_1b_2j",
-        "C_3l_mix_sfz_1b_3j",
-        "C_3l_mix_sfz_1b_4j",
-        "C_3l_mix_sfz_1b_ge5j",
-        "C_3l_mix_sfz_2b_2j",
-        "C_3l_mix_sfz_2b_3j",
-        "C_3l_mix_sfz_2b_4j",
-        "C_3l_mix_sfz_2b_ge5j",
-        "C_4l_2b_2j",
-        "C_4l_2b_3j",
-        "C_4l_2b_ge4j",
+        "2lss_4t_m_4j_2b",
+        "2lss_4t_m_5j_2b",
+        "2lss_4t_m_6j_2b",
+        "2lss_4t_m_7j_2b",
+        "2lss_4t_p_4j_2b",
+        "2lss_4t_p_5j_2b",
+        "2lss_4t_p_6j_2b",
+        "2lss_4t_p_7j_2b",
+        "2lss_m_4j_2b",
+        "2lss_m_5j_2b",
+        "2lss_m_6j_2b",
+        "2lss_m_7j_2b",
+        "2lss_p_4j_2b",
+        "2lss_p_5j_2b",
+        "2lss_p_6j_2b",
+        "2lss_p_7j_2b",
+        "3l_m_offZ_1b_2j",
+        "3l_m_offZ_1b_3j",
+        "3l_m_offZ_1b_4j",
+        "3l_m_offZ_1b_5j",
+        "3l_m_offZ_2b_2j",
+        "3l_m_offZ_2b_3j",
+        "3l_m_offZ_2b_4j",
+        "3l_m_offZ_2b_5j",
+        "3l_p_offZ_1b_2j",
+        "3l_p_offZ_1b_3j",
+        "3l_p_offZ_1b_4j",
+        "3l_p_offZ_1b_5j",
+        "3l_p_offZ_2b_2j",
+        "3l_p_offZ_2b_3j",
+        "3l_p_offZ_2b_4j",
+        "3l_p_offZ_2b_5j",
+        "3l_onZ_1b_2j",
+        "3l_onZ_1b_3j",
+        "3l_onZ_1b_4j",
+        "3l_onZ_1b_5j",
+        "3l_onZ_2b_2j",
+        "3l_onZ_2b_3j",
+        "3l_onZ_2b_4j",
+        "3l_onZ_2b_5j",
+        "4l_2j_2b",
+        "4l_3j_2b",
+        "4l_4j_2b",
+    };
+    cat_groups["2lss_4t_m"] = {
+        "2lss_4t_m_4j_2b",
+        "2lss_4t_m_5j_2b",
+        "2lss_4t_m_6j_2b",
+        "2lss_4t_m_7j_2b",
+    };
+    cat_groups["2lss_4t_p"] = {
+        "2lss_4t_p_4j_2b",
+        "2lss_4t_p_5j_2b",
+        "2lss_4t_p_6j_2b",
+        "2lss_4t_p_7j_2b",
     };
     cat_groups["2lss_m"] = {
-        "C_2lss_m_2b_4j",
-        "C_2lss_m_2b_5j",
-        "C_2lss_m_2b_6j",
-        "C_2lss_m_2b_ge7j"
+        "2lss_m_4j_2b",
+        "2lss_m_5j_2b",
+        "2lss_m_6j_2b",
+        "2lss_m_7j_2b",
     };
     cat_groups["2lss_p"] = {
-        "C_2lss_p_2b_4j",
-        "C_2lss_p_2b_5j",
-        "C_2lss_p_2b_6j",
-        "C_2lss_p_2b_ge7j",
+        "2lss_p_4j_2b",
+        "2lss_p_5j_2b",
+        "2lss_p_6j_2b",
+        "2lss_p_7j_2b",
     };
-    cat_groups["3l_p_nsfz_1b"] = {
-        "C_3l_mix_p_1b_2j",
-        "C_3l_mix_p_1b_3j",
-        "C_3l_mix_p_1b_4j",
-        "C_3l_mix_p_1b_ge5j",
+    cat_groups["3l_m_offZ_1b"] = {
+        "3l_m_offZ_1b_2j",
+        "3l_m_offZ_1b_3j",
+        "3l_m_offZ_1b_4j",
+        "3l_m_offZ_1b_5j",
     };
-    cat_groups["3l_m_nsfz_1b"] = {
-        "C_3l_mix_m_1b_2j",
-        "C_3l_mix_m_1b_3j",
-        "C_3l_mix_m_1b_4j",
-        "C_3l_mix_m_1b_ge5j",
+    cat_groups["3l_m_offZ_2b"] = {
+        "3l_m_offZ_2b_2j",
+        "3l_m_offZ_2b_3j",
+        "3l_m_offZ_2b_4j",
+        "3l_m_offZ_2b_5j",
     };
-    cat_groups["3l_p_nsfz_2b"] = {
-        "C_3l_mix_p_2b_2j",
-        "C_3l_mix_p_2b_3j",
-        "C_3l_mix_p_2b_4j",
-        "C_3l_mix_p_2b_ge5j",
+    cat_groups["3l_p_offZ_1b"] = {
+        "3l_p_offZ_1b_2j",
+        "3l_p_offZ_1b_3j",
+        "3l_p_offZ_1b_4j",
+        "3l_p_offZ_1b_5j",
     };
-    cat_groups["3l_m_nsfz_2b"] = {
-        "C_3l_mix_m_2b_2j",
-        "C_3l_mix_m_2b_3j",
-        "C_3l_mix_m_2b_4j",
-        "C_3l_mix_m_2b_ge5j",
+    cat_groups["3l_p_offZ_2b"] = {
+        "3l_p_offZ_2b_2j",
+        "3l_p_offZ_2b_3j",
+        "3l_p_offZ_2b_4j",
+        "3l_p_offZ_2b_5j",
     };
-    cat_groups["3l_sfz_1b"] = {
-        "C_3l_mix_sfz_1b_2j",
-        "C_3l_mix_sfz_1b_3j",
-        "C_3l_mix_sfz_1b_4j",
-        "C_3l_mix_sfz_1b_ge5j",
+    cat_groups["3l_onZ_1b"] = {
+        "3l_onZ_1b_2j",
+        "3l_onZ_1b_3j",
+        "3l_onZ_1b_4j",
+        "3l_onZ_1b_5j",
     };
-    cat_groups["3l_sfz_2b"] = {
-        "C_3l_mix_sfz_2b_2j",
-        "C_3l_mix_sfz_2b_3j",
-        "C_3l_mix_sfz_2b_4j",
-        "C_3l_mix_sfz_2b_ge5j",
+    cat_groups["3l_onZ_2b"] = {
+        "3l_onZ_2b_2j",
+        "3l_onZ_2b_3j",
+        "3l_onZ_2b_4j",
+        "3l_onZ_2b_5j",
     };
     cat_groups["4l"] = {
-        "C_4l_2b_2j",
-        "C_4l_2b_3j",
-        "C_4l_2b_ge4j",
+        "4l_2j_2b",
+        "4l_3j_2b",
+        "4l_4j_2b",
     };
-
-    // Can of course have groups of any arbitrary combination
-    cat_groups["wacky"] = {
-        "C_3l_mix_p_1b_2j",
-        "C_4l_2b_3j",
-        "C_2lss_m_2b_5j"
-    };
-
+    
     // For the njet merged plots, this determines the bin order
     std::vector<TString> cat_group_names {
         "2lss_p",
         "2lss_m",
-        "3l_p_nsfz_1b",
-        "3l_m_nsfz_1b",
-        "3l_p_nsfz_2b",
-        "3l_m_nsfz_2b",
-        "3l_sfz_1b",
-        "3l_sfz_2b",
+        "2lss_4t_p",
+        "2lss_4t_m",
+        "3l_p_offZ_1b",
+        "3l_m_offZ_1b",
+        "3l_p_offZ_2b",
+        "3l_m_offZ_2b",
+        "3l_onZ_1b",
+        "3l_onZ_2b",
         "4l",
-
-        // "wacky",
-        // "all",
     };
 
     
     CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
-    //////////////////////
-    // Create some merged categories, i.e. create a new category which is the merger of all
-    //  sub-categories of the corresponding 'cat_groups' entry
-    //////////////////////
+    
+    // Set up the child categories and merge them into the parent category
     for (TString mrg_name: cat_group_names) {
-        cat_manager.mergeCategories(mrg_name,cat_groups[mrg_name.Data()],YIELD_TABLE_ORDER);
+        std::vector<TString> mrg_groups = {};
+        for (TString cat_name: cat_groups[mrg_name.Data()]) {
+            for (auto const& x : ch_map) {
+                if (x.first == cat_name) {
+                    mrg_groups.push_back(x.second);
+                }
+            }
+        }
+        cat_manager.mergeCategories(mrg_name.Data(), mrg_groups, YIELD_TABLE_ORDER);
     }
+    
+    //////////////////////
+    // Create some merged processes, i.e. create a new process which is the merger of all
+    //  sub-processes of the corresponding 'cat_groups' entry
+    //////////////////////
+    for (TString mrg_name: ALL_PROCS) {
+        cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
+    }
+    
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
+    for (AnalysisCategory* ana_cat: cats_to_plot) {
+        ana_cat->setAsimov();
+    }
     
     //////////////////////
     // Print some stuff
@@ -2343,16 +2396,16 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = false;
-    bool incl_summary_gif_plots = true;
+    bool incl_summary_plots = true;
+    bool incl_summary_gif_plots = false;
     bool incl_fluct_plots = false;
     bool incl_fluct_sum_plots = false;
     bool incl_njets_plots = false;
 
     // Plot layout options
     bool incl_ratio = true;
-    bool incl_leg = false;
-    bool incl_ext_leg = true;
+    bool incl_leg = true;
+    bool incl_ext_leg = false;
     
     // Note: Irrelevant if not making fluctuation plots
     // std::vector<TString> wc_to_fluctuate {};
@@ -2384,14 +2437,30 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         // Puts the bonus text in frame to avoid overlap with the cms_style.extra_text
         double cms_txt_xpos = 0.12;
         double cms_txt_ypos = 0.94;
-        double extra_txt_xoffset =  0.03;
-        double extra_txt_yoffset = -0.12;
+        double extra_txt_xoffset =  0.10;
+        double extra_txt_yoffset = -0.02;
         int extra_txt_align = 11;
 
         std::cout << "--- Prefit ---" << std::endl;
 
         // Make the prefit histogram stack plot
         ws->loadSnapshot("postfit_i");
+        
+        /*
+        std::vector<TString> wcs {};
+        RooArgSet pdfs = (RooArgSet) ws->allVars();
+        RooAbsReal* pdf;
+        TIterator *it_pdf = pdfs.createIterator();
+        while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
+            wcs.push_back(pdf->getTitle());
+        }
+        for (TString wc: wcs) {
+            ws->var(wc)->setVal(0);
+            ws->var(wc)->setError(0);
+            cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
+        }
+        */
+        
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070

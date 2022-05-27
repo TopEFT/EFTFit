@@ -10,7 +10,7 @@ from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
 
 class EFTPlot(object):
-    def __init__(self):
+    def __init__(self,wc_ranges=None):
         self.logger = logging.getLogger(__name__)
         self.ContourHelper = ContourHelper()
 
@@ -19,37 +19,39 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-        self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
-                            'cpt':(-30,30),   'ctp':(-35,65),
-                            'ctli':(-10,10),  'ctlSi':(-15,15),
-                            'cQl3i':(-15,15), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-10,10),  
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-5,5),
-                            'cQq13': (-1,2),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
-        #2017 range
-        '''
-        self.wc_ranges = {  'ctW':(-5,5),     'ctZ':(-10,10),
-                            'cpt':(-20,20),   'ctp':(-20,50),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-20,20), 'cptb':(-50,50),
-                            'ctG':(-2,2),     'cpQM':(-10,30),
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-20,20),
-                            'cQq13': (-1,1),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
-        '''
+
+        # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
+        self.wc_ranges = {
+            'cQQ1' : (-6.0,6.0),
+            'cQei' : (-7.0,7.0),
+            'cQl3i': (-10.0,10.0),
+            'cQlMi': (-8.0,8.0),
+            'cQq11': (-1.5,1.5),
+            'cQq13': (-0.6,0.6),
+            'cQq81': (-4.0,3.0),
+            'cQq83': (-1.2,1.2),
+            'cQt1' : (-5.0,5.0),
+            'cQt8' : (-10.0,10.0),
+            'cbW'  : (-5.0,5.0),
+            'cpQ3' : (-10.0,7.0),
+            'cpQM' : (-11.0,30.0),
+            'cpt'  : (-25.0,20.0),
+            'cptb' : (-17.0,17.0),
+            'ctG'  : (-1.5,1.5),
+            'ctW'  : (-4.0,3.0),
+            'ctZ'  : (-4.0,4.0),
+            'ctei' : (-8.0,8.0),
+            'ctlSi': (-8.0,8.0),
+            'ctlTi': (-1.4,1.4),
+            'ctli' : (-8.0,8.0),
+            'ctp'  : (-11.0,35.0),
+            'ctq1' : (-1.4,1.4),
+            'ctq8' : (-3.0,3.0),
+            'ctt1' : (-3.0,3.0),
+        }
+        if wc_ranges is not None:
+            self.wc_ranges = wc_ranges
+
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
@@ -1350,7 +1352,6 @@ class EFTPlot(object):
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
-    # def getIntervalFits(self, basename='.EFT.SM.Float', params=[], siginterval=2):
     def getIntervalFits(self,**kwargs):
         basename    = kwargs.pop('basename','.EFT.SM.Float')
         params      = kwargs.pop('params',[])

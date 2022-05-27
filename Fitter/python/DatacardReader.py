@@ -190,9 +190,9 @@ class DatacardReader(object):
         return sig_rate / math.sqrt(bkg_rate)
 
 if __name__ == "__main__":
-    cmssw_base = "/afs/crc.nd.edu/user/a/awightma/CMSSW_Releases/CMSSW_8_1_0/"
-    input_dir  = "src/EFTFit/Fitter/test/anatest14/SM_impacts_AsimovSMdata/"
-    dc_name    = "EFT_MultiDim_Datacard.txt"
+    cmssw_base = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/"
+    input_dir  = "src/EFTFit/Fitter/test/card"
+    dc_name    = "combinedcard_njets.txt"
     fpath = os.path.join(cmssw_base,input_dir,dc_name)
 
     reader = DatacardReader()
@@ -212,7 +212,15 @@ if __name__ == "__main__":
         tmp.bin([b])
         tmp.PrintProcess()
         print "%s: %.3f +/- %.3f" % (b.ljust(21),tmp.GetRate(),tmp.GetUncertainty())
-
-    rm_systs = ['^PDF$','^MUF$']    # Remove these systematics from all processes in all bins
-    for syst in rm_systs: reader.removeSyst(b='.*',proc='.*',syst_name=syst)
-    reader.write(fpath); reader.load(fpath)
+        
+    channels = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9']
+    for ch in channels:
+        b = reader.getBins(keep=[ch])
+        cb_copy = reader.cb.cp()
+        cb_copy.bin(b)
+        cb_copy.PrintProcess()
+        #cb_copy.WriteDatacard("combinedcard_njets_"+ch+".txt")
+        
+    #rm_systs = ['^PDF$','^MUF$']    # Remove these systematics from all processes in all bins
+    #for syst in rm_systs: reader.removeSyst(b='.*',proc='.*',syst_name=syst)
+    #reader.write(fpath); reader.load(fpath)
