@@ -467,8 +467,14 @@ class EFTFit(object):
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs='ctZ', workspace='wps_njet_runII.root')`
     '''
-    def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[], mask=[], mask_syst=[], wcs=[], workspace='EFTWorkspace.root'):
+    def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[], mask=[], mask_syst=[], wcs=[], workspace='EFTWorkspace.root', differential=None):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
+        if differential is None:
+            differential = 'njets' not in workspace
+            print 'Assuming',
+            print 'njets' if not differential else 'differential',
+            print 'based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.'
+            wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
 
         # Use EVERY combination of wcs
         if allPairs:
