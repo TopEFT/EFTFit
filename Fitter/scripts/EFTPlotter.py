@@ -1722,6 +1722,7 @@ class EFTPlot(object):
         numWC=len(self.wcs)
         if '28redo' in basename_float:
             numWC=15
+        print(numWC)
         y_float = [n*4+3 for n in range(0,numWC)]
         y_freeze = [n*4+2 for n in range(0,numWC)]
 
@@ -1996,8 +1997,8 @@ class EFTPlot(object):
         else:
             canvas.Print('BestScanPlot{}.png'.format(filename),'png')
             canvas.Print('BestScanPlot{}.eps'.format(filename),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot{}.eps'.format(filename))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot{}.eps BestScanPlot{}.pdf'.format(filename,filename))
+            #os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot{}.eps'.format(filename))
+            #os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot{}.eps BestScanPlot{}.pdf'.format(filename,filename))
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###

@@ -264,7 +264,12 @@ class EFTFit(object):
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
-        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked)])
+        track = []
+        if any('trackParameters' in s for s in other):
+            index = other.index('--trackParameters')
+            other.pop(index)
+            track.append(other.pop(index))
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track)])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
             other.append('--setParameters')
@@ -288,7 +293,7 @@ class EFTFit(object):
         if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         logging.info(' '.join(args))
 
         # Run the combineTool.py command
