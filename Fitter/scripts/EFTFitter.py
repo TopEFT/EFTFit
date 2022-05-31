@@ -286,7 +286,7 @@ class EFTFit(object):
             args.extend(['--setParameters',','.join(masks)])
 
         point_time = 2#hrs
-        wall_time = 48#hrs
+        wall_time  = 8#hrs
         if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time/point_time)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
