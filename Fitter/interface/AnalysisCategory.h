@@ -14,6 +14,11 @@
 
 #include "WSHelper.h"
 
+#include "Timer.h"
+#include <chrono>
+using Clock = std::chrono::steady_clock;
+using std::chrono::time_point;
+
 // >VERY< useful convenience class for extracting expected and observed yields of some category from
 // a given RooWorkspace.
 //  * Has methods for creating new categories that are the merger of other categories from the RooWorkspace
@@ -30,16 +35,16 @@ class AnalysisCategory {
         TString cat_name;
         RooDataSet* roo_data;
         RooDataSet* asimov_data;
-        static RooRealVar* th1x;
-        bool use_asimov;    // Determine if getData() function return asimov data or real data
+        bool use_asimov = true;    // Set it to false to use the real data instead of asimov data.
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
         std::vector<TString> children;      // Contains the names of the categories merged into this one
+        RooAddition* allProcs = nullptr;    // Pointer to the object all processes are merged into. It's for the caculation of summed errors.
 
         WSHelper helper;    // Kind of annoying that we have to initialize one helper per Category...
 
-        bool DEBUG = false;
+        bool DEBUG = true;
 
         AnalysisCategory(TString category, RooWorkspace* ws);
         AnalysisCategory(TString category, std::vector<AnalysisCategory> others);
@@ -69,22 +74,25 @@ class AnalysisCategory {
         
         void setProcOrder(std::vector<TString> order);
         void mergeProcesses(TRegexp rgx,TString new_name);
+        void mergeAllProcesses();  // Set allProcs to the merged object 
         void Print(RooFitResult* fr=0);
-        void setAsimov();
         
-    private:
-        std::vector<double> index_mapping {0.5, 1.5, 2.5, 3.5};
+        void setAsimov();
+        void deleteAsimov();
+        void resetAsimov();  // Asimov data has to be reset everytime a set of fitresults is loaded.
+        
+        static RooRealVar* th1x;
+        static std::vector<double> index_mapping;   // depends on the number of entries
 };
 
 // Normal constructor
 AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
+
+    time_point<Clock> s0 = Clock::now();
+
     this->cat_name = category;
     this->helper = WSHelper();
     TRegexp cat_rgx = TRegexp("^"+category+"$");
-    
-    if (this->DEBUG) {
-        std::cout << category.Data() << std::endl;
-    }
 
     std::vector<RooCatType*> all_cats = this->helper.getTypes(ws,"CMS_channel");
     std::vector<RooCatType*> tar_cats = this->helper.filter(all_cats, cat_rgx);
@@ -94,9 +102,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         throw;
     }
     this->roo_data = (RooDataSet*)obs_data.at(0);
-    this->asimov_data = (RooDataSet*)obs_data.at(0);
-    this->use_asimov = false;
-    //this->th1x = ws->var("CMS_th1x");
+    //this->asimov_data = (RooDataSet*)obs_data.at(0);
     std::vector<RooAbsReal*> exp_cat = this->helper.getExpCatFuncs(ws,tar_cats);
 
     // TODO: We also want to store a pointer to the th1x object from the RooWorkspace
@@ -107,6 +113,12 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
         RooAddition* proc_yield = nullptr;
         TString name(ra->GetName());
+        
+        TString match = TString::Format("charge_flip");
+        if (name.Contains(match)) {
+            cout << "Skip process: " << name << endl;
+            continue;
+        }
         
         // Starting index for the process name, e.g. "ttll_quad_mixed_ctp_cpt"
         Ssiz_t idx_proc(name.Index(search_proc));
@@ -123,15 +135,8 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
 
         TString name_ch   = name(idx_ch+search_channel.Length(), idx_proc-search_channel.Length());
         TString name_proc = name(idx_proc+search_proc.Length(), name.Length());
-        TString name_pdf  = TString::Format("shapeSig_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
-        TString name_pdf2 = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
-
-        if (this->DEBUG) {
-            std::cout << "Name:      " << name.Data() << std::endl;
-            std::cout << "Name Ch:   " << name_ch.Data() << std::endl;
-            std::cout << "Name Proc: " << name_proc.Data() << std::endl;
-            std::cout << "Name PDF:  " << name_pdf.Data() << std::endl;
-        }
+        TString name_pdf  = TString::Format("shapeSig_%s_%s_morph",name_ch.Data(),name_proc.Data());  // hard-coded PDF names, need to be changed from different workspaces.
+        TString name_pdf2 = TString::Format("shapeSig_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
 
         RooAbsReal* roo_pdf = ws->function(name_pdf);
         if (roo_pdf == nullptr) {
@@ -145,9 +150,19 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
             //std::cout << TString::Format("[WARNING] Unable to find PDF %s or %s for process %s, ignoring this process", name_pdf.Data(), name_pdf2.Data(), name.Data()) << std::endl;
             continue;
             proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
-        } else {
+        } 
+        else {
             RooArgSet set_proc;
             RooArgSet set_pdf;
+          
+        /*  
+        if (this->DEBUG) {
+            std::cout << "Name:      " << name.Data() << std::endl;
+            std::cout << "Name Ch:   " << name_ch.Data() << std::endl;
+            std::cout << "Name Proc: " << name_proc.Data() << std::endl;
+            std::cout << "Name PDF:  " << name_pdf.Data() << std::endl;
+        }
+        */
 
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
@@ -157,16 +172,16 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         this->exp_proc[name_proc.Data()] = proc_yield;
         this->proc_order.push_back(name_proc);
         this->proc_width = std::max(this->proc_width,name_proc.Length());
-        
-        /*
-        for (int i = 0; i <= 3; ++i) {
-            this->th1x->setVal(this->index_mapping[i]);
-            if (proc_yield->getVal()) {
-                std::cout << this->th1x->getVal() << ": " << proc_yield->getVal() << std::endl;
-            }
-        }
-        */
-    }  
+    }
+    
+    if (this->use_asimov) {
+        this->setAsimov(); // initialize the asimov dataset.
+    }
+    
+    if (this->DEBUG) {
+        double duration = findDuration(s0);
+        cout << "Initialization of " << this->getName().Data() << " takes " << duration << "s" << endl;
+    } 
 }
 
 // Construct an AnalysisCategory by merging together everything from 'others'
@@ -190,10 +205,14 @@ AnalysisCategory::~AnalysisCategory() {}
 
 // Define a common initilizer method for overloading the ctors used for merging categories
 void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory> others) {
+
+    time_point<Clock> merge_s0 = Clock::now();
+
     this->cat_name = category;
     this->helper = WSHelper();
     this->proc_width = 0;
     this->roo_data = nullptr;   // Temporarily set to a nullptr
+    this->asimov_data = nullptr;   // Temporarily set to a nullptr
     // First find all unique processes among the AnalysisCategories to be merged, also merge
     //  the RooDataSets together at this time
     for (auto ana_cat: others) {
@@ -207,15 +226,15 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
             this->roo_data->append(*other_data);
         }
         
-        /*
         // TODO: Figure out how to merge data with shape distributions
-        RooDataSet* other_asimov_data = ana_cat.asimov_data;
-        if (!this->asimov_data) {
-            this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
-        } else {
-            this->asimov_data->append(*other_asimov_data);
+        if (this->use_asimov) {
+            RooDataSet* other_asimov_data = ana_cat.asimov_data;
+            if (!this->asimov_data) {
+                this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
+            } else {
+                this->asimov_data->append(*other_asimov_data);
+            }
         }
-        */
         
         for (TString p: ana_cat.getProcs()) {
             if (!this->hasProc(p)) {
@@ -237,6 +256,12 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
         RooAddition* roo_merged = this->helper.merge(to_merge,merge_name);
         this->exp_proc[p.Data()] = roo_merged;
     }
+    
+    if (this->DEBUG) {
+        double duration = findDuration(merge_s0);
+        cout << "Merging of " << this->getName().Data() << " takes " << duration << "s" << endl;
+    }
+    
 }
 
 // Check if the specfied process exists in this category
@@ -313,18 +338,15 @@ double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
     if (this->hasProc(proc) && fr) {
         RooAddition* Proc = this->getRooAdd(proc);
         if (this->th1x == nullptr) {
-            return Proc->getPropagatedError(*fr);
-        }
-        if (Proc->dependsOn(*(this->th1x))) {
-            double err(0.0);
-            for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                err += this->getExpProcErrorBin(proc, idx, fr);  // This is questionable. We can't simply sum the error over bins.
+            if (Proc->dependsOn(*(this->th1x))) {
+                double err(0.0);
+                for (int idx=0; idx < this->index_mapping.size(); idx++) {
+                    err += this->getExpProcErrorBin(proc, idx, fr);  // This is questionable. We can't simply sum the error over bins.
+                }
+                return err;
             }
-            return err;
         }
-        else {
-            return Proc->getPropagatedError(*fr);
-        }
+        return Proc->getPropagatedError(*fr);
     }
     return 0.0;
 }
@@ -339,39 +361,37 @@ double AnalysisCategory::getExpSum() {
 }
 
 double AnalysisCategory::getExpSumError(RooFitResult* fr) {
+
+    time_point<Clock> sumError_s0 = Clock::now();
+
     if (!fr) {
         return 0.0;
     }
-    TString s("tmp_merged");
-    std::vector<RooAddition*> to_merge;
-    for (TString p: this->getProcs()) {
-        to_merge.push_back(this->getRooAdd(p));
-    }
-    RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
     double err(0.0);
     if (this->th1x) {
-        if (tmp_mrg->dependsOn(*(this->th1x))) {
+        RooAddition* first = this->getRooAdd(this->getProcs().at(0));
+        if (first->dependsOn(*(this->th1x))) {
             for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                err += tmp_mrg->getPropagatedError(*fr);
+                err += getExpSumErrorBin(idx, fr);
             }
         }
+        
+        if (this->DEBUG) {
+            double duration = findDuration(sumError_s0);
+            cout << "Find expected sum error of " << this->getName().Data() << " takes " << duration << "s (inclusive)" << endl;
+        }
+        
+        return err;
     }
-    else {
-        err = tmp_mrg->getPropagatedError(*fr);  // Again, this is questionable.
-    }
-    // I don't know if this is a good idea or not...
-    delete tmp_mrg;
-
+    err = getExpSumErrorBin(0, fr);
     return err;
 }
 
 // Get bin content for data
 double AnalysisCategory::getDataBin(int bin) {
-    if (bin<0 | bin>3) {
-        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
-        throw;
-    }
-    double data_bin;
+
+    time_point<Clock> dataBin_s0 = Clock::now();
+
     RooDataSet* obj_data;
     if (this->use_asimov) {
         obj_data = this->asimov_data;
@@ -384,26 +404,52 @@ double AnalysisCategory::getDataBin(int bin) {
             return 0.0;
         }
     }
-    obj_data->get(bin);
-    data_bin = obj_data->weight();
+    int nEntries = obj_data->numEntries(); // the number of data entries = number of merged categories * number of bins
+    int nBins    = this->th1x->numBins();  // the number of bins
+    double iter = nEntries / nBins;
+    double data_bin = 0;
+    for (uint i=0; i < iter; i++) {
+        if ( obj_data->get(bin + i*nBins) ) {
+            data_bin += obj_data->weight();
+        }
+        else {
+            std::cout << TString::Format("[WARNING] Invalid index %d", bin + i*nBins) << std::endl;
+            std::cout << this->getName() << std::endl;
+            std::cout << "How many data bins?  " << nEntries << std::endl;
+            std::cout << "How many index bins? " << nBins << std::endl;
+            std::cout << "current iteration: " << i << std::endl;
+            throw;
+        }
+    }
     
-    cout << "bin idx:  " << bin << endl;
-    cout << "data bin: " << data_bin << endl;
+    /*
+    if (this->DEBUG) {
+        double duration = findDuration(dataBin_s0);
+        cout << "Find data at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+    }
+    */
     
     return data_bin;
 }
 
 // Return the expected bin yield for a specific process
 double AnalysisCategory::getExpProcBin(TString proc, int bin) {
-    if (bin<0 | bin>3) {
-        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
-        throw;
-    }
+
+    time_point<Clock> procYieldBin_s0 = Clock::now();
+
     if (this->hasProc(proc) && this->th1x) {
         double old_bin = this->th1x->getVal();
         this->th1x->setVal(this->index_mapping[bin]);
         double exp_yield = this->getRooAdd(proc)->getVal();
         this->th1x->setVal(old_bin);
+        
+        /*
+        if (this->DEBUG) {
+            double duration = findDuration(procYieldBin_s0);
+            cout << "Find expected yield for " << proc.Data() << " at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+        }
+        */
+        
         return exp_yield;
     }
     return 0.0;
@@ -411,16 +457,21 @@ double AnalysisCategory::getExpProcBin(TString proc, int bin) {
 
 // Return the propagated bin error for a specific process
 double AnalysisCategory::getExpProcErrorBin(TString proc, int bin, RooFitResult* fr) {
-    if (bin<0 | bin>3) {
-        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
-        throw;
-    }
+
+    time_point<Clock> procErrorBin_s0 = Clock::now();
+
     if (this->hasProc(proc) && fr && this->th1x) {
         double old_bin = this->th1x->getVal();
         this->th1x->setVal(this->index_mapping[bin]);
         RooAddition* roo_add = this->getRooAdd(proc);
         double exp_error = roo_add->getPropagatedError(*fr);
         this->th1x->setVal(old_bin);
+        
+        if (this->DEBUG) {
+            double duration = findDuration(procErrorBin_s0);
+            cout << "Find expected error for " << proc.Data() << " at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+        }
+        
         return exp_error;
     }
     return 0.0;
@@ -428,37 +479,43 @@ double AnalysisCategory::getExpProcErrorBin(TString proc, int bin, RooFitResult*
 
 // Return the expected bin yield summed over all processes
 double AnalysisCategory::getExpSumBin(int bin) {
-    if (bin<0 | bin>3) {
-        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
-        throw;
+
+    time_point<Clock> sumYieldBin_s0 = Clock::now();
+
+    this->mergeAllProcesses();
+    double old_bin = this->th1x->getVal();
+    this->th1x->setVal(this->index_mapping[bin]);
+    double sum = this->allProcs->getVal();
+    this->th1x->setVal(old_bin);
+    
+    /*
+    if (this->DEBUG) {
+        double duration = findDuration(sumYieldBin_s0);
+        cout << "Find expected sum yield at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
     }
-    double sum(0.0);
-    for (TString p: this->getProcs()) {
-        sum += this->getExpProcBin(p, bin);
-    }
+    */
+    
     return sum;
 }
 
 double AnalysisCategory::getExpSumErrorBin(int bin, RooFitResult* fr) {
-    if (bin<0 | bin>3) {
-        std::cout << TString::Format("[WARNING] Invalid index %d", bin) << std::endl;
-        throw;
-    }
+
+    time_point<Clock> sumErrorBin_s0 = Clock::now();
+
     if (!fr) {
         return 0.0;
     }
-    TString s("tmp_merged");
-    std::vector<RooAddition*> to_merge;
+    this->mergeAllProcesses();
     double old_bin = this->th1x->getVal();
     this->th1x->setVal(this->index_mapping[bin]);
-    for (TString p: this->getProcs()) {
-        to_merge.push_back(this->getRooAdd(p));
-    }
-    RooAddition* tmp_mrg = this->helper.merge(to_merge,s);
-    double err = tmp_mrg->getPropagatedError(*fr);
+    double err = this->allProcs->getPropagatedError(*fr);
     this->th1x->setVal(old_bin);
-    delete tmp_mrg;
-
+    
+    if (this->DEBUG) {
+        double duration = findDuration(sumErrorBin_s0);
+        cout << "Find expected sum error at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+    }
+    
     return err;
 }
 
@@ -509,6 +566,16 @@ void AnalysisCategory::mergeProcesses(TRegexp rgx, TString new_name) {
     this->proc_order = new_order;
 } 
 
+void AnalysisCategory::mergeAllProcesses() {
+    if (this->allProcs) return;
+    TString s("merged");
+    std::vector<RooAddition*> to_merge;
+    for (TString p: this->getProcs()) {
+        to_merge.push_back(this->getRooAdd(p));
+    }
+    this->allProcs = this->helper.merge(to_merge,s);
+}
+
 void AnalysisCategory::Print(RooFitResult* fr) {
     int pwidth = std::max(5,this->proc_width);
     int dwidth = 5; // Digit width
@@ -542,11 +609,31 @@ void AnalysisCategory::Print(RooFitResult* fr) {
 void AnalysisCategory::setAsimov() {
     this->use_asimov = true;
     RooCategory roo_cat("asimov","asimov");
-    roo_cat.defineType("asimov");
     RooRealVar rrv("_weight_","_weight_",0);
     RooDataSet* rds = new RooDataSet("asimov_data","asimov_data",RooArgSet(rrv,roo_cat),"_weight_");
-    rds->add(roo_cat, this->getExpSum());
+    
+    int nBins = this->th1x->numBins();
+    for (uint idx=0; idx<nBins; idx++) {
+        TString bin_name = TString::Format("asimov_bin%d", idx);
+        roo_cat.defineType(bin_name);
+        roo_cat.setIndex(idx);
+        rds->add(roo_cat, this->getExpSumBin(idx));
+    }
     this->asimov_data = rds;
+}
+
+void AnalysisCategory::deleteAsimov() {
+    this->use_asimov = false;
+    delete this->asimov_data;
+}
+
+void AnalysisCategory::resetAsimov() {
+    if (this->use_asimov) {
+        this->deleteAsimov();
+    }
+    if (!this->use_asimov) {
+        this->setAsimov();
+    }
 }
 
 #endif

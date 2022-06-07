@@ -68,6 +68,7 @@ typedef std::pair<TString,double> pTStrDbl;
 typedef std::pair<TString,TString> pTStrTStr;
 typedef std::unordered_map<std::string,double> umapStrDbl;  // Apparently a TString isn't a 'hashable' type
 RooRealVar* AnalysisCategory::th1x = nullptr;
+std::vector<double> AnalysisCategory::index_mapping = {};
 
 // Fancy structure for containing the info needed to plot an 'off-scale' point in the ratio fluct plots 
 struct OffScalePoint {
@@ -707,7 +708,10 @@ void add_cms_text(TPad* pad, CMSTextStyle style) {
 // Returns a histogram that is the ratio of h1/h2
 // Used in: make_overlay_plot_v2
 TH1D* make_ratio_histogram(TString name, TH1D* h1, TH1D* h2) {
+    cout << "Making ratio plot for " << name.Data() << endl;
     if (h1->GetXaxis()->GetNbins() != h2->GetXaxis()->GetNbins()) {
+        std::cout << "hist1 number of bins: " << h1->GetXaxis()->GetNbins() << std::endl;
+        std::cout << "hist2 number of bins: " << h2->GetXaxis()->GetNbins() << std::endl;
         std::cout << "[Error] makeRatioHistogram() - bin mismatch between ratio of hists" << std::endl;
         throw;
     }
@@ -1300,7 +1304,7 @@ void make_overlay_plot_v2(
     // std::vector<TH1D*> overlay_hists={}
     std::vector<PlotPartition> partitions={}
 ) {
-    bool debug = false;
+    bool debug = true;
 
     // Some configuration settings
     Float_t small = 1.e-5;
@@ -1356,6 +1360,7 @@ void make_overlay_plot_v2(
     for (TH1D* h: proc_hists) {
         if (debug) std::cout << "DEBUG: Adding histogram to stack: " << h->GetName() << std::endl;
         hs->Add(h);
+        if (debug) std::cout << "DEBUG: Histogram added to stack: " << h->GetName() << std::endl;
     }
 
     // hs->SetTitle(";Category;Events");
@@ -1364,10 +1369,12 @@ void make_overlay_plot_v2(
     } else {
         hs->SetTitle(TString::Format(";%s;Events",xtitle.Data()));
     }
+    if (debug) std::cout << "DEBUG: Title has been set." << std::endl;
 
     // TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP);
     TH1D* h_exp_sum = builder.buildSummedHistogram("expected_sum","",cats,BIN_LABEL_MAP,fr);
     TGraphErrors* gr_err = get_error_graph(h_exp_sum,cats,fr);
+    if (debug) std::cout << "DEBUG: Building summed histogram. " << std::endl;
 
     // h_exp_sum->SetFillStyle(1001);
     // h_exp_sum->SetFillColor(kGray);
@@ -1380,9 +1387,10 @@ void make_overlay_plot_v2(
     TH1D* h_ratio_base;
     TGraphAsymmErrors* h_ratio_band;
     if (incl_ratio) {
+        if (debug) std::cout << "DEBUG: Adding ratio plots. " << std::endl;
         TString ratio_name = "r_" + title;
         h_ratio = make_ratio_histogram(ratio_name,h_data,h_exp_sum);
-        h_ratio_base = make_ratio_histogram("r_base",h_data,h_data);
+        h_ratio_base = make_ratio_histogram("r_base",h_data,h_data);  // draw a horizontal line at y=1
         h_ratio_band = make_ratio_error_band(h_data,h_exp_sum,gr_err);
 
         h_ratio->SetLineColor(kBlack);
@@ -1701,7 +1709,7 @@ void make_overlay_diff_plot(
     HistogramBuilder builder = HistogramBuilder();
 
     int c_hh = 640;
-    int c_ww = 3840;
+    int c_ww = 1920;
 
     if (cats.size() > 9) {
         c_ww += (cats.size() - 9)*35;
@@ -2501,15 +2509,20 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "wps_lj0pt_may03.root");
+    TFile* ws_file = TFile::Open(in_dir + "wps_ptz-lj0pt.root");
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
     AnalysisCategory::th1x = ws->var("CMS_th1x");
+    for (uint i=0; i < AnalysisCategory::th1x->numBins(); i++) {
+        double half_int = i + 0.5;
+        AnalysisCategory::index_mapping.push_back(half_int);
+        cout << half_int << endl;
+    }
     
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_may03/combinedcard.txt";  // hard-coded path for the datacard for now.
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_pp/combinedcard.txt";  // hard-coded path for the datacard for now.
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true);
     
     for (const auto & [lstring, ch] : ch_map) {
@@ -2540,7 +2553,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     RooFitResult* freezefit_nom = nullptr;
 
     prefit  = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,prefit_file);
-    postfit = load_fitresult(in_dir + "multidimfitPrefit.root"  ,FR_MDKEY,postfit_file);
+    postfit = load_fitresult(in_dir + "multidimfitPrep.root"  ,FR_MDKEY,postfit_file);
     //bestfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root"  ,FR_DIAGKEY,bestfit_file);
     //nuisfit = load_fitresult(in_dir + "fitDiagnosticsPrefit.root" ,FR_DIAGKEY,nuisfit_file);
     //freezefit_nom = load_fitresult(in_dir + "fitDiagnosticsPrefit.root",FR_DIAGKEY,freeze_nom_file);
@@ -2699,6 +2712,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         "4l",
     };
     
+    std::vector<TString> cat_group_names_4lonly {
+        "4l"
+    };
+    
     CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
     
     // Set up the child categories and merge them into the parent category
@@ -2725,9 +2742,14 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     // These are basically the bins of the histogram we want to make
     std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
     
-    for (AnalysisCategory* ana_cat: cats_to_plot) {
-        ana_cat->setAsimov();
+    /*
+    bool do_asimov = true;
+    if (do_asimov) {
+        for (AnalysisCategory* ana_cat: cats_to_plot) {
+            ana_cat->resetAsimov();
+        }
     }
+    */
     
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
     //return;
@@ -2790,7 +2812,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = false;
+    bool incl_summary_plots = true;
     bool incl_summary_gif_plots = false;
     bool incl_diff_plots = true;
     bool incl_fluct_plots = false;
@@ -2837,86 +2859,30 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         int extra_txt_align = 11;
 
         std::cout << "--- Prefit ---" << std::endl;
-        
-        std::vector<TString> wcs {};
-        RooArgSet pdfs = (RooArgSet) ws->allVars();
-        RooAbsReal* pdf;
-        TIterator *it_pdf = pdfs.createIterator();
-        TString wc_name;
-        while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
-            wc_name = pdf->getTitle();
-            if (wc_name.Data()[0] == 'c')
-            {
-                cout << wc_name.Data() << endl;
-                wcs.push_back(wc_name);
-            }
-        }
-
-        /*
-        cout << "Default values: " << endl;
-        for (TString wc: wcs) {
-            //ws->var(wc)->setVal(0);
-            //ws->var(wc)->setError(0);
-            //cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
-            cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
-        }
-
-        for (TString wc: wcs) {
-            ws->var(wc)->setVal(0);
-            ws->var(wc)->setError(0);
-        }
-        */
 
         // Make the prefit histogram stack plot
-        ws->loadSnapshot("prefit_i");
-        
-        for (auto const& x : ch_map) {
-            cat_manager.getCategory(x.second)->setAsimov();
-        }
+        ws->loadSnapshot("postfit_i");
+        std::cout << "Fit results loaded: postfit->floatParsInit()" << std::endl;
         
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
-        make_overlay_plot_v2("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        make_overlay_plot_v2("sum_prefit",extra_text,cats_to_plot, postfit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
         std::cout << "--- Postfit ---" << std::endl;
 
         // Make the postfit histogram stack plot
         ws->loadSnapshot("postfit_f");
+        std::cout << "Fit results loaded: postfit->floatParsFinal()" << std::endl;
         
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
-        for (auto& kv: BEST_FIT_POIS) {
-            std::string rrv_poi_name = kv.first;
-            double rrv_value = kv.second;
-            setRRV(pois,rrv_poi_name,rrv_value);
-        }
-        make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
-        
-        // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
-
-        /*
-        std::cout << "--- NuisOnly ---" << std::endl;
-
-        // Make the nuisfit histogram stack plot
-        ws->loadSnapshot("nuisfit_f");
-        latex->SetNDC();
-        latex->SetTextFont(42);
-        latex->SetTextSize(0.080);  // Was 0.070
-        latex->SetTextAlign(extra_txt_align);
-        latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Nuis. Only");
-        for (auto& kv: BEST_FIT_POIS) {
-            std::string rrv_poi_name = kv.first;
-            double rrv_value = 0.0;
-            setRRV(pois,rrv_poi_name,rrv_value);
-        }
-        make_overlay_plot_v2("noflucts_nuisfit",extra_text,cats_to_plot,nuisfit,incl_ratio,incl_leg,incl_ext_leg,supp_style);
-        */
+        make_overlay_plot_v2("sum_postfit",extra_text,cats_to_plot, postfit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
     }
 
     if (incl_summary_gif_plots) {
@@ -3026,49 +2992,16 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         int extra_txt_align = 11;
 
         std::cout << "--- Prefit ---" << std::endl;
-        
-        std::vector<TString> wcs {};
-        RooArgSet pdfs = (RooArgSet) ws->allVars();
-        RooAbsReal* pdf;
-        TIterator *it_pdf = pdfs.createIterator();
-        TString wc_name;
-        while ( (pdf=(RooAbsReal*)it_pdf->Next()) ){
-            wc_name = pdf->getTitle();
-            if (wc_name.Data()[0] == 'c')
-            {
-                cout << wc_name.Data() << endl;
-                wcs.push_back(wc_name);
-            }
-        }
-
-        /*
-        cout << "Default values: " << endl;
-        for (TString wc: wcs) {
-            //ws->var(wc)->setVal(0);
-            //ws->var(wc)->setError(0);
-            //cout << wc.Data() << ": " << ws->var(wc)->getError() << endl;
-            cout << wc.Data() << ": " << ws->var(wc)->getVal() << endl;
-        }
-
-        for (TString wc: wcs) {
-            ws->var(wc)->setVal(0);
-            ws->var(wc)->setError(0);
-        }
-        */
 
         // Make the prefit histogram stack plot
-        ws->loadSnapshot("prefit_i");
-        
-        for (auto const& x : ch_map) {
-            cat_manager.getCategory(x.second)->setAsimov();
-        }
+        ws->loadSnapshot("postfit_i");
         
         latex->SetNDC();
         latex->SetTextFont(42);
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Prefit");
-        make_overlay_diff_plot("noflucts_prefit",extra_text,cats_to_plot,prefit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        make_overlay_diff_plot("diff_prefit",extra_text,cats_to_plot, postfit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
         std::cout << "--- Postfit ---" << std::endl;
 
@@ -3081,12 +3014,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
-        for (auto& kv: BEST_FIT_POIS) {
-            std::string rrv_poi_name = kv.first;
-            double rrv_value = kv.second;
-            setRRV(pois,rrv_poi_name,rrv_value);
-        }
-        //make_overlay_plot_v2("noflucts_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
+        make_overlay_diff_plot("diff_postfit",extra_text,cats_to_plot, postfit,incl_ratio,incl_leg,incl_ext_leg,cms_style);
         
         // make_overlay_plot_v2("noflucts_postfit_SM",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,cms_style);
 
@@ -3250,11 +3178,6 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         latex->SetTextSize(0.080);  // Was 0.070
         latex->SetTextAlign(extra_txt_align);
         latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,"Postfit");
-        for (auto& kv: BEST_FIT_POIS) {
-            std::string rrv_poi_name = kv.first;
-            double rrv_value = kv.second;
-            setRRV(pois,rrv_poi_name,rrv_value);
-        }
         make_overlay_plot_v2("noflucts_njets_postfit",extra_text,cats_to_plot,freezefit_nom,incl_ratio,incl_leg,incl_ext_leg,supp_style,"",partitions);
     }
 

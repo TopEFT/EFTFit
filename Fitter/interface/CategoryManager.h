@@ -125,7 +125,6 @@ void CategoryManager::mergeCategories(TString mrg_name, std::vector<TString> cat
         return;
     }
     for (TString s: cat_names) {
-        std::cout << s << std::endl;
         if (!this->hasCategory(s)) {
             std::cout << TString::Format("[WARNING] Skipping unknown category: %s",s.Data()) << std::endl;
             continue;

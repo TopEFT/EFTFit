@@ -12,8 +12,6 @@
 
 #include "AnalysisCategory.h"
 
-int bin_size = 4; // Number of bins for the differnetial distributions
-
 // Container for info found by the 'get_extremum_fitresult' function from a particular AnalysisCategory
 // TODO: I don't know if this struct def should go here or somewhere else
 struct ExtremumPoint {
@@ -62,6 +60,9 @@ class HistogramBuilder {
         TH1D* buildSummedHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0);
         TH1D* buildSummedDifferentialHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0);
         TH1D* buildExtremumHistogram(TString title, TString proc, std::vector<ExtremumPoint> pts, TString pt_type, std::unordered_map<std::string,std::string> bin_labels, std::unordered_map<std::string,Color_t> color_map);
+        
+        //int bin_size = 5;
+        int bin_size = AnalysisCategory::th1x->numBins();
 };
 
 HistogramBuilder::HistogramBuilder() {}
@@ -99,7 +100,7 @@ TH1D* HistogramBuilder::buildDataHistogram(TString title,std::vector<AnalysisCat
 
 TH1D* HistogramBuilder::buildDataDifferentialHistogram(TString title,std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels) {
     TString plot_title = TString::Format("%s;category;Events",title.Data());
-    TH1D* h_data = new TH1D("data_yield",plot_title,cats.size(),0.0,cats.size());
+    TH1D* h_data = new TH1D("data_yield",plot_title, this->bin_size * cats.size(),0.0, this->bin_size * cats.size());
     h_data->SetLineColor(1);
     h_data->SetLineWidth(2);
     h_data->SetMarkerStyle(20);
@@ -115,13 +116,17 @@ TH1D* HistogramBuilder::buildDataDifferentialHistogram(TString title,std::vector
         if (bin_labels.count(bin_label.Data())) {
             bin_label = bin_labels[bin_label.Data()];
         }
-        int cat_idx = bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
+        int cat_idx = this->bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
         h_data->GetXaxis()->SetBinLabel(cat_idx, bin_label);
-        for (uint bin_idx = 0; bin_idx < bin_size; bin_idx++) {
+        for (uint bin_idx = 0; bin_idx < this->bin_size; bin_idx++) {
             double bin_val = cat->getDataBin(bin_idx);
             h_data->SetBinContent( cat_idx + bin_idx, bin_val);
+            h_data->SetBinErrorOption(TH1::kPoisson);
+            if (bin_idx) {
+                TString sub_label = TString::Format("%d", bin_idx+1);
+                h_data->GetXaxis()->SetBinLabel(cat_idx+bin_idx, sub_label);  // set for place-holder
+            }
         }
-        h_data->SetBinErrorOption(TH1::kPoisson);
     }
     return h_data;
 }
@@ -168,7 +173,7 @@ TH1D* HistogramBuilder::buildProcessDifferentialHistogram(TString title, TString
     TString plot_title = TString::Format("%s;category;Events",proc.Data());
     // TH1D* h = new TH1D(proc+"_yield",plot_title,cats.size(),0.0,1.0);
     TString hname = TString::Format("%s_%s_yield",title.Data(),proc.Data());
-    TH1D* h = new TH1D(hname,plot_title,cats.size(),0.0,cats.size());
+    TH1D* h = new TH1D(hname,plot_title, this->bin_size * cats.size(),0.0, this->bin_size * cats.size());
     h->GetYaxis()->SetTitleSize(0.05);
     h->GetYaxis()->SetTitleOffset(1.1);
     h->GetYaxis()->SetLabelSize(0.05);
@@ -185,17 +190,21 @@ TH1D* HistogramBuilder::buildProcessDifferentialHistogram(TString title, TString
     // Fill and label the histogram
     for (uint i = 0; i < cats.size(); i++) {
         AnalysisCategory* cat = cats.at(i);
-        int cat_idx = bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
+        int cat_idx = this->bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
         TString bin_label = cat->getName();
         if (bin_labels.count(bin_label.Data())) {
             bin_label = bin_labels[bin_label.Data()];
         }
         h->GetXaxis()->SetBinLabel(cat_idx, bin_label);
-        for (uint bin_idx = 0; bin_idx < bin_size; bin_idx++) {
+        for (uint bin_idx = 0; bin_idx < this->bin_size; bin_idx++) {
             if (cat->hasProc(proc)) {
                 h->SetBinContent( cat_idx + bin_idx, cat->getExpProcBin(proc, bin_idx));
             } else {
                 h->SetBinContent( cat_idx + bin_idx, 0.0);
+            }
+            if (bin_idx) {
+                TString sub_label = TString::Format("%d", bin_idx+1);
+                h->GetXaxis()->SetBinLabel(cat_idx+bin_idx, sub_label);  // set for place-holder
             }
         }
     }
@@ -213,6 +222,9 @@ TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::v
         AnalysisCategory* cat = cats.at(i);
         int bin_idx = i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
         TString bin_label = cat->getName();
+        
+        cout << "Building category " << bin_label << "......" << endl;
+        
         if (bin_labels.count(bin_label.Data())) {
             bin_label = bin_labels[bin_label.Data()];
         }
@@ -220,6 +232,7 @@ TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::v
         h->SetBinContent(bin_idx,cat->getExpSum());
 
         if (fr) {
+            cout << "Setting error......" << endl;
             h->SetBinError(bin_idx,cat->getExpSumError(fr));
         }
     }
@@ -228,22 +241,31 @@ TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::v
 
 // Returns a differential histogram built from the vector of categories, summed over all processes
 TH1D* HistogramBuilder::buildSummedDifferentialHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0) {
-    TH1D* h = new TH1D(name,title,cats.size(),0.0,cats.size());
+    TH1D* h = new TH1D(name,title, this->bin_size * cats.size(),0.0, this->bin_size * cats.size());
     h->SetFillColor(0);
     h->SetLineWidth(1);
     // Fill and label the histogram
     for (uint i = 0; i < cats.size(); i++) {
         AnalysisCategory* cat = cats.at(i);
-        int cat_idx = bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
+        int cat_idx = this->bin_size * i + 1;    // Histogram bins are offset by 1, since idx 0 is underflow bin
         TString bin_label = cat->getName();
+        
+        cout << "Building category " << bin_label << "......" << endl;
+        
         if (bin_labels.count(bin_label.Data())) {
             bin_label = bin_labels[bin_label.Data()];
         }
         h->GetXaxis()->SetBinLabel(cat_idx, bin_label);
-        for (uint bin_idx = 0; bin_idx < bin_size; bin_idx++) {
+        for (uint bin_idx = 0; bin_idx < this->bin_size; bin_idx++) {
+            cout << "Setting content for bin " << cat_idx + bin_idx << "......" << endl;
             h->SetBinContent( cat_idx + bin_idx, cat->getExpSumBin(bin_idx));
             if (fr) {
+                cout << "Setting error for bin " << cat_idx + bin_idx << "......" << endl;
                 h->SetBinError( cat_idx + bin_idx, cat->getExpSumErrorBin(bin_idx, fr));
+            }
+            if (bin_idx) {
+                TString sub_label = TString::Format("%d", bin_idx+1);
+                h->GetXaxis()->SetBinLabel(cat_idx+bin_idx, sub_label);  // set for place-holder
             }
         }
     }
