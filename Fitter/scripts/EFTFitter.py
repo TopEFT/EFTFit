@@ -10,6 +10,7 @@ import getpass
 import array
 from collections import defaultdict
 from EFTFit.Fitter.findMask import findMask 
+import os
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -285,9 +286,10 @@ class EFTFit(object):
             masks = [item for sub in masks for item in sub]
             args.extend(['--setParameters',','.join(masks)])
 
-        point_time = 2#hrs
+        point_scale = 8#hrs
         wall_time  = 8#hrs
-        if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time/point_time)))])
+        if not freeze: wall_time /= 2 # profiled scans take longer, so submit less points per job
+        if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
@@ -399,7 +401,10 @@ class EFTFit(object):
 
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
-            hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            host = os.uname()[1]
+            if 'lxlpus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
             (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
             if not tarfiles[2]:
                 logging.error("No files found in store!")
@@ -493,6 +498,9 @@ class EFTFit(object):
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctW','ctZ')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
