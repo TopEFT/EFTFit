@@ -402,7 +402,7 @@ class EFTFit(object):
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
             host = os.uname()[1]
-            if 'lxlpus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}'.format(user, taskname)
             elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
             else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
             (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
