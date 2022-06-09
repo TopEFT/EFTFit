@@ -579,7 +579,7 @@ class EFTPlot(object):
         for wc in wcs:
             self.OverlayZoomLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
 
-    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False):
+    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False, final=False):
         if len(wcs)!=2:
             logging.error("Function 'LLPlot2D' requires exactly two wcs!")
             return
@@ -600,55 +600,39 @@ class EFTPlot(object):
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        hist = ROOT.TH3F(hname, hname, 150, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 150, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
-        #hist = ROOT.TH3F(hname, hname, 300, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 300, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
-        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],hname,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
-        #htemp = ROOT.TH2F(hname,hname,200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        hist = ROOT.TH3F(hname, hname, 100, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 100, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
         limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
-        hist.Project3DProfile().Draw('colz')
-        hist.SetTitle(';{};{}'.format(wcs[1],wcs[0]))
-        
-        #hist = canvas.GetPrimitive(hname)
-
-        # Draw best fit point from grid scan
-        #for entry in range(limitTree.GetEntries()):
-        #    limitTree.GetEntry(entry)
-        #    currentnll = limitTree.GetLeaf('deltaNLL').GetValue(0)
-        #    if currentnll == minZ:
-        #        minentry = entry
-        #limitTree.GetEntry(minentry)
-        #xmin=limitTree.GetLeaf(wcs[1]).GetValue(0)
-        #ymin=limitTree.GetLeaf(wcs[0]).GetValue(0)
-        #print("Minimum: {}={}, {}={}".format(wcs[1],xmin,wcs[0],ymin))
+        hist = hist.Project3DProfile()
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist(100,{},{},100,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        hist.Draw('colz')
+        hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
         # Change plot formats
-        hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])
-        hist.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
-        hist.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
-        hist.SetTitle("2*deltaNLL < {}".format(ceiling))
+        hist.GetYaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        hist.GetXaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
+        hist.SetTitle('')#"2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
         ROOT.gStyle.SetOptStat(0)
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.18, 0.96, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.1, 0.945, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(30)
+        self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        #self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
-        self.CMS_extra.SetTextSize(0.02)
-        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
-        self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.7, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        if not final: self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
-        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
         self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
@@ -681,12 +665,11 @@ class EFTPlot(object):
         # wcs[0] is y-axis variable, wcs[1] is x-axis variable
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
-        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*deltaNLL<100', 'prof colz')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(150,{},{},150,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(100,{},{},100,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
         #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',150,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],150,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',100,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],100,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
@@ -754,8 +737,8 @@ class EFTPlot(object):
         h_contour.SetStats(0)
         #h_contour.SetTitle("Significance Contours")
         h_contour.SetTitle("")
-        h_contour.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
-        h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        h_contour.GetYaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        h_contour.GetXaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
 
         # CMS-required text
         self.CMS_text = ROOT.TLatex(0.1, 0.945, "CMS")# Simulation")
@@ -825,7 +808,11 @@ class EFTPlot(object):
         self.Lumi_text.Draw('same')
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
-        else: canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+        else:
+            canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour.eps {}{}contour.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         if final: 
             #canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
@@ -1045,10 +1032,10 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
         #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,params[0],params[1]), '', 'prof colz')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(150,{},{},150,{},{})'.format(minZ,params[0],params[1],self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(100,{},{},100,{},{})'.format(minZ,params[0],params[1],self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1]), '', 'prof colz')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(params[0],params[1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',150,self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],150,self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',100,self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],100,self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1])
 
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
@@ -1327,6 +1314,9 @@ class EFTPlot(object):
             wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
             wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
             wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
+	    wcs_pairs = [('cQei','ctZ'), ('cQl3i','ctZ'), ('cpQM','ctZ'), ('cptb','ctZ'), ('cpt','ctZ'), ('ctei','ctZ'), ('ctlSi','ctZ'), ('ctli','ctZ')]
+            # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
+            wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
