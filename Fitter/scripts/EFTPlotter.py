@@ -22,32 +22,32 @@ class EFTPlot(object):
 
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-6.0,6.0),
-            'cQei' : (-7.0,7.0),
-            'cQl3i': (-10.0,10.0),
-            'cQlMi': (-8.0,8.0),
-            'cQq11': (-1.5,1.5),
-            'cQq13': (-0.6,0.6),
-            'cQq81': (-4.0,3.0),
-            'cQq83': (-1.2,1.2),
-            'cQt1' : (-5.0,5.0),
-            'cQt8' : (-10.0,10.0),
-            'cbW'  : (-5.0,5.0),
-            'cpQ3' : (-10.0,7.0),
-            'cpQM' : (-11.0,30.0),
-            'cpt'  : (-25.0,20.0),
-            'cptb' : (-17.0,17.0),
-            'ctG'  : (-1.5,1.5),
-            'ctW'  : (-4.0,3.0),
-            'ctZ'  : (-4.0,4.0),
-            'ctei' : (-8.0,8.0),
-            'ctlSi': (-8.0,8.0),
-            'ctlTi': (-1.4,1.4),
-            'ctli' : (-8.0,8.0),
+            'cQQ1' : (-4.0,4.0),
+            'cQei' : (-4.0,4.0),
+            'cQl3i': (-5.5,5.5),
+            'cQlMi': (-4.0,4.0),
+            'cQq11': (-0.7,0.7),
+            'cQq13': (-0.35,0.35),
+            'cQq81': (-1.7,1.5),
+            'cQq83': (-0.6,0.6),
+            'cQt1' : (-4.0,4.0),
+            'cQt8' : (-8.0,8.0),
+            'cbW'  : (-3.0,3.0),
+            'cpQ3' : (-4.0,4.0),
+            'cpQM' : (-10.0,17.0),
+            'cpt'  : (-15.0,15.0),
+            'cptb' : (-9.0,9.0),
+            'ctG'  : (-0.8,0.8),
+            'ctW'  : (-1.5,1.5),
+            'ctZ'  : (-2.0,2.0),
+            'ctei' : (-4.0,4.0),
+            'ctlSi': (-5.0,5.0),
+            'ctlTi': (-0.9,0.9),
+            'ctli' : (-4.0,4.0),
             'ctp'  : (-11.0,35.0),
-            'ctq1' : (-1.4,1.4),
-            'ctq8' : (-3.0,3.0),
-            'ctt1' : (-3.0,3.0),
+            'ctq1' : (-0.6,0.6),
+            'ctq8' : (-1.4,1.4),
+            'ctt1' : (-2.1,2.1),
         }
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
@@ -1317,6 +1317,7 @@ class EFTPlot(object):
 	    wcs_pairs = [('cQei','ctZ'), ('cQl3i','ctZ'), ('cpQM','ctZ'), ('cptb','ctZ'), ('cpt','ctZ'), ('ctei','ctZ'), ('ctlSi','ctZ'), ('ctli','ctZ')]
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
