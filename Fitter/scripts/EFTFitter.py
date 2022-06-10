@@ -10,7 +10,7 @@ import getpass
 import array
 from collections import defaultdict
 from EFTFit.Fitter.findMask import findMask 
-import os
+from itertools import chain
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -402,11 +402,12 @@ class EFTFit(object):
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
             host = os.uname()[1]
-            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}'.format(user, taskname)
-            elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
+            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
+            elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
             else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
-            (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
-            if not tarfiles[2]:
+            paths = glob.glob(hadooppath)
+            paths = [p for p in (chain.from_iterable(os.walk(path) for path in paths))]
+            if not paths[0][2]:
                 logging.error("No files found in store!")
                 sys.exit()
 
@@ -418,10 +419,11 @@ class EFTFit(object):
                 return
 
             # Extract the root files
-            for tarfile in tarfiles[2]:
-                if tarfile.endswith('.tar'):
-                    print tarfiles[0]+'/'+tarfile
-                    sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
+            for tarfiles in paths:
+                for tarfile in tarfiles[2]:
+                    if tarfile.endswith('.tar'):
+                        print tarfiles[0]+'/'+tarfile
+                        sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
             haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
@@ -501,7 +503,7 @@ class EFTFit(object):
             scan_wcs = [('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
-            wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -602,7 +604,7 @@ class EFTFit(object):
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
-            wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
