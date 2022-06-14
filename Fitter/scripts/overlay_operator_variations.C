@@ -1,8 +1,42 @@
-// #include "workspace_helper.h"
-// #include "plotmaker.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <utility>
+
+#include "TString.h"
+#include "TLatex.h"
+#include "TLine.h"
+#include "TArrow.h"
+#include "TColor.h"
+#include "TH1D.h"
+#include "TPad.h"
+#include "TAxis.h"
+#include "TGraphErrors.h"
+#include "TGraphAsymmErrors.h"
+#include "TSystemDirectory.h"
+#include "TList.h"
+#include "TFile.h"
+#include "TSystemFile.h"
+#include "TCollection.h"
+#include "TIterator.h"
+#include "TLegend.h"
+#include "TCanvas.h"
+#include "THStack.h"
+#include "TMath.h"
+#include "TStyle.h"
+
+#include "RooFitResult.h"
+#include "RooWorkspace.h"
+#include "RooArgSet.h"
+#include "RooAddition.h"
+#include "RooCatType.h"
+#include "RooRealVar.h"
 
 #include "EFTFit/Fitter/interface/WSHelper.h"
-#include "EFTFit/Fitter/interface/PlotMaker.h"
+//#include "EFTFit/Fitter/interface/PlotMaker.h"
 #include "EFTFit/Fitter/interface/AnalysisCategory.h"
 #include "EFTFit/Fitter/interface/CategoryManager.h"
 #include "EFTFit/Fitter/interface/HistogramBuilder.h"
@@ -69,6 +103,7 @@ typedef std::pair<TString,TString> pTStrTStr;
 typedef std::unordered_map<std::string,double> umapStrDbl;  // Apparently a TString isn't a 'hashable' type
 RooRealVar* AnalysisCategory::th1x = nullptr;
 std::vector<double> AnalysisCategory::index_mapping = {};
+int AnalysisCategory::roo_counter = 0;
 
 // Fancy structure for containing the info needed to plot an 'off-scale' point in the ratio fluct plots 
 struct OffScalePoint {
@@ -182,7 +217,6 @@ struct PlotPartition {
         draw_axis_latex = true;
     }
 };
-
 // This determines the ordering of the THStack histograms
 vTStr ALL_PROCS {
     "charge_flips","fakes",
@@ -194,6 +228,23 @@ vTStr ALL_PROCS {
     //"singlet_tWchan","singletbar_tWchan",
     "ttH","ttll","ttlnu","tllq","tHq","tttt"
     // "ttlnu","ttll","ttH","tllq","tHq","tttt"
+};
+
+struct PlotData {
+    std::vector<TString> SR_name;
+    std::vector<double> data;
+    std::vector<double> sum;
+    std::vector<double> err;
+    std::unordered_map<std::string, std::vector<double> > procs;
+    PlotData() {
+        SR_name = {};
+        data = {};
+        sum = {};
+        err = {};
+        for (TString proc: ALL_PROCS) {
+            procs[proc.Data()] = {};
+        }
+    }
 };
 
 vTStr YIELD_TABLE_ORDER {
@@ -2510,16 +2561,18 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
 
     // Read in objects from various files
     TFile* ws_file = TFile::Open(in_dir + "wps_ptz-lj0pt.root");
+    //TFile* ws_file = TFile::Open(in_dir + "../card_pp/wps_reduced.root");
+    
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
         ws_file = TFile::Open(in_dir + "SMWorkspace.root");
     }
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
     AnalysisCategory::th1x = ws->var("CMS_th1x");
-    for (uint i=0; i < AnalysisCategory::th1x->numBins(); i++) {
+    int bin_size = AnalysisCategory::th1x->numBins();
+    for (uint i=0; i < bin_size; i++) {
         double half_int = i + 0.5;
         AnalysisCategory::index_mapping.push_back(half_int);
-        cout << half_int << endl;
     }
     
     TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_pp/combinedcard.txt";  // hard-coded path for the datacard for now.
@@ -2698,7 +2751,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     };
     
     // For the njet merged plots, this determines the bin order
-    std::vector<TString> cat_group_names {
+    std::vector<TString> signal_regions {
         "2lss_p",
         "2lss_m",
         "2lss_4t_p",
@@ -2711,50 +2764,107 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         "3l_onZ_2b",
         "4l",
     };
-    
-    std::vector<TString> cat_group_names_4lonly {
+    /*
+    std::vector<TString> signal_regions["2lss_4t"] {
+        "2lss_4t_p",
+        "2lss_4t_m",
+    };
+    std::vector<TString> signal_regions["2lss"] {
+        "2lss_p",
+        "2lss_m",
+    };
+    std::vector<TString> signal_regions["3l_m_offZ"] {
+        "3l_m_offZ_1b",
+        "3l_m_offZ_2b",
+    };
+    std::vector<TString> signal_regions["3l_p_offZ"] {
+        "3l_p_offZ_1b",
+        "3l_p_offZ_2b",
+    };
+    std::vector<TString> signal_regions["3l_onZ"] {
+        "3l_onZ_1b",
+        "3l_onZ_2b",
+    };
+    std::vector<TString> signal_regions["4l"] {
         "4l"
     };
+    */
     
-    CategoryManager cat_manager = CategoryManager(ws,ws_helper,YIELD_TABLE_ORDER);
+    PlotData data_to_plot;
+
+    std::vector<TString> SR_to_plot = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
+    //std::vector<TString> SR_to_plot = {"3l_p_offZ_2b"};
     
-    // Set up the child categories and merge them into the parent category
-    for (TString mrg_name: cat_group_names) {
+    bin_size = 2; // Warning: for testing only!!!
+    
+    AnalysisCategory::roo_counter = 0;
+    
+    for (TString SR: SR_to_plot) 
+    {
+        std::vector<TString> ch_to_plot = {};
+        for (TString cat_name: cat_groups[SR.Data()]) {
+            for (auto const& x : ch_map) {
+                if (x.first == cat_name) {
+                    ch_to_plot.push_back(x.second);
+                    cout << x.second << " added for the SR " << SR << endl;
+                }
+            }
+        }
+    
+        CategoryManager cat_manager = CategoryManager(ws, ws_helper, ch_to_plot, YIELD_TABLE_ORDER);
+    
+        // Set up the child categories and merge them into the parent category
         std::vector<TString> mrg_groups = {};
-        for (TString cat_name: cat_groups[mrg_name.Data()]) {
+        for (TString cat_name: cat_groups[SR.Data()]) {
             for (auto const& x : ch_map) {
                 if (x.first == cat_name) {
                     mrg_groups.push_back(x.second);
                 }
             }
         }
-        cat_manager.mergeCategories(mrg_name.Data(), mrg_groups, YIELD_TABLE_ORDER);
-    }
+        cat_manager.mergeCategories(SR.Data(), mrg_groups, YIELD_TABLE_ORDER);
     
-    //////////////////////
-    // Create some merged processes, i.e. create a new process which is the merger of all
-    //  sub-processes of the corresponding 'cat_groups' entry
-    //////////////////////
-    for (TString mrg_name: ALL_PROCS) {
-        cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
-    }
-    
-    // These are basically the bins of the histogram we want to make
-    std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(cat_group_names);
-    
-    /*
-    bool do_asimov = true;
-    if (do_asimov) {
-        for (AnalysisCategory* ana_cat: cats_to_plot) {
-            ana_cat->resetAsimov();
+        //////////////////////
+        // Create some merged processes, i.e. create a new process which is the merger of all
+        //  sub-processes of the corresponding 'cat_groups' entry
+        //////////////////////
+        for (TString mrg_name: ALL_PROCS) {
+            cat_manager.mergeProcesses(mrg_name,mrg_name.Data());
         }
+        
+        // These are basically the bins of the histogram we want to make
+        std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(SR);
+        for (AnalysisCategory* ana_cat: cats_to_plot) {
+            for (uint idx=0; idx < bin_size; idx++) {
+                data_to_plot.SR_name.push_back(ana_cat->getName());
+                data_to_plot.data.push_back(ana_cat->getDataBin(idx));
+                data_to_plot.sum.push_back(ana_cat->getExpSumBin(idx));
+                data_to_plot.err.push_back(ana_cat->getExpSumErrorBin(idx, postfit));
+                for (TString proc: ALL_PROCS) {
+                    data_to_plot.procs[proc.Data()].push_back(ana_cat->getExpProcBin(proc, idx));
+                }
+            }
+        }
+        
+        cout << "Current existing RooAddition object count: " << AnalysisCategory::roo_counter << endl;
+        
+        /*
+        for (uint i=0; i < data_to_plot.SR_name.size(); i++) {
+            cout << data_to_plot.SR_name[i] << endl;
+            cout << data_to_plot.data[i] << endl;
+            cout << data_to_plot.err[i] << endl;
+            for (TString proc: ALL_PROCS) {
+                cout << proc << ": " << data_to_plot.procs[proc.Data()][i] << endl;
+            }
+        }
+        */
     }
-    */
     
+    cout << "The number of RooAddition objects after the run: " << AnalysisCategory::roo_counter << endl;
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
-    //return;
+    return;
     
-    
+    std::vector<AnalysisCategory*> cats_to_plot = {}; // delete this
     //////////////////////
     // Print some stuff
     //////////////////////
@@ -2812,7 +2922,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     //////////////////////
 
     // Options for which plots to make
-    bool incl_summary_plots = true;
+    bool incl_summary_plots = false;
     bool incl_summary_gif_plots = false;
     bool incl_diff_plots = true;
     bool incl_fluct_plots = false;
@@ -2961,7 +3071,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         std::vector<PlotPartition> partitions {part1,part2,part3,part4,part5,part6,part7,part8,part9};
 
         cats_to_plot.clear();
-        cats_to_plot = cat_manager.getChildCategories(cat_group_names);
+        //cats_to_plot = cat_manager.getChildCategories(signal_regions);
 
         for (int i = 0; i <= num_steps; i++) {
             latex->SetNDC();
@@ -3154,7 +3264,7 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
 
 
         cats_to_plot.clear();
-        cats_to_plot = cat_manager.getChildCategories(cat_group_names);
+        //cats_to_plot = cat_manager.getChildCategories(signal_regions);
 
         double cms_txt_xpos = 0.12;
         double cms_txt_ypos = 0.94;

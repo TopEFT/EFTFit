@@ -39,6 +39,7 @@ class AnalysisCategory {
         std::unordered_map<std::string,RooAddition*> exp_proc;  // The RooAddition objects contain the
                                                                 //  expected yield for a specific process
         std::vector<TString> proc_order;    // Maintains a consistent ordering of the processes
+        std::vector<TString> proc_unused;   // Unused processes marked for deletion
         std::vector<TString> children;      // Contains the names of the categories merged into this one
         RooAddition* allProcs = nullptr;    // Pointer to the object all processes are merged into. It's for the caculation of summed errors.
 
@@ -47,11 +48,11 @@ class AnalysisCategory {
         bool DEBUG = true;
 
         AnalysisCategory(TString category, RooWorkspace* ws);
-        AnalysisCategory(TString category, std::vector<AnalysisCategory> others);
+        //AnalysisCategory(TString category, std::vector<AnalysisCategory> others);
         AnalysisCategory(TString category, std::vector<AnalysisCategory*> others);
         ~AnalysisCategory();
 
-        void mergeInit(TString category, std::vector<AnalysisCategory> others);
+        void mergeInit(TString category, std::vector<AnalysisCategory*> others);
 
         bool hasProc(TString proc);
         TString getName();
@@ -83,6 +84,7 @@ class AnalysisCategory {
         
         static RooRealVar* th1x;
         static std::vector<double> index_mapping;   // depends on the number of entries
+        static int roo_counter;   // tracker of the count of the created RooAddition objects across the analysis categories
 };
 
 // Normal constructor
@@ -167,12 +169,14 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
             proc_yield = new RooAddition(name_ch + name_proc, name, set_proc, set_pdf);
+            this->roo_counter++;
         }
 
         this->exp_proc[name_proc.Data()] = proc_yield;
         this->proc_order.push_back(name_proc);
         this->proc_width = std::max(this->proc_width,name_proc.Length());
     }
+    this->proc_unused = this->proc_order;
     
     if (this->use_asimov) {
         this->setAsimov(); // initialize the asimov dataset.
@@ -185,26 +189,49 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
 }
 
 // Construct an AnalysisCategory by merging together everything from 'others'
+/*
 AnalysisCategory::AnalysisCategory(TString category, std::vector<AnalysisCategory> others) {
     this->mergeInit(category,others);
 }
+*/
 
 // Overloaded constructor for vectors of ptrs
 // NOTE: I don't know if overloading the ctor like this is taboo or not, just make note
 //  of the fact that if we tried to flip the order of the ctor delegation by using a
 //  'mergeInit()' method that takes a vector of ptrs instead, it all fails horribly!
 AnalysisCategory::AnalysisCategory(TString category, std::vector<AnalysisCategory*> others) {
+    /*
     std::vector<AnalysisCategory> vec;
     for (AnalysisCategory* a: others) {
         vec.push_back(*a);
+        cout << "pushing back "<< a->getName() << "..." << endl;
     }
-    this->mergeInit(category,vec);
+    */
+    this->mergeInit(category, others);
 }
 
-AnalysisCategory::~AnalysisCategory() {}
+AnalysisCategory::~AnalysisCategory() {
+    cout << "Deleting category " << this->getName() << "......" << endl;
+    for (TString name_proc: this->proc_order) {
+        //cout << "deleting process " << name_proc.Data() << endl;
+        delete this->getRooAdd(name_proc);
+        this->roo_counter--;
+    }
+    for (TString name_proc: this->proc_unused) {
+        //cout << "deleting process " << name_proc.Data() << endl;
+        delete this->getRooAdd(name_proc);
+        this->roo_counter--;
+    }
+
+    if (this->allProcs) {
+        delete this->allProcs;
+        this->roo_counter--;
+    }
+    if (this->asimov_data) delete this->asimov_data;
+}
 
 // Define a common initilizer method for overloading the ctors used for merging categories
-void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory> others) {
+void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory*> others) {
 
     time_point<Clock> merge_s0 = Clock::now();
 
@@ -216,8 +243,8 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
     // First find all unique processes among the AnalysisCategories to be merged, also merge
     //  the RooDataSets together at this time
     for (auto ana_cat: others) {
-        this->children.push_back(ana_cat.getName());
-        RooDataSet* other_data = ana_cat.getRooData();
+        this->children.push_back(ana_cat->getName());
+        RooDataSet* other_data = ana_cat->getRooData();
         // NOTE: RooDataSet::merge() does not do what I thought it does, so have to 'merge' the
         //  datasets using RooDataSet::append() instead
         if (!this->roo_data) {
@@ -228,7 +255,7 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
         
         // TODO: Figure out how to merge data with shape distributions
         if (this->use_asimov) {
-            RooDataSet* other_asimov_data = ana_cat.asimov_data;
+            RooDataSet* other_asimov_data = ana_cat->asimov_data;
             if (!this->asimov_data) {
                 this->asimov_data = (RooDataSet*)other_asimov_data->Clone(category);
             } else {
@@ -236,13 +263,14 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
             }
         }
         
-        for (TString p: ana_cat.getProcs()) {
+        for (TString p: ana_cat->getProcs()) {
             if (!this->hasProc(p)) {
                 this->exp_proc[p.Data()] = nullptr;  // Temporarily set to a nullptr
                 this->proc_order.push_back(p);
                 this->proc_width = std::max(this->proc_width,p.Length());
             }
         }
+        this->proc_unused = this->proc_order;
     }
     // Next iterate over all processes collecting the RooAddition object from each category and merge
     //  it with the rest
@@ -250,10 +278,11 @@ void AnalysisCategory::mergeInit(TString category, std::vector<AnalysisCategory>
         std::vector<RooAddition*> to_merge;
         TString merge_name = TString("n_exp_bin") + category + TString("_proc_") + p;
         for (auto ana_cat: others) {
-            if (!ana_cat.hasProc(p)) continue;
-            to_merge.push_back(ana_cat.getRooAdd(p));
+            if (!ana_cat->hasProc(p)) continue;
+            to_merge.push_back(ana_cat->getRooAdd(p));
         }
         RooAddition* roo_merged = this->helper.merge(to_merge,merge_name);
+        this->roo_counter++;
         this->exp_proc[p.Data()] = roo_merged;
     }
     
@@ -291,6 +320,7 @@ RooDataSet* AnalysisCategory::getRooData() {
 RooAddition* AnalysisCategory::getRooAdd(TString proc) {
     std::string s(proc.Data());
     if (!this->hasProc(proc)) {
+        cout << "[ERROR] Cannot find process " << proc.Data() << " in category " << this->getName().Data() << endl;
         throw;
     }
     return this->exp_proc[s];
@@ -369,18 +399,13 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
     }
     double err(0.0);
     if (this->th1x) {
-        RooAddition* first = this->getRooAdd(this->getProcs().at(0));
-        if (first->dependsOn(*(this->th1x))) {
-            for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                err += getExpSumErrorBin(idx, fr);
-            }
+        for (int idx=0; idx < this->index_mapping.size(); idx++) {
+            err += getExpSumErrorBin(idx, fr);
         }
-        
         if (this->DEBUG) {
             double duration = findDuration(sumError_s0);
             cout << "Find expected sum error of " << this->getName().Data() << " takes " << duration << "s (inclusive)" << endl;
         }
-        
         return err;
     }
     err = getExpSumErrorBin(0, fr);
@@ -508,9 +533,12 @@ double AnalysisCategory::getExpSumErrorBin(int bin, RooFitResult* fr) {
     this->mergeAllProcesses();
     double old_bin = this->th1x->getVal();
     this->th1x->setVal(this->index_mapping[bin]);
+    /*
+    double duration0 = findDuration(sumErrorBin_s0);
+    cout << "Right before find expected sum error at bin " << bin << " of " << this->getName().Data() << ", it takes " << duration0 << "s" << endl;
+    */
     double err = this->allProcs->getPropagatedError(*fr);
     this->th1x->setVal(old_bin);
-    
     if (this->DEBUG) {
         double duration = findDuration(sumErrorBin_s0);
         cout << "Find expected sum error at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
@@ -552,7 +580,7 @@ void AnalysisCategory::mergeProcesses(TRegexp rgx, TString new_name) {
         bool chk = (rgx.Index(name,&len) > -1);
         if (chk) {
             procs_to_merge.push_back(ra);
-            this->exp_proc.erase(name.Data());  // Remove any procs that we're going to merge together
+            //this->exp_proc.erase(name.Data());  // Remove any procs that we're going to merge together
         } else {
             new_order.push_back(name);
             this->proc_width = std::max(this->proc_width,name.Length());
@@ -562,18 +590,20 @@ void AnalysisCategory::mergeProcesses(TRegexp rgx, TString new_name) {
     this->proc_width = std::max(this->proc_width,new_name.Length());
 
     RooAddition* merged_process = this->helper.merge(procs_to_merge,new_name);
+    this->roo_counter++;
     this->exp_proc[new_name.Data()] = merged_process;
     this->proc_order = new_order;
 } 
 
 void AnalysisCategory::mergeAllProcesses() {
     if (this->allProcs) return;
-    TString s("merged");
+    TString s = TString::Format(this->getName(), "_merged");
     std::vector<RooAddition*> to_merge;
     for (TString p: this->getProcs()) {
         to_merge.push_back(this->getRooAdd(p));
     }
     this->allProcs = this->helper.merge(to_merge,s);
+    this->roo_counter++;
 }
 
 void AnalysisCategory::Print(RooFitResult* fr) {

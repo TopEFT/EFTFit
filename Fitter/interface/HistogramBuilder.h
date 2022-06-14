@@ -213,7 +213,7 @@ TH1D* HistogramBuilder::buildProcessDifferentialHistogram(TString title, TString
 
 // Returns a histogram built from the vector of categories, summed over all processes
 // TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels) {
-TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0) {
+TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr) {
     TH1D* h = new TH1D(name,title,cats.size(),0.0,cats.size());
     h->SetFillColor(0);
     h->SetLineWidth(1);
@@ -240,7 +240,7 @@ TH1D* HistogramBuilder::buildSummedHistogram(TString name, TString title, std::v
 }
 
 // Returns a differential histogram built from the vector of categories, summed over all processes
-TH1D* HistogramBuilder::buildSummedDifferentialHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0) {
+TH1D* HistogramBuilder::buildSummedDifferentialHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr) {
     TH1D* h = new TH1D(name,title, this->bin_size * cats.size(),0.0, this->bin_size * cats.size());
     h->SetFillColor(0);
     h->SetLineWidth(1);

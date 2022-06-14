@@ -10,7 +10,7 @@
 #include "RooWorkspace.h"
 #include "RooCatType.h"
 
-#include "AnalysisCategory.h"
+  #include "AnalysisCategory.h"
 #include "WSHelper.h"
 
 // Wrapper class to manage a collection of AnalysisCategory objects
@@ -25,12 +25,13 @@ class CategoryManager {
         // Note: This currently isn't used anywhere and duplicates information already contained in the above map
         std::vector<TString> cat_names;
 
-        CategoryManager(RooWorkspace* ws, WSHelper ws_helper,std::vector<TString> proc_order);
+        CategoryManager(RooWorkspace* ws, WSHelper ws_helper, std::vector<TString> ch_to_plot, std::vector<TString> proc_order);
         ~CategoryManager();
 
         bool hasCategory(TString name);
         AnalysisCategory* getCategory(TString name);
         std::vector<AnalysisCategory*> getCategories(std::vector<TString> names);
+        std::vector<AnalysisCategory*> getCategories(TString name);
         std::vector<AnalysisCategory*> getChildCategories(TString name);
         std::vector<AnalysisCategory*> getChildCategories(std::vector<TString> names);
 
@@ -40,9 +41,12 @@ class CategoryManager {
 };
 
 // Normal constructor
-CategoryManager::CategoryManager(RooWorkspace* ws, WSHelper ws_helper, std::vector<TString> proc_order) {
+CategoryManager::CategoryManager(RooWorkspace* ws, WSHelper ws_helper, std::vector<TString> ch_to_plot, std::vector<TString> proc_order) {
     for (RooCatType* c: ws_helper.getTypes(ws)) {
         TString cat_name(c->GetName());
+        if (ch_to_plot.size()) {
+            if (!(std::count(ch_to_plot.begin(), ch_to_plot.end(), cat_name))) continue;
+        }
         AnalysisCategory* ana_cat = new AnalysisCategory(c->GetName(),ws);
         ana_cat->setProcOrder(proc_order);
         this->all_cats[cat_name.Data()] = ana_cat;
@@ -51,7 +55,13 @@ CategoryManager::CategoryManager(RooWorkspace* ws, WSHelper ws_helper, std::vect
 }
 
 // Default destructor
-CategoryManager::~CategoryManager() {}
+CategoryManager::~CategoryManager() {
+    cout << "Deleting category manager......" << endl;
+    for (TString cat_name: this->cat_names) {
+        AnalysisCategory* ana_cat = this->getCategory(cat_name);
+        delete ana_cat;
+    }
+}
 
 bool CategoryManager::hasCategory(TString name) {
     return this->all_cats.count(name.Data());
@@ -64,10 +74,16 @@ AnalysisCategory* CategoryManager::getCategory(TString name) {
 
 // Returns a vector of categories
 std::vector<AnalysisCategory*> CategoryManager::getCategories(std::vector<TString> names) {
-    std::vector<AnalysisCategory*> cats;
+    std::vector<AnalysisCategory*> cats = {};
     for (TString name: names) {
         cats.push_back(this->getCategory(name));
     }
+    return cats;
+}
+
+std::vector<AnalysisCategory*> CategoryManager::getCategories(TString name) {
+    std::vector<AnalysisCategory*> cats = {};
+    cats.push_back(this->getCategory(name));
     return cats;
 }
 

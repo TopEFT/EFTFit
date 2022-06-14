@@ -5,15 +5,30 @@
 #include <set>
 #include <stdio.h>
 
+#include <vector>
+#include <set>
+#include <stdio.h>
+#include <utility>
+
+#include "TRegexp.h"
 #include "TString.h"
 #include "TIterator.h"
+#include "TObject.h"
+#include "TIterator.h"
+#include "TList.h"
 
 #include "RooWorkspace.h"
 #include "RooCategory.h"
+#include "RooDataSet.h"
 #include "RooFitResult.h"
 #include "RooProdPdf.h"
 #include "RooAddition.h"
 #include "RooRealVar.h"
+#include "RooArgSet.h"
+#include "RooAbsData.h"
+#include "RooAbsReal.h"
+#include "RooCatType.h"
+#include "RooStats/ModelConfig.h"
 
 // Helper class for working with and manipulating RooWorkspace objects
 class WSHelper {
@@ -243,7 +258,7 @@ std::vector<TString> WSHelper::getProcesses(RooWorkspace* ws) {
 }
 
 // Returns all type states for the specified category in the workspace
-std::vector<RooCatType*> WSHelper::getTypes(RooWorkspace* ws,TString name="CMS_channel") {
+std::vector<RooCatType*> WSHelper::getTypes(RooWorkspace* ws,TString name) {
     std::vector<RooCatType*> r;
     RooCategory* c = ws->cat(name);
     RooCatType* next = 0;
@@ -302,12 +317,7 @@ std::vector<RooAbsReal*> WSHelper::getExpCatFuncs(RooWorkspace* ws,std::vector<R
 }
 
 // Return specified ws pdf objects in a std::vector container
-std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws,
-    bool bkg_pdfs=0,
-    bool nuis_pdfs=0,
-    bool other_pdfs=0,//others
-    bool all_pdfs=0
-) {
+std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws, bool bkg_pdfs, bool nuis_pdfs, bool other_pdfs, bool all_pdfs) {
     // Note: All filter options result in mutually exlusive sets (only exception being the 'all' option)
     // 0 0 0 1 --> all pdfs
     // 0 0 1 0 --> other pdfs
@@ -401,8 +411,8 @@ double WSHelper::sumObsDataByCats(
 std::vector<RooAddition*> WSHelper::getSummedCats(
     std::vector<RooAbsReal*> funcs,
     std::vector<RooCatType*> cat_types,
-    vTStr procs={},
-    TString override=""
+    vTStr procs,
+    TString override
 ) {
     std::vector<RooAddition*> r;
     for (auto c: cat_types) {
