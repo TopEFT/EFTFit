@@ -85,29 +85,58 @@ class EFTPlot(object):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
         self.histosFileName = 'Histos{}.root'.format(name)
 
-    def LLPlot1DEFT(self, name='.test', frozen=False, wc='', log=False):
+    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
         if not wc:
             logging.error("No WC specified!")
             return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
-            return
-            
-        ROOT.gROOT.SetBatch(True)
 
-        canvas = ROOT.TCanvas()
-
-        # Get scan tree
-        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-        limitTree = rootFile.Get('limit')
-
-        # Get coordinates for TGraph
         graphwcs = []
         graphnlls = []
-        for entry in range(limitTree.GetEntries()):
-            limitTree.GetEntry(entry)
-            graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
-            graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+        for name in name_lst:
+            if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+                logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+                return
+
+            ROOT.gROOT.SetBatch(True)
+
+            canvas = ROOT.TCanvas()
+
+            # Get scan tree
+            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+            limitTree = rootFile.Get('limit')
+
+            # Get coordinates for TGraph
+            for entry in range(limitTree.GetEntries()):
+                limitTree.GetEntry(entry)
+                graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
+                graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+
+
+        # Check the lists for duplicate wc points
+        # If there is a duplicate point, take the one with the lowest NLL
+        #     - This is necessary when combining the output of multiple random starting point runs
+        #     - Note that in order to combine the results from multiple runs, it is very important that the same pre-fit fit was performed in each run (i.e. no randomization)
+        #     - This will ensure that the delta NLL values in the file are all relative to the same pre-fit fit point 
+        graphwcs_unique = []
+        graphnlls_unique = []
+        if len(graphwcs) != len(graphnlls): raise Exception("Error: Something is wrong, the wc values and nll values must have the same length.")
+        # Loop over the indices inthe list, check for duplicate x values (i.e. duplicate wc points)
+        for idx in range(len(graphwcs)):
+            wcpt = graphwcs[idx]
+            nll  = graphnlls[idx]
+            if wcpt not in graphwcs_unique:
+                graphwcs_unique.append(graphwcs[idx])
+                graphnlls_unique.append(graphnlls[idx])
+            else:
+                existing_element_idx = graphwcs_unique.index(wcpt)
+                existing_nll = graphnlls_unique[existing_element_idx]
+                if nll < existing_nll:
+                    graphnlls_unique[existing_element_idx] = nll
+
+        # Overwrite the lists with the new lists
+        # We should now have unique x values, with y corresponding to the min of the set of different y values for this x point
+        graphnlls = graphnlls_unique
+        graphwcs  = graphwcs_unique
 
         # Rezero the y axis and make the tgraphs
         graphnlls = [val-min(graphnlls) for val in graphnlls]
@@ -541,14 +570,18 @@ class EFTPlot(object):
         rootFile1.Close()
         rootFile2.Close()
 
-    def BatchLLPlot1DEFT(self, basename='.test', frozen=False, wcs=[], log=False):
+    def BatchLLPlot1DEFT(self, basename_lst=['.test'], frozen=False, wcs=[], log=False):
         if not wcs:
             wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
-            self.LLPlot1DEFT(basename+'.'+wc, frozen, wc, log)
+            basename_lst_with_wc_appended = []
+            for basename in basename_lst:
+                # Append the wc string to each of the base names in the list
+                basename_lst_with_wc_appended.append(basename+'.'+wc)
+            self.LLPlot1DEFT(basename_lst_with_wc_appended, frozen, wc, log)
 
     def BatchLLPlotNDEFT(self, basename='.test', frozen=False, wcs=[], log=False):
         if not wcs:
