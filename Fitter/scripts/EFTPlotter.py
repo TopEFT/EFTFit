@@ -81,9 +81,41 @@ class EFTPlot(object):
         #self.Lumi_text.Draw('same')
 
 
+
+    # Takes as input two lists (of x values and y values, i.e. WC values and nll values, respecitvely), returns th lists with duplicate x values removed
+    # Of the y values corresponding to the duplicate x values, we keep the min y
+    def GetUniqueNLL(self,graphwcs,graphnlls):
+
+        # Check the lists for duplicate wc points
+        # If there is a duplicate point, take the one with the lowest NLL
+        #     - This is necessary when combining the output of multiple random starting point runs
+        #     - Note that in order to combine the results from multiple runs, it is very important that the same pre-fit fit was performed in each run (i.e. no randomization)
+        #     - This will ensure that the delta NLL values in the file are all relative to the same pre-fit fit point 
+        graphwcs_unique = []
+        graphnlls_unique = []
+        if len(graphwcs) != len(graphnlls): raise Exception("Error: Something is wrong, the wc values and nll values must have the same length.")
+        # Loop over the indices inthe list, check for duplicate x values (i.e. duplicate wc points)
+        for idx in range(len(graphwcs)):
+            wcpt = graphwcs[idx]
+            nll  = graphnlls[idx]
+            if wcpt not in graphwcs_unique:
+                graphwcs_unique.append(graphwcs[idx])
+                graphnlls_unique.append(graphnlls[idx])
+            else:
+                existing_element_idx = graphwcs_unique.index(wcpt)
+                existing_nll = graphnlls_unique[existing_element_idx]
+                if nll < existing_nll:
+                    graphnlls_unique[existing_element_idx] = nll
+
+        return [graphwcs_unique,graphnlls_unique]
+
+
+
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
         self.histosFileName = 'Histos{}.root'.format(name)
+
+
 
     def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
         if not wc:
@@ -111,32 +143,9 @@ class EFTPlot(object):
                 graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
                 graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
-
-        # Check the lists for duplicate wc points
-        # If there is a duplicate point, take the one with the lowest NLL
-        #     - This is necessary when combining the output of multiple random starting point runs
-        #     - Note that in order to combine the results from multiple runs, it is very important that the same pre-fit fit was performed in each run (i.e. no randomization)
-        #     - This will ensure that the delta NLL values in the file are all relative to the same pre-fit fit point 
-        graphwcs_unique = []
-        graphnlls_unique = []
-        if len(graphwcs) != len(graphnlls): raise Exception("Error: Something is wrong, the wc values and nll values must have the same length.")
-        # Loop over the indices inthe list, check for duplicate x values (i.e. duplicate wc points)
-        for idx in range(len(graphwcs)):
-            wcpt = graphwcs[idx]
-            nll  = graphnlls[idx]
-            if wcpt not in graphwcs_unique:
-                graphwcs_unique.append(graphwcs[idx])
-                graphnlls_unique.append(graphnlls[idx])
-            else:
-                existing_element_idx = graphwcs_unique.index(wcpt)
-                existing_nll = graphnlls_unique[existing_element_idx]
-                if nll < existing_nll:
-                    graphnlls_unique[existing_element_idx] = nll
-
         # Overwrite the lists with the new lists
         # We should now have unique x values, with y corresponding to the min of the set of different y values for this x point
-        graphnlls = graphnlls_unique
-        graphwcs  = graphwcs_unique
+        graphwcs, graphnlls = self.GetUniqueNLL(graphwcs, graphnlls)
 
         # Rezero the y axis and make the tgraphs
         graphnlls = [val-min(graphnlls) for val in graphnlls]
