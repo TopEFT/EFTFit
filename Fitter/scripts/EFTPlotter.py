@@ -111,27 +111,17 @@ class EFTPlot(object):
 
 
 
-    def ResetHistoFile(self, name=''):
-        ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
-        self.histosFileName = 'Histos{}.root'.format(name)
-
-
-
-    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
-        if not wc:
-            logging.error("No WC specified!")
-            return
+    # Takes as input the name of a root file (assumed to be in ../fit_files)
+    # Retruns [wc vals in the scan, delta nll vals at each point]
+    # Optionally removes duplicate wc points (choosing min nll)
+    def GetWCsNLLFromRoot(self,base_name_lst,wc,unique=False):
 
         graphwcs = []
         graphnlls = []
-        for name in name_lst:
+        for name in base_name_lst:
             if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
                 logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
-                return
-
-            ROOT.gROOT.SetBatch(True)
-
-            canvas = ROOT.TCanvas()
+                return [graphwcs,graphnlls]
 
             # Get scan tree
             rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
@@ -143,9 +133,36 @@ class EFTPlot(object):
                 graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
                 graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
+            rootFile.Close()
+
         # Overwrite the lists with the new lists
         # We should now have unique x values, with y corresponding to the min of the set of different y values for this x point
-        graphwcs, graphnlls = self.GetUniqueNLL(graphwcs, graphnlls)
+        if unique:
+            graphwcs, graphnlls = self.GetUniqueNLL(graphwcs, graphnlls)
+
+        return [graphwcs,graphnlls]
+
+
+
+    def ResetHistoFile(self, name=''):
+        ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
+        self.histosFileName = 'Histos{}.root'.format(name)
+
+
+
+    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
+        if not wc:
+            logging.error("No WC specified!")
+            return
+
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas()
+
+        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc,unique=True)
+        if graphwcs == [] or graphnlls == []:
+            # Something went wrong
+            print("Error, probably could not find root file")
+            return
 
         # Rezero the y axis and make the tgraphs
         graphnlls = [val-min(graphnlls) for val in graphnlls]
@@ -225,7 +242,6 @@ class EFTPlot(object):
         else:
             canvas.Print('{}1DNLL.png'.format(wc,'freeze' if frozen else 'float'),'png')
 
-        rootFile.Close()
 
     def duplicates(self, seq, item):
         start_at = -1
