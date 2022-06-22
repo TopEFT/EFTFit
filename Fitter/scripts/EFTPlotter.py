@@ -281,8 +281,8 @@ class EFTPlot(object):
         return [unique_wcs, unique_nlls]
 
     def OverlayLLPlot1DEFT(self,**kwargs):
-        name1 = kwargs.pop('name1','.test')
-        name2 = kwargs.pop('name2','.test')
+        name1_lst = kwargs.pop('name1_lst',['.test'])
+        name2_lst = kwargs.pop('name2_lst',['.test'])
         wc  = kwargs.pop('wc','')
         d1  = kwargs.pop('dir1','../fit_files')
         d2  = kwargs.pop('dir2','../fit_files')
@@ -295,12 +295,14 @@ class EFTPlot(object):
         if not wc:
             logging.error("No wc specified!")
             return
-        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
-            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
-            return
-        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
-            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
-            return
+        for name1 in name1_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
+                logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
+                return
+        for name2 in name1_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
+                logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
+                return
 
         ROOT.gROOT.SetBatch(True)
 
@@ -309,30 +311,10 @@ class EFTPlot(object):
         p1.Draw()
         p1.cd()
 
-        # Get scan trees
-        rootFile1 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1))
-        limitTree1 = rootFile1.Get('limit')
-
-        rootFile2 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2))
-        limitTree2 = rootFile2.Get('limit')
-
         # Get coordinates for TGraphs
-        graph1wcs = []
-        graph2wcs = []
-        graph1nlls = []
-        graph2nlls = []
-        for entry in range(limitTree1.GetEntries()):
-            limitTree1.GetEntry(entry)
-            graph1wcs.append(limitTree1.GetLeaf(wc).GetValue(0))
-            graph1nlls.append(2*limitTree1.GetLeaf('deltaNLL').GetValue(0))
-        for entry in range(limitTree2.GetEntries()):
-            limitTree2.GetEntry(entry)
-            graph2wcs.append(limitTree2.GetLeaf(wc).GetValue(0))
-            graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
+        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True)
+        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True)
 
-        dup = [self.duplicates(graph1wcs, x) for x in graph1wcs]
-        graph1wcs, graph1nlls = self.clean_duplicates(graph1wcs, graph1nlls)
-        graph2wcs, graph2nlls = self.clean_duplicates(graph2wcs, graph2nlls)
         # Rezero the y axis and make the tgraphs
         #zero = graph1nlls.index(0)
         zero = 0
@@ -484,9 +466,6 @@ class EFTPlot(object):
         os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
         os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_Overlay1DNLL.eps')
 
-        rootFile1.Close()
-        rootFile2.Close()
-
     def OverlayZoomLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
         if not wc:
             logging.error("No wc specified!")
@@ -626,7 +605,8 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+        if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
 
@@ -634,7 +614,9 @@ class EFTPlot(object):
 
         for wc in wcs:
             print(wc)
-            self.OverlayLLPlot1DEFT(name1=basename1+'.'+wc, name2=basename2+'.'+wc, wc=wc, log=log, final=final, titles=titles)
+            basename1_lst_with_wc_appended = self.AppendStrToItemsInLst(basename1_lst,"."+wc)
+            basename2_lst_with_wc_appended = self.AppendStrToItemsInLst(basename2_lst,"."+wc)
+            self.OverlayLLPlot1DEFT(name1_lst=basename1_lst_with_wc_appended, name2_lst=basename2_lst_with_wc_appended, wc=wc, log=log, final=final, titles=titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
