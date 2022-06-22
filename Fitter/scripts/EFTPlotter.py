@@ -1571,8 +1571,6 @@ class EFTPlot(object):
 
         if not basename_float: basename_float='.EFT.SM.Float.Mar8'
         if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar8'
-        #if not basename_float: basename_float='.EFT.SM.Float.2sig.Feb27'
-        #if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar4.2sig'
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
@@ -1582,14 +1580,11 @@ class EFTPlot(object):
         fits_freeze = self.getIntervalFits(basename=basename_freeze)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
-            #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
-            # `(CI_(freeze high) - CI_(freeze low)) / (CI_(float high) - CI_(float low))`
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(basename_freeze, basename_freeze, basename_float, basename_float))
             print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
-        #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
         fits_float1sigma = self.getIntervalFits(basename=basename_float,siginterval=1)
         print 'freeze'
         fits_freeze1sigma = self.getIntervalFits(basename=basename_freeze,siginterval=1)
