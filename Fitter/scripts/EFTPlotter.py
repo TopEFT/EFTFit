@@ -1560,6 +1560,11 @@ class EFTPlot(object):
         return fit_array
 
     def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False):
+
+        # Colors to use for the plots
+        clr_float = 1 # Black
+        clr_freeze = 2 # Red
+
         if wcs != []: self.wcs = wcs
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
@@ -1805,15 +1810,15 @@ class EFTPlot(object):
         graph_float = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
-        graph_float.SetMarkerColor(1)
-        graph_float.SetLineColor(1)
+        graph_float.SetMarkerColor(clr_float)
+        graph_float.SetLineColor(clr_float)
 
         graph_freeze = ROOT.TGraph()
         graph_freeze = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(3)
         graph_freeze.SetMarkerSize(0.5)
-        graph_freeze.SetMarkerColor(2)
-        graph_freeze.SetLineColor(2)
+        graph_freeze.SetMarkerColor(clr_freeze)
+        graph_freeze.SetLineColor(clr_freeze)
         graph_freeze.SetLineStyle(3)
 
         # Add lines for the errors, but print the value if line would go off the pad
@@ -1827,14 +1832,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1842,19 +1847,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(1)
+                    min_label.SetTextColor(clr_float)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(1)
+                    max_label.SetTextColor(clr_float)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
-                lines_float[-1].SetLineColor(1)
+                lines_float[-1].SetLineColor(clr_float)
         lines_float_1sigma = []
         for idx,fittuple in enumerate(fits_float1sigma):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -1863,14 +1868,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1878,19 +1883,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(1)
+                    min_label.SetTextColor(clr_float)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(1)
+                    max_label.SetTextColor(clr_float)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float_1sigma.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
-                lines_float_1sigma[-1].SetLineColor(1)
+                lines_float_1sigma[-1].SetLineColor(clr_float)
                 lines_float_1sigma[-1].SetLineWidth(3)
 
 
@@ -1902,14 +1907,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)  
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1917,19 +1922,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(2)
+                    min_label.SetTextColor(clr_freeze)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(2)
+                    max_label.SetTextColor(clr_freeze)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
-                lines_freeze[-1].SetLineColor(2)
+                lines_freeze[-1].SetLineColor(clr_freeze)
                 lines_freeze[-1].SetLineStyle(3)
         lines_freeze_1sigma = []
         for idx,fittuple in enumerate(fits_freeze1sigma):
@@ -1939,14 +1944,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1954,19 +1959,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(2)
+                    min_label.SetTextColor(clr_freeze)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(2)
+                    max_label.SetTextColor(clr_freeze)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
-                lines_freeze_1sigma[-1].SetLineColor(2)
+                lines_freeze_1sigma[-1].SetLineColor(clr_freeze)
                 lines_freeze_1sigma[-1].SetLineWidth(3)
                 lines_freeze_1sigma[-1].SetLineStyle(3)
 
