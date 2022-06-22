@@ -6,6 +6,7 @@ import numpy
 import itertools
 import subprocess as sp
 import os
+from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
 
@@ -1312,10 +1313,10 @@ class EFTPlot(object):
         fit_file.Close()
         return best_vals
 
-    def batchGrid2DWC(self, name=''):
+    def batchGrid2DWC(self, name=['']):
         best = []
 
-        fits_float = self.getIntervalFits(basename=name)
+        fits_float = self.getIntervalFits(basename_lst=name)
         fits = {lst[0] : lst[1] for lst in fits_float}
 
         for wc in self.wcs:
@@ -1392,7 +1393,7 @@ class EFTPlot(object):
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self,**kwargs):
-        basename    = kwargs.pop('basename','.EFT.SM.Float')
+        basename_lst= kwargs.pop('basename_lst',['.EFT.SM.Float'])
         params      = kwargs.pop('params',[])
         siginterval = kwargs.pop('siginterval',2)
         dir_path    = kwargs.pop('dir_path','../fit_files')
@@ -1409,23 +1410,22 @@ class EFTPlot(object):
 
         for param in params:
 
-            # Get scan TTree
-            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
-            fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
             # This is mostly used to compare TOP-19-001 to Run II, it will skip the 10 WCs not in TOP-19-001 only and set them to +/- 999
-            try:
-                limit_tree = fit_file.Get('limit')
-            except:
-                fit_array.append([param,0,[-999 ],[999]])
-                continue
+            missing_wc = False
+            for basename in basename_lst:
+                logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
+                fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
+                try:
+                    _ = fit_file.Get('limit')
+                    fit_file.Close()
+                except:
+                    missing_wc = True
+                    if param not in map(itemgetter(0),fit_array):
+                        fit_array.append([param,0,[-999 ],[999]])
+            if missing_wc: continue
 
-            # Extract points
-            wc_values = []
-            nll_values = []
-            for entry in range(limit_tree.GetEntries()):
-                limit_tree.GetEntry(entry)
-                wc_values.append(limit_tree.GetLeaf(param).GetValue(0))
-                nll_values.append(2*limit_tree.GetLeaf('deltaNLL').GetValue(0))
+            basename_lst_with_wcs_appended = self.AppendStrToItemsInLst(basename_lst,"."+param)
+            wc_values, nll_values = self.GetWCsNLLFromRoot(basename_lst_with_wcs_appended,param,unique=True)
 
             # Rezero deltanll values
             bestNLL = min(nll_values)
@@ -1559,7 +1559,7 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False):
+    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
 
         # Colors to use for the plots
         clr_float = 1 # Black
@@ -1569,25 +1569,25 @@ class EFTPlot(object):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
-        if not basename_float: basename_float='.EFT.SM.Float.Mar8'
-        if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar8'
+        if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
+        if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
         print 'float'
-        fits_float = self.getIntervalFits(basename=basename_float)
+        fits_float = self.getIntervalFits(basename_lst=basename_float_lst)
         print 'freeze'
-        fits_freeze = self.getIntervalFits(basename=basename_freeze)
+        fits_freeze = self.getIntervalFits(basename_lst=basename_freeze_lst)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
-            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(basename_freeze, basename_freeze, basename_float, basename_float))
+            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
             print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
-        fits_float1sigma = self.getIntervalFits(basename=basename_float,siginterval=1)
+        fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
         print 'freeze'
-        fits_freeze1sigma = self.getIntervalFits(basename=basename_freeze,siginterval=1)
+        fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
@@ -1759,18 +1759,18 @@ class EFTPlot(object):
 
         # Set y-coordinates for points and lines
         numWC=len(self.wcs)
-        if '28redo' in basename_float:
-            numWC=15
+        #if '28redo' in basename_float: # Not sure what this was for, but it looks out of date
+        #    numWC=15                   # Not sure what this was for, but it looks out of date
         y_float = [n*4+3 for n in range(0,numWC)]
         y_freeze = [n*4+2 for n in range(0,numWC)]
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
-        if 'Asimov' not in basename_float:
+        if asimov_plotstyle_flag:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
-        if 'Asimov' not in basename_float:
+        if not asimov_plotstyle_flag:
             h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
