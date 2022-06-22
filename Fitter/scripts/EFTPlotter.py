@@ -82,6 +82,17 @@ class EFTPlot(object):
 
 
 
+    # Appends a given string to each item in a list of strings
+    def AppendStrToItemsInLst(self,in_lst,in_str):
+        out_lst = []
+        for item in in_lst:
+            if type(item) is not str:
+                raise Exception("Error: Cannot append the str to items in this list, not all items are str")
+            out_lst.append(item+in_str)
+        return out_lst
+
+
+
     # Takes as input two lists (of x values and y values, i.e. WC values and nll values, respecitvely), returns th lists with duplicate x values removed
     # Of the y values corresponding to the duplicate x values, we keep the min y
     def GetUniqueNLL(self,graphwcs,graphnlls):
@@ -602,10 +613,7 @@ class EFTPlot(object):
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
-            basename_lst_with_wc_appended = []
-            for basename in basename_lst:
-                # Append the wc string to each of the base names in the list
-                basename_lst_with_wc_appended.append(basename+'.'+wc)
+            basename_lst_with_wc_appended = self.AppendStrToItemsInLst(basename_lst,"."+wc)
             self.LLPlot1DEFT(basename_lst_with_wc_appended, frozen, wc, log)
 
     def BatchLLPlotNDEFT(self, basename='.test', frozen=False, wcs=[], log=False):
