@@ -1759,8 +1759,6 @@ class EFTPlot(object):
 
         # Set y-coordinates for points and lines
         numWC=len(self.wcs)
-        #if '28redo' in basename_float: # Not sure what this was for, but it looks out of date
-        #    numWC=15                   # Not sure what this was for, but it looks out of date
         y_float = [n*4+3 for n in range(0,numWC)]
         y_freeze = [n*4+2 for n in range(0,numWC)]
 
