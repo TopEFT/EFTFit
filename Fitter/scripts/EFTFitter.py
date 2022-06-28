@@ -10,6 +10,7 @@ import getpass
 import array
 from collections import defaultdict
 from EFTFit.Fitter.findMask import findMask 
+from itertools import chain
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -290,7 +291,10 @@ class EFTFit(object):
             masks = [item for sub in masks for item in sub]
             args.extend(['--setParameters',','.join(masks)])
 
-        if batch=='crab':              args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points','3000'])
+        point_scale = 8#hrs
+        wall_time  = 8#hrs
+        if not freeze: wall_time /= 2 # profiled scans take longer, so submit less points per job
+        if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
@@ -312,7 +316,7 @@ class EFTFit(object):
                 #return
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=3072\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
@@ -402,9 +406,13 @@ class EFTFit(object):
 
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
-            hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}'.format(user, taskname)
-            (tarpath,tardirs,tarfiles) = os.walk(hadooppath)
-            if not tarfiles[2]:
+            host = os.uname()[1]
+            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
+            elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
+            else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
+            paths = glob.glob(hadooppath)
+            paths = [p for p in (chain.from_iterable(os.walk(path) for path in paths))]
+            if not paths[0][2]:
                 logging.error("No files found in store!")
                 sys.exit()
 
@@ -416,10 +424,11 @@ class EFTFit(object):
                 return
 
             # Extract the root files
-            for tarfile in tarfiles[2]:
-                if tarfile.endswith('.tar'):
-                    print tarfiles[0]+'/'+tarfile
-                    sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
+            for tarfiles in paths:
+                for tarfile in tarfiles[2]:
+                    if tarfile.endswith('.tar'):
+                        print tarfiles[0]+'/'+tarfile
+                        sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
             haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
@@ -496,6 +505,10 @@ class EFTFit(object):
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
+            scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -507,7 +520,7 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],wc_ranges[wcs[0]][0],wc_ranges[wcs[0]][1],wcs[1],wc_ranges[wcs[1]][0],wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],self.wc_ranges_njets[wcs[0]][0],self.wc_ranges_njets[wcs[0]][1],wcs[1],self.wc_ranges_njets[wcs[1]][0],self.wc_ranges_njets[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[], mask_syst=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
@@ -595,6 +608,8 @@ class EFTFit(object):
             #pairs from AN
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
+            scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1019,6 +1034,85 @@ class EFTFit(object):
 
         for line in fit_array:
             print line              
+
+    def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], wc_ranges=None):
+        for wc in self.wcs:
+            target = 'condor_%s.sh' % wc
+            condorFile = open(target,'w')
+            condorFile.write('#!/bin/sh\n')
+            condorFile.write('ulimit -s unlimited\n')
+            condorFile.write('set -e\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
+            condorFile.write('eval `scramv1 runtime -sh`\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('\n')
+            condorFile.write('if [ $1 -eq 0 ]; then\n')
+            condorFile.write('  combine -M MultiDimFit -n _initialFit_%s --algo singles --redefineSignalPOIs %s --robustFit 1 -t -1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s\n' % (wc, wc, wc, wc, wc, workspace))
+            condorFile.write('fi\n')
+            condorFile.close()
+
+            target = 'condor_%s.sub' % wc
+            condorFile = open(target,'w')
+            condorFile.write('executable = condor_%s.sh\n' % wc)
+            condorFile.write('arguments = $(ProcId)\n')
+            condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
+            condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
+            condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
+            condorFile.write('\n')
+            condorFile.write('# Send the job to Held state on failure.\n')
+            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+            condorFile.write('\n')
+            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+            condorFile.write('\n')
+            condorFile.write('\n')
+            condorFile.write('queue 1\n')
+            condorFile.close()
+
+            os.system('chmod 777 condor_%s.sh', wc)
+            os.system('condor_submit %s -batch-name %s' % (target, wc))
+
+    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], wc_ranges=None):
+        nps = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2016APV', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2016APV', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'jet_scale', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
+        for wc in self.wcs:
+            print 'Submitting', wc
+            target = 'condor_%s_fit.sh' % wc
+            condorFile = open(target,'w')
+            condorFile.write('#!/bin/sh\n')
+            condorFile.write('ulimit -s unlimited\n')
+            condorFile.write('set -e\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
+            condorFile.write('eval `scramv1 runtime -sh`\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('\n')
+            for i,np in enumerate(nps):
+                condorFile.write('if [ $1 -eq %d ]; then\n' % i)
+                condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 -t -1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s\n' % (wc, np, wc, np ,wc, wc, workspace))
+                condorFile.write('fi\n')
+            condorFile.close()
+
+            target = 'condor_%s_fit.sub' % wc
+            condorFile = open(target,'w')
+            condorFile.write('executable = condor_%s_fit.sh\n' % wc)
+            condorFile.write('arguments = $(ProcId)\n')
+            condorFile.write('output                = %s_fit.$(ClusterId).$(ProcId).out\n' % wc)
+            condorFile.write('error                 = %s_fit.$(ClusterId).$(ProcId).err\n' % wc)
+            condorFile.write('log                   = %s_fit.$(ClusterId).log\n' % wc)
+            condorFile.write('\n')
+            condorFile.write('# Send the job to Held state on failure.\n')
+            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+            condorFile.write('\n')
+            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+            condorFile.write('\n')
+            condorFile.write('\n')
+            condorFile.write('queue %d\n' % len(nps))
+            condorFile.close()
+
+            os.system('chmod 777 condor_%s_fit.sh' % wc)
+            os.system('condor_submit %s -batch-name %s' % (target, wc))
 
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'
