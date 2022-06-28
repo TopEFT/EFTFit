@@ -311,7 +311,7 @@ class EFTFit(object):
                 #return
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=3072\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
