@@ -1035,8 +1035,9 @@ class EFTFit(object):
         for line in fit_array:
             print line              
 
-    def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], wc_ranges=None):
-        for wc in self.wcs:
+    def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+        if not wcs: wcs = self.wcs
+        for wc in wcs:
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1073,9 +1074,10 @@ class EFTFit(object):
             os.system('chmod 777 condor_%s.sh', wc)
             os.system('condor_submit %s -batch-name %s' % (target, wc))
 
-    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], wc_ranges=None):
+    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
         nps = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2016APV', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2016APV', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'jet_scale', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
-        for wc in self.wcs:
+        if not wcs: wcs = self.wcs
+        for wc in wcs:
             print 'Submitting', wc
             target = 'condor_%s_fit.sh' % wc
             condorFile = open(target,'w')
@@ -1113,6 +1115,46 @@ class EFTFit(object):
             condorFile.close()
 
             os.system('chmod 777 condor_%s_fit.sh' % wc)
+            os.system('condor_submit %s -batch-name %s' % (target, wc))
+
+    def ImpactCollect(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+        if not wcs: wcs = self.wcs
+        for wc in wcs:
+            target = 'condor_%s_collect.sh' % wc
+            condorFile = open(target,'w')
+            condorFile.write('#!/bin/sh\n')
+            condorFile.write('ulimit -s unlimited\n')
+            condorFile.write('set -e\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
+            condorFile.write('eval `scramv1 runtime -sh`\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('\n')
+            condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s.json -t -1  --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -m 1 -n %s --redefineSignalPOIs %s  --exclude ' % (workspace, wc, wc, wc))
+            exclude = ','.join([w for w in wcs if w != wc])
+            condorFile.write(exclude + '\n')
+            condorFile.write('plotImpacts.py -i impacts%s.json -o impacts%s\n' % (wc, wc))
+            condorFile.close()
+
+            target = 'condor_%s_collect.sub' % wc
+            condorFile = open(target,'w')
+            condorFile.write('executable = condor_%s_collect.sh\n' % wc)
+            condorFile.write('arguments = $(ProcId)\n')
+            condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
+            condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
+            condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
+            condorFile.write('\n')
+            condorFile.write('# Send the job to Held state on failure.\n')
+            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+            condorFile.write('\n')
+            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+            condorFile.write('\n')
+            condorFile.write('\n')
+            condorFile.write('queue 1\n')
+            condorFile.close()
+
+            os.system('chmod 777 condor_%s_collect.sh' % wc)
             os.system('condor_submit %s -batch-name %s' % (target, wc))
 
 if __name__ == "__main__":
