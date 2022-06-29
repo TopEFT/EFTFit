@@ -144,18 +144,18 @@ Impact plots must be done in three stages:
 ### Initial fit
 Run 
 ```python
-fitter.ImpactInitialFit(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+fitter.ImpactInitialFit(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
 ```
 to produce the initial fits. A blank `wcs` will run over all WCs.
 ### Nuisance fit
 Run 
 ```python
-fitter.ImpactNuisance(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+fitter.ImpactNuisance(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
 ```
 to fit each NP. A blank `wcs` will run over all WCs.
 ### Produce plots
 Run 
 ```python
-fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
 ```
 to collect all jobs and create the final pdf plots. A blank `wcs` will run over all WCs.
