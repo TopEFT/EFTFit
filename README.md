@@ -151,10 +151,11 @@ to produce the initial fits. A blank `wcs` will run over all WCs.
 Run 
 ```python
 fitter.ImpactNuisance(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
-to fit each NP. A blank `wcs` will run over all WCs.
 ```
+to fit each NP. A blank `wcs` will run over all WCs.
 ### Produce plots
 Run 
 ```python
 fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
+```
 to collect all jobs and create the fin pdf plots.
