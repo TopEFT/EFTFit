@@ -158,4 +158,4 @@ Run
 ```python
 fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
 ```
-to collect all jobs and create the fin pdf plots.
+to collect all jobs and create the final pdf plots. A blank `wcs` will run over all WCs.
