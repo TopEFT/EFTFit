@@ -137,3 +137,25 @@ helper.runCombine(method=CombineMethod.MULTIDIMFIT,name='ExFit2',algo=FitAlgo.NO
 By default the extra options passed to the `runCombine` method will overwrite the corresponding `HelperOptions` settings. If the user specifies the `runCombine` option `overwrite=False`, the additional configuration options will only be used for that specific `runCombine` call and will be discarded for any subsequent `CombineHelper` method calls.
 
 The user can refer to the [combine_helper.py](https://github.com/cms-govner/EFTFit/blob/master/Fitter/scripts/combine_helper.py) script for a detailed implementation example of the `CombineHelper` class, which makes use of a number of the useful convenience methods included in the `CombineHelper` class and also to the [HelperOptions](https://github.com/cms-govner/EFTFit/blob/master/Fitter/python/options.py#L86-L139) class definition for additional information on configuring the `CombineHelper` class.
+
+
+# Making impact plots
+Impact plots must be done in three stages:
+### Initial fit
+Run 
+```python
+fitter.ImpactInitialFit(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
+```
+to produce the initial fits. A blank `wcs` will run over all WCs.
+### Nuisance fit
+Run 
+```python
+fitter.ImpactNuisance(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
+```
+to fit each NP. A blank `wcs` will run over all WCs.
+### Produce plots
+Run 
+```python
+fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
+```
+to collect all jobs and create the final pdf plots. A blank `wcs` will run over all WCs.
