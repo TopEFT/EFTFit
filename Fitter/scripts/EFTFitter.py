@@ -1038,6 +1038,7 @@ class EFTFit(object):
     def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
         if not wcs: wcs = self.wcs
         for wc in wcs:
+            print 'Submitting', wc
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1071,11 +1072,11 @@ class EFTFit(object):
             condorFile.write('queue 1\n')
             condorFile.close()
 
-            os.system('chmod 777 condor_%s.sh', wc)
+            os.system('chmod 777 condor_%s.sh' % wc)
             os.system('condor_submit %s -batch-name %s' % (target, wc))
 
     def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[]):
-        nps = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2016APV', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2016APV', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'jet_scale', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
+        nps = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2016APV', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2016APV', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
         if not wcs: wcs = self.wcs
         for wc in wcs:
             print 'Submitting', wc
