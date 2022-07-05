@@ -1615,21 +1615,21 @@ class EFTPlot(object):
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
-            #if line[0]=='ctp':
-            #    line[0] = 'ctp#divide5'
-            #    line[1] = line[1]/5
-            #    line[2] = [val/5 for val in line[2]]
-            #    line[3] = [val/5 for val in line[3]]
+            if line[0]=='ctp':
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
                 line[2] = [val/2 for val in line[2]]
                 line[3] = [val/2 for val in line[3]]
-            #if line[0]=='cpQM':
-            #    line[0] = 'cpQM#divide2'
-            #    line[1] = line[1]/2
-            #    line[2] = [val/2 for val in line[2]]
-            #    line[3] = [val/2 for val in line[3]]
+            if line[0]=='cpQM':
+                line[0] = 'cpQM#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
             if line[0]=='ctG':
