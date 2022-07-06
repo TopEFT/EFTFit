@@ -649,10 +649,11 @@ class EFTPlot(object):
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        hist = ROOT.TH3F(hname, hname, 100, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 100, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
+        points = 100
+        hist = ROOT.TH3F(hname, hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], points, 0, ceiling)
         limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
         hist = hist.Project3DProfile()
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist(100,{},{},100,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
         hist.Draw('colz')
         hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
@@ -715,10 +716,11 @@ class EFTPlot(object):
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(100,{},{},100,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
+        points = 100
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
         #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',100,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],100,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
