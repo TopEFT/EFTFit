@@ -3,6 +3,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+# This script has some tools for looking at the best fit point from a set of grid scans
+
 #POI_LST = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 POI_LST = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 
@@ -143,18 +145,17 @@ def get_unique_points(in_dict,scan_var,minimize_var):
 ########################################################################
 ### Plotting functions ###
 
-def make_scatter_plot(lst_of_points_to_plot,wc_for_plot):
+def make_scatter_plot(lst_of_points_to_plot,xaxis_ticklabels_lst,save_name="test"):
 
     fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(20,7))
 
     y_name = "WC value"
     axs.set_ylabel(y_name)
     axs.set_xlabel("WC")
-    axs.set_title("Best fit points summary") # Set title
+    axs.set_title("Best fit points summary")
     axs.grid()
-    axs.set_xticks(np.arange(0,17,step=1))
-    axs.set_xticklabels(wc_for_plot)
-
+    axs.set_xticks(np.arange(0,len(xaxis_ticklabels_lst),step=1))
+    axs.set_xticklabels(xaxis_ticklabels_lst)
 
     # Main plot
     for i,plot_info_dict in enumerate(lst_of_points_to_plot):
@@ -166,15 +167,12 @@ def make_scatter_plot(lst_of_points_to_plot,wc_for_plot):
         plt.scatter(xarr,yarr,color=clr,marker=marker,edgecolors='none',label=leg_str, zorder=10)
 
     # Legend
-    #if leg_str != "": axs.legend(scatterpoints=1)
-    #axs.legend(loc=2, prop={'size': 6})
-    axs.legend(loc=2, prop={'size': 6},ncol=17,scatterpoints=1)
+    axs.legend(prop={'size': 10},scatterpoints=1)
 
     plt.axhline(y = 0.0, color = 'k', linestyle = '-',zorder=8) # hline at 1
     #plt.xlim(0,80)
     #plt.ylim(0,100)
 
-    save_name = "test01"
     plt.savefig(save_name+".png",format="png")
     plt.show()
 
@@ -193,9 +191,6 @@ def plotter_wrapper(lst_of_bestfit_dicts):
         for poi_name_in_bestfit_point in bestfit_point.keys():
             plotting_info_dict["xarr"].append(POI_IDX_MAP[poi_name_in_bestfit_point])
         lst_of_points_for_plotter.append(plotting_info_dict)
-
-    print ""
-    for i in lst_of_points_for_plotter: print i
 
     make_scatter_plot(lst_of_points_for_plotter,POI_LST+["deltaNLL"])
 
@@ -228,7 +223,7 @@ def get_best_points_by_wc(lst_of_best_point_dicts):
 ########################################################################
 def main():
 
-    #root_file_tag = ".111221.njetsttHbtagSysQuadFixTr2lssp.Frozen"
+    # Example root files to process
     #root_file_tag = ".070522.top19001_100pts_realData_randPtsV18_nPointsRand10.njets.1d.Prof"
     #root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
     root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
@@ -247,23 +242,6 @@ def main():
         bestfit_dict[poi_name] = best_point
 
     plotter_wrapper(bestfit_dict)
-    exit()
-
-    # Get dictionary of best fit points arranged by WCs
-    #best_points_by_wc = get_best_points_by_wc(best_point_dict_lst)
-    #for k,v in best_points_by_wc.items():
-        #print k,v
-
-    ## Test printing some things
-    #variation_extreme_dict = {}
-    #for k,v in best_points_by_wc.iteritems():
-    #    print k,v
-    #    variation_extreme_dict[k] = []
-    #    variation_extreme_dict[k].append(min(v))
-    #    variation_extreme_dict[k].append(max(v))
-
-    #for k,v in variation_extreme_dict.iteritems():
-    #    print k,v
 
 if __name__ == "__main__":
     main()
