@@ -5,16 +5,20 @@ import numpy as np
 #POI_LST = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 POI_LST = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 
-# Gets list of branches names
-#   - Assumes the non-scanned POIs have the name trackedParam_NAME
-#   - Assumes you also want delta NLL
-def get_branches_lst(poi_lst,scan_poi):
-    out_lst = ["deltaNLL"]
-    out_lst.append(scan_poi)
-    for poi in poi_lst:
-        if poi == scan_poi: continue
-        out_lst.append("trackedParam_"+poi)
-    return out_lst
+### Helper functions ###
+
+# Get path to root file given base name
+#   - Assumes the file is in "../fit_files" relative to where we are
+#   - Assumes the file is named higgsCombine{}.MultiDimFit.root
+def find_root_file_path(base_name,wc):
+    root_file_name = '../fit_files/higgsCombine{}.MultiDimFit.root'.format(base_name+"."+wc)
+    if not os.path.exists(root_file_name):
+        print("Warning: File {} does not exist.".format(root_file_name))
+        return None
+    else:
+        #print("File {} exists.".format(root_file_name))
+        return root_file_name
+
 
 # Get the values of params from the root file
 def get_vals_from_root_file(root_file_path,branches_to_get,srip_poi_branch_names=False):
@@ -41,17 +45,16 @@ def get_vals_from_root_file(root_file_path,branches_to_get,srip_poi_branch_names
     return ret_dict
 
 
-# Get path to root file given base name
-#   - Assumes the file is in "../fit_files" relative to where we are
-#   - Assumes the file is named higgsCombine{}.MultiDimFit.root
-def find_root_file_path(base_name,wc):
-    root_file_name = '../fit_files/higgsCombine{}.MultiDimFit.root'.format(base_name+"."+wc)
-    if not os.path.exists(root_file_name):
-        print("Warning: File {} does not exist.".format(root_file_name))
-        return None
-    else:
-        #print("File {} exists.".format(root_file_name))
-        return root_file_name
+# Gets list of branches names
+#   - Assumes the non-scanned POIs have the name trackedParam_NAME
+#   - Assumes you also want delta NLL
+def make_branches_lst(poi_lst,scan_poi):
+    out_lst = ["deltaNLL"]
+    out_lst.append(scan_poi)
+    for poi in poi_lst:
+        if poi == scan_poi: continue
+        out_lst.append("trackedParam_"+poi)
+    return out_lst
 
 
 # Get arrays that have only one copy of each scan point
@@ -97,6 +100,8 @@ def get_unique_points(in_dict,scan_var,minimize_var):
     return out_dict
 
 
+### Wrapper functions ###
+
 # Find the best points in EFT space
 def get_best_nll_eft_point(in_dict,poi_lst):
     best_point_dict = {}
@@ -107,31 +112,32 @@ def get_best_nll_eft_point(in_dict,poi_lst):
 
     return best_point_dict
 
+# Take dict like this ctG_scan_dict = {"ctG":1.1,"ctW":2.1}, ctW_scan_dict = {"ctG":1.2,"ctW"2.2} -> ctG_vals=[1.1,1.2] ctW_vals=[2.1,2.2]
+def get_best_points_by_wc(lst_of_best_point_dicts):
+    best_point_summary = {}
+    for poi in POI_LST:
+        best_point_summary[poi] = []
+    for best_point_dict in lst_of_best_point_dicts:
+        for poi in POI_LST:
+            best_point_summary[poi].append(best_point_dict[poi])
+
+    return best_point_summary
+
 
 #####################################
 def main():
 
     #root_file_tag = ".111221.njetsttHbtagSysQuadFixTr2lssp.Frozen"
     #root_file_tag = ".070522.top19001_100pts_realData_randPtsV18_nPointsRand10.njets.1d.Prof"
-    #root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
-    root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
-
-    ###
-    #root_file_name = find_root_file_path(root_file_tag,"ctG")
-    #root_dict = get_vals_from_root_file(root_file_name,POI_LST+["deltaNLL"])
-    #unique_points_dict = get_unique_points(root_dict,"ctG","deltaNLL")
-    ##get_global_min(unique_points_dict["deltaNLL"],unique_points_dict["ctG"])
-    ##print(unique_points_dict)
-    #best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
-    #print best_point
-    ###
+    root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
+    #root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
 
     # Get the best fit from each scan
     best_point_dict_lst = []
     for poi_name in POI_LST:
         print "\n",poi_name
         root_file_name = find_root_file_path(root_file_tag,poi_name)
-        branches_to_get = get_branches_lst(POI_LST,poi_name)
+        branches_to_get = make_branches_lst(POI_LST,poi_name)
         root_dict = get_vals_from_root_file(root_file_name,branches_to_get,True)
         unique_points_dict = get_unique_points(root_dict,poi_name,"deltaNLL")
         best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
@@ -139,23 +145,21 @@ def main():
         print best_point["deltaNLL"]
         best_point_dict_lst.append(best_point)
 
-    # Test printing some things
-    best_point_summary = {}
-    for poi in POI_LST:
-        best_point_summary[poi] = []
-    for best_point_dict in best_point_dict_lst:
-        for poi in POI_LST:
-            best_point_summary[poi].append(best_point_dict[poi])
-
-    variation_extreme_dict = {}
-    for k,v in best_point_summary.iteritems():
+    # Get dictionary of best fit points arranged by WCs
+    best_points_by_wc = get_best_points_by_wc(best_point_dict_lst)
+    for k,v in best_points_by_wc.items():
         print k,v
-        variation_extreme_dict[k] = []
-        variation_extreme_dict[k].append(min(v))
-        variation_extreme_dict[k].append(max(v))
 
-    for k,v in variation_extreme_dict.iteritems():
-        print k,v
+    ## Test printing some things
+    #variation_extreme_dict = {}
+    #for k,v in best_points_by_wc.iteritems():
+    #    print k,v
+    #    variation_extreme_dict[k] = []
+    #    variation_extreme_dict[k].append(min(v))
+    #    variation_extreme_dict[k].append(max(v))
+
+    #for k,v in variation_extreme_dict.iteritems():
+    #    print k,v
 
 if __name__ == "__main__":
     main()
