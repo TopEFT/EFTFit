@@ -10,6 +10,8 @@ from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
 
+import parse_nll as nlltools
+
 class EFTPlot(object):
     def __init__(self,wc_ranges=None):
         self.logger = logging.getLogger(__name__)
@@ -94,35 +96,6 @@ class EFTPlot(object):
 
 
 
-    # Takes as input two lists (of x values and y values, i.e. WC values and nll values, respecitvely), returns th lists with duplicate x values removed
-    # Of the y values corresponding to the duplicate x values, we keep the min y
-    def GetUniqueNLL(self,graphwcs,graphnlls):
-
-        # Check the lists for duplicate wc points
-        # If there is a duplicate point, take the one with the lowest NLL
-        #     - This is necessary when combining the output of multiple random starting point runs
-        #     - Note that in order to combine the results from multiple runs, it is very important that the same pre-fit fit was performed in each run (i.e. no randomization)
-        #     - This will ensure that the delta NLL values in the file are all relative to the same pre-fit fit point 
-        graphwcs_unique = []
-        graphnlls_unique = []
-        if len(graphwcs) != len(graphnlls): raise Exception("Error: Something is wrong, the wc values and nll values must have the same length.")
-        # Loop over the indices inthe list, check for duplicate x values (i.e. duplicate wc points)
-        for idx in range(len(graphwcs)):
-            wcpt = graphwcs[idx]
-            nll  = graphnlls[idx]
-            if wcpt not in graphwcs_unique:
-                graphwcs_unique.append(graphwcs[idx])
-                graphnlls_unique.append(graphnlls[idx])
-            else:
-                existing_element_idx = graphwcs_unique.index(wcpt)
-                existing_nll = graphnlls_unique[existing_element_idx]
-                if nll < existing_nll:
-                    graphnlls_unique[existing_element_idx] = nll
-
-        return [graphwcs_unique,graphnlls_unique]
-
-
-
     # Takes as input the name of a root file (assumed to be in ../fit_files)
     # Retruns [wc vals in the scan, delta nll vals at each point]
     # Optionally removes duplicate wc points (choosing min nll)
@@ -150,7 +123,9 @@ class EFTPlot(object):
         # Overwrite the lists with the new lists
         # We should now have unique x values, with y corresponding to the min of the set of different y values for this x point
         if unique:
-            graphwcs, graphnlls = self.GetUniqueNLL(graphwcs, graphnlls)
+            unique_points_dict = nlltools.get_unique_points({"wcvals":graphwcs,"nllvals":graphnlls},scan_var="wcvals",minimize_var="nllvals")
+            graphwcs = unique_points_dict["wcvals"]
+            graphnlls = unique_points_dict["nllvals"]
 
         return [graphwcs,graphnlls]
 
