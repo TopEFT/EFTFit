@@ -5,9 +5,19 @@ import numpy as np
 #POI_LST = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 POI_LST = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 
+# Gets list of branches names
+#   - Assumes the non-scanned POIs have the name trackedParam_NAME
+#   - Assumes you also want delta NLL
+def get_branches_lst(poi_lst,scan_poi):
+    out_lst = ["deltaNLL"]
+    out_lst.append(scan_poi)
+    for poi in poi_lst:
+        if poi == scan_poi: continue
+        out_lst.append("trackedParam_"+poi)
+    return out_lst
 
 # Get the values of params from the root file
-def get_vals_from_root_file(root_file_path,branches_to_get):
+def get_vals_from_root_file(root_file_path,branches_to_get,srip_poi_branch_names=False):
 
     # Get scan tree
     ROOT.gROOT.SetBatch(True)
@@ -21,8 +31,12 @@ def get_vals_from_root_file(root_file_path,branches_to_get):
         for leaf in limitTree.GetListOfLeaves():
             lname = leaf.GetName()
             if lname in branches_to_get:
-                if lname not in ret_dict: ret_dict[lname] = []
-                ret_dict[lname].append(limitTree.GetLeaf(lname).GetValue(0))
+                keyname = lname
+                if srip_poi_branch_names and lname.startswith("trackedParam_"):
+                    # Use just the poi name as the key
+                    keyname = lname.replace("trackedParam_","")
+                if keyname not in ret_dict: ret_dict[keyname] = []
+                ret_dict[keyname].append(limitTree.GetLeaf(lname).GetValue(0))
 
     return ret_dict
 
@@ -49,6 +63,7 @@ def get_unique_points(in_dict,scan_var,minimize_var):
     ref_len = len(in_dict[scan_var])
     for var_name in in_dict.keys():
         if len(in_dict[var_name]) != ref_len:
+            print ref_len, len(in_dict[var_name])
             raise Exception("Error: Something is wrong , not all lists are the same len")
 
     # Find the index of the unique points we want to keep
@@ -93,11 +108,13 @@ def get_best_nll_eft_point(in_dict,poi_lst):
     return best_point_dict
 
 
+#####################################
 def main():
 
     #root_file_tag = ".111221.njetsttHbtagSysQuadFixTr2lssp.Frozen"
     #root_file_tag = ".070522.top19001_100pts_realData_randPtsV18_nPointsRand10.njets.1d.Prof"
-    root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
+    #root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
+    root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
 
     ###
     #root_file_name = find_root_file_path(root_file_tag,"ctG")
@@ -114,7 +131,8 @@ def main():
     for poi_name in POI_LST:
         print "\n",poi_name
         root_file_name = find_root_file_path(root_file_tag,poi_name)
-        root_dict = get_vals_from_root_file(root_file_name,POI_LST+["deltaNLL"])
+        branches_to_get = get_branches_lst(POI_LST,poi_name)
+        root_dict = get_vals_from_root_file(root_file_name,branches_to_get,True)
         unique_points_dict = get_unique_points(root_dict,poi_name,"deltaNLL")
         best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
         print best_point
