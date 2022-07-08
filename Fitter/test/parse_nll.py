@@ -1,10 +1,51 @@
 import ROOT
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 #POI_LST = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 POI_LST = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
 
+POI_IDX_MAP = {
+    'ctW'   : 0,
+    'ctZ'   : 1,
+    'ctp'   : 2,
+    'cpQM'  : 3,
+    'ctG'   : 4,
+    'cbW'   : 5,
+    'cpQ3'  : 6,
+    'cptb'  : 7,
+    'cpt'   : 8,
+    'cQl3i' : 9,
+    'cQlMi' : 10,
+    'cQei'  : 11,
+    'ctli'  : 12,
+    'ctei'  : 13,
+    'ctlSi' : 14,
+    'ctlTi' : 15,
+    'deltaNLL' : 16,
+}
+
+POI_SYTLE_MAP = {
+    'ctW'     : ["k","o"],
+    'ctZ'     : ["r","o"],
+    'ctp'     : ["g","o"],
+    'cpQM'    : ["b","o"],
+    'ctG'     : ["orange","o"],
+    'cbW'     : ["grey","o"],
+    'cpQ3'    : ["cyan","o"],
+    'cptb'    : ["m","o"],
+    'cpt'     : ["y","o"],
+    'cQl3i'   : ["k","x"],
+    'cQlMi'   : ["r","x"],
+    'cQei'    : ["g","x"],
+    'ctli'    : ["b","x"],
+    'ctei'    : ["m","x"],
+    'ctlSi'   : ["c","x"],
+    'ctlTi'   : ["y","x"],
+}
+
+########################################################################
 ### Helper functions ###
 
 # Get path to root file given base name
@@ -99,7 +140,67 @@ def get_unique_points(in_dict,scan_var,minimize_var):
 
     return out_dict
 
+########################################################################
+### Plotting functions ###
 
+def make_scatter_plot(lst_of_points_to_plot,wc_for_plot):
+
+    fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(20,7))
+
+    y_name = "WC value"
+    axs.set_ylabel(y_name)
+    axs.set_xlabel("WC")
+    axs.set_title("Best fit points summary") # Set title
+    axs.grid()
+    axs.set_xticks(np.arange(0,17,step=1))
+    axs.set_xticklabels(wc_for_plot)
+
+
+    # Main plot
+    for i,plot_info_dict in enumerate(lst_of_points_to_plot):
+        xarr = plot_info_dict["xarr"]
+        yarr = plot_info_dict["yarr"]
+        leg_str = plot_info_dict["label"]
+        clr = plot_info_dict["color"]
+        marker = plot_info_dict["marker"]
+        plt.scatter(xarr,yarr,color=clr,marker=marker,edgecolors='none',label=leg_str, zorder=10)
+
+    # Legend
+    #if leg_str != "": axs.legend(scatterpoints=1)
+    #axs.legend(loc=2, prop={'size': 6})
+    axs.legend(loc=2, prop={'size': 6},ncol=17,scatterpoints=1)
+
+    plt.axhline(y = 0.0, color = 'k', linestyle = '-',zorder=8) # hline at 1
+    #plt.xlim(0,80)
+    #plt.ylim(0,100)
+
+    save_name = "test01"
+    plt.savefig(save_name+".png",format="png")
+    plt.show()
+
+    return plt
+
+def plotter_wrapper(lst_of_bestfit_dicts):
+
+    lst_of_points_for_plotter = []
+    for wc_name,bestfit_point in lst_of_bestfit_dicts.iteritems():
+        plotting_info_dict = {}
+        plotting_info_dict["label"] = wc_name+" scan"
+        plotting_info_dict["color"] = POI_SYTLE_MAP[wc_name][0]
+        plotting_info_dict["marker"] = POI_SYTLE_MAP[wc_name][1]
+        plotting_info_dict["yarr"] = np.array(bestfit_point.values())
+        plotting_info_dict["xarr"] = []
+        for poi_name_in_bestfit_point in bestfit_point.keys():
+            plotting_info_dict["xarr"].append(POI_IDX_MAP[poi_name_in_bestfit_point])
+        lst_of_points_for_plotter.append(plotting_info_dict)
+
+    print ""
+    for i in lst_of_points_for_plotter: print i
+
+    make_scatter_plot(lst_of_points_for_plotter,POI_LST+["deltaNLL"])
+
+
+########################################################################
 ### Wrapper functions ###
 
 # Find the best points in EFT space
@@ -124,16 +225,16 @@ def get_best_points_by_wc(lst_of_best_point_dicts):
     return best_point_summary
 
 
-#####################################
+########################################################################
 def main():
 
     #root_file_tag = ".111221.njetsttHbtagSysQuadFixTr2lssp.Frozen"
     #root_file_tag = ".070522.top19001_100pts_realData_randPtsV18_nPointsRand10.njets.1d.Prof"
-    root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
-    #root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
+    #root_file_tag = ".052822.top19001_100pts_realData_randPtsV00_nPointsRand10.njets.1d.Prof"
+    root_file_tag = ".070722.top19001_100pts_realData_randPtsV19_nPointsRand00.njets.1d.Prof"
 
     # Get the best fit from each scan
-    best_point_dict_lst = []
+    bestfit_dict = {}
     for poi_name in POI_LST:
         print "\n",poi_name
         root_file_name = find_root_file_path(root_file_tag,poi_name)
@@ -143,12 +244,15 @@ def main():
         best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
         print best_point
         print best_point["deltaNLL"]
-        best_point_dict_lst.append(best_point)
+        bestfit_dict[poi_name] = best_point
+
+    plotter_wrapper(bestfit_dict)
+    exit()
 
     # Get dictionary of best fit points arranged by WCs
-    best_points_by_wc = get_best_points_by_wc(best_point_dict_lst)
-    for k,v in best_points_by_wc.items():
-        print k,v
+    #best_points_by_wc = get_best_points_by_wc(best_point_dict_lst)
+    #for k,v in best_points_by_wc.items():
+        #print k,v
 
     ## Test printing some things
     #variation_extreme_dict = {}
