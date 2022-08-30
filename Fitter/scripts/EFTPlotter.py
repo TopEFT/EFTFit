@@ -625,10 +625,9 @@ class EFTPlot(object):
         minZ = limitTree.GetMinimum('deltaNLL')
 
         points = 100
-        hist = ROOT.TH3F(hname, hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], points, 0, ceiling)
-        limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
-        hist = hist.Project3DProfile()
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
+        hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
+        hist = canvas.GetPrimitive("hist")
         hist.Draw('colz')
         hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
@@ -1340,7 +1339,6 @@ class EFTPlot(object):
             wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
             wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
             wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
-	    wcs_pairs = [('cQei','ctZ'), ('cQl3i','ctZ'), ('cpQM','ctZ'), ('cptb','ctZ'), ('cpt','ctZ'), ('ctei','ctZ'), ('ctlSi','ctZ'), ('ctli','ctZ')]
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
