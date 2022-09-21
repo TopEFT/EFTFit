@@ -1137,7 +1137,7 @@ class EFTFit(object):
             if len(wcs) > 1:
                 exclude = ' --exclude' + ','.join([w for w in wcs if w != wc])
                 condorFile.write(exclude + '\n')
-            condorFile.write('plotImpacts.py -i impacts%s.json -o impacts%s\n' % (wc, wc))
+            condorFile.write('\nplotImpacts.py -i impacts%s.json -o impacts%s\n' % (wc, wc))
             condorFile.close()
 
             target = 'condor_%s_collect.sub' % wc
