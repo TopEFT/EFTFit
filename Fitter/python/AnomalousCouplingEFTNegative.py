@@ -18,17 +18,17 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         self.alternative = False
         self.numOperators={}
         self.Operators={}
-        jsons=open(os.environ['CMSSW_BASE']+'/src/EFTFit/Fitter/hist_files/selectedWCs.txt','r').read()
+        # jsons=open(os.environ['CMSSW_BASE']+'/src/EFTFit/Fitter/hist_files/selectedWCs.txt','r').read()
 
-        operators=json.loads(jsons)
+        # operators=json.loads(jsons)
         self.sgnl_known = ['ttH','tllq','ttll','ttlnu','tHq','tttt']
-        self.alloperators=[]
-        for sig in self.sgnl_known:
-            self.Operators[sig] = operators[sig]
-            self.numOperators[sig]=len(operators[sig])
-            self.alloperators.extend(operators[sig])
-        self.alloperators=list(set(self.alloperators))
-        print(self.Operators)
+        # self.alloperators=[]
+        # for sig in self.sgnl_known:
+            # self.Operators[sig] = operators[sig]
+            # self.numOperators[sig]=len(operators[sig])
+            # self.alloperators.extend(operators[sig])
+        # self.alloperators=list(set(self.alloperators))
+        # print(self.Operators)
         
 
         # regular expressions for process names:
@@ -38,13 +38,27 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         self.mixed_re = re.compile('(?P<proc>.*)_quad_mixed_(?P<c1>.*)_(?P<c2>.*)') # should go before quad
 
 
+    def loadOperators(self,fpath):
+        print("Loading operators from {fpath}".format(fpath=fpath))
+        jsn = open(fpath,'r').read()
+        operators = json.loads(jsn)
+        self.alloperators = []
+        for sig in self.sgnl_known:
+            self.Operators[sig] = operators[sig]
+            self.numOperators[sig] = len(operators[sig])
+            self.alloperators.extend(operators[sig])
+        self.alloperators = list(set(self.alloperators))
+        print("Operators: {ops}".format(ops=self.Operators))
+
     def setPhysicsOptions(self,physOptions):
+        selected_wcs_fpath = os.path.join(os.environ['CMSSW_BASE'],'src/EFTFit/Fitter/hist_files/selectedWCs.txt')  # Default
         for po in physOptions:
-
-
             if po.startswith("eftAlternative"):
                 self.alternative = True
                 raise RuntimeError("Alternative not yet implemented")
+            if po.startswith("selectedWCs="):
+                selected_wcs_fpath = po.replace("selectedWCs=","").strip()
+        self.loadOperators(selected_wcs_fpath) 
 
 
 #
