@@ -117,6 +117,8 @@ def get_unique_points(in_dict,scan_var,minimize_var):
     scan_var_val_lst_unique = {}
     for idx in range(ref_len):
         scan_var_val = in_dict[scan_var][idx]
+        if any(isinstance(i, list) for i in in_dict[scan_var]):  #relevant only for 2D scans
+            scan_var_val = tuple(scan_var_val)
         minimize_var_val = in_dict[minimize_var][idx]
         if scan_var_val not in scan_var_val_lst_unique:
             # This x value is not yet in our unique list
@@ -137,7 +139,7 @@ def get_unique_points(in_dict,scan_var,minimize_var):
     idx_to_keep = np.array(idx_to_keep)
     for var_name in in_dict.keys():
         var_val_arr = np.array(in_dict[var_name])
-        var_val_arr_unique = np.take(var_val_arr,idx_to_keep)
+        var_val_arr_unique = var_val_arr[idx_to_keep]
         out_dict[var_name] = list(var_val_arr_unique)
 
     return out_dict
