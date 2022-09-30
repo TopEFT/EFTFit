@@ -882,6 +882,10 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
         
+        #close the tmp root file
+        gridFile.Close()
+        os.remove("tmp.root")
+ 
     def LLPlot1DSM(self, name='.test', param='', log=False):
         if not param:
             logging.error("No parameter specified!")
