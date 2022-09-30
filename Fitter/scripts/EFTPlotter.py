@@ -9,7 +9,6 @@ import os
 from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
-from array import array
 
 import parse_nll as nlltools
 
@@ -138,10 +137,9 @@ class EFTPlot(object):
         graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc_lst,unique=True)
         newRootFile = ROOT.TFile("tmp.root","RECREATE")          #temporary root file with new limit tree
         limit = ROOT.TTree("limit","limit")
-        wc0 = array('f',[0])
-        wc1 = array('f',[0])
-        deltanll = array('f',[0])
-
+        wc0 = numpy.array([0],dtype='f')
+        wc1 = numpy.array([0],dtype='f')
+        deltanll = numpy.array([0],dtype='f')
         #Create new branches with two WCs being scanned and deltaNLL
         limit.Branch("{}".format(wc_lst[0]),wc0,"{}".format(wc_lst[0]))
         limit.Branch("{}".format(wc_lst[1]),wc1,"{}".format(wc_lst[1]))
@@ -696,6 +694,10 @@ class EFTPlot(object):
             outfile = ROOT.TFile(self.histosFileName,'UPDATE')
             hist.Write()
             outfile.Close()
+
+        #close the tmp root file
+        rootFile.Close()
+        os.remove("tmp.root")
 
     def ContourPlotEFT(self, name_lst=['.test'], wcs=[], final=False):
         if len(wcs)!=2:
