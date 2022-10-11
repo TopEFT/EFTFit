@@ -19,9 +19,6 @@
 using Clock = std::chrono::steady_clock;
 using std::chrono::time_point;
 
-std::vector<TString> AUTOSTATS_PROCS {"fakes"};
-//std::vector<TString> AUTOSTATS_PROCS {"Diboson", "Triboson", "charge_flips", "fakes", "convs"};
-
 // >VERY< useful convenience class for extracting expected and observed yields of some category from
 // a given RooWorkspace.
 //  * Has methods for creating new categories that are the merger of other categories from the RooWorkspace
@@ -121,8 +118,6 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     TString search_proc("_proc_");
     TString search_channel("n_exp_bin");
     this->proc_width = 0;
-    int idx_wrapper = 0; // index of a process used in constructing the CMSHistFuncWrapper objects for auto MC stats
-
     for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
     
         time_point<Clock> s0_proc = Clock::now();
@@ -130,13 +125,13 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         RooAddition* proc_yield = nullptr;
         TString name(ra->GetName());
         
-        /*
+        
         TString match = TString::Format("charge_flip");
         if (name.Contains(match)) {
             cout << "Skip process: " << name << endl;
             continue;
         }
-        */
+        
         
         // Starting index for the process name, e.g. "ttll_quad_mixed_ctp_cpt"
         Ssiz_t idx_proc(name.Index(search_proc));
@@ -158,30 +153,25 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         TString name_pdfbkg  = TString::Format("shapeBkg_%s_%s_morph",name_ch.Data(),name_proc.Data());
         TString name_pdfbkg2 = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
 
-        TString name_pdf_found = "";
-        std::vector <TString> lst_name_pdf = {name_pdf, name_pdf2, name_pdfbkg, name_pdfbkg2};
-
-        for (TString n: lst_name_pdf) {
-            if (ws->function(n)) {
-                name_pdf_found = n;
-                std::cout << n << std::endl;
-            }
+        RooAbsReal* roo_pdf = ws->function(name_pdf);
+        if (roo_pdf == nullptr) {
+            // Let's try again looking for a matching background shape
+            //std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s, looking for %s instead", name_pdf.Data(), name.Data(), name_pdf2.Data()) << std::endl;
+            roo_pdf = ws->function(name_pdfbkg);
         }
-
-        bool do_wrapper = false;
-        for (TString auto_procs: AUTOSTATS_PROCS) {
-            if (name.Contains(auto_procs)) {
-                do_wrapper = true;
-            }
+        if (roo_pdf == nullptr) {
+            // Let's try again looking for a matching background shape
+            roo_pdf = ws->function(name_pdf2);
         }
-
-        if (name_pdf_found.Length() == 0) {
+        if (roo_pdf == nullptr) {
+            roo_pdf = ws->function(name_pdfbkg2);
+        }
+        if (roo_pdf == nullptr) {
             // Now we really couldn't find the shape PDF
             std::cout << TString::Format("[WARNING] Unable to find PDF for process %s, ignoring this process", name.Data()) << std::endl;
             continue;
             proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
-        }
-
+        } 
         else {
             RooArgSet set_proc;
             RooArgSet set_pdf;
@@ -192,33 +182,10 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
                 set_proc.add(*ra_flips);
             }
             */
-
-            RooAbsReal* roo_pdf;
-            TString name_wrapper = TString::Format("%s_%s", name_pdf_found.Data(), "wrapper");
-            if (ws->function(name_wrapper)) {
-                roo_pdf = ws->function(name_wrapper);
-            }
-            else if (do_wrapper) {
-                std::cout << "constructing wrapper " << name_wrapper << " for the process " << name << std::endl;
-                RooRealVar* x = (RooRealVar*)ws->var("CMS_th1x");
-                CMSHistFunc* pdf = (CMSHistFunc*)ws->function(name_pdf_found);
-                TString name_prop = TString::Format("%s%s", "prop_bin", name_ch.Data()); //construct the name of the CMSErrorPropagator object
-                CMSHistErrorPropagator* prop = (CMSHistErrorPropagator*) ws->function(name_prop);
-                if (prop == nullptr) {
-                    std::cout << "[ERROR]Propagator " << name_prop << " not found for " << name_ch << std::endl;
-                    throw;
-                }
-                roo_pdf = new CMSHistFuncWrapper(name_wrapper, name_wrapper, *x, *pdf, *prop, idx_wrapper);
-            }
-            else {
-                roo_pdf = ws->function(name_pdf_found);
-            }
-            
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
             proc_yield = new RooAddition(name_ch + name_proc, name, set_proc, set_pdf);
             this->roo_counter++;
-            idx_wrapper++;
         }
 
         this->exp_proc[name_proc.Data()] = proc_yield;
@@ -412,11 +379,6 @@ double AnalysisCategory::getExpProc(TString proc) {
         if (Proc->dependsOn(*(this->th1x))) {
             double sum(0.0);
             for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                if (idx) {
-                    if (!bool(this->getExpProcBin(proc, idx) - this->getExpProcBin(proc, idx-1))) {
-                        continue;
-                    }
-                }
                 sum += this->getExpProcBin(proc, idx);
             }
         return sum;
@@ -476,6 +438,10 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
             double duration = findDuration(sumError_s0);
             //cout << "Find expected sum error of " << this->getName().Data() << " takes " << duration << "s (inclusive)" << endl;
         }
+
+
+        std::cout << err << std::endl;
+
         return err;
     }
     err = getExpSumErrorBin(0, fr);
@@ -614,7 +580,7 @@ double AnalysisCategory::getExpSumErrorBin(int bin, RooFitResult* fr) {
     double duration0 = findDuration(sumErrorBin_s0);
     cout << "Right before find expected sum error at bin " << bin << " of " << this->getName().Data() << ", it takes " << duration0 << "s" << endl;
     */
-    double err = this->allUnusedProcs->getPropagatedError(*fr);
+    double err = this->allProcs->getPropagatedError(*fr);
     this->th1x->setVal(old_bin);
     if (this->DEBUG) {
         double duration = findDuration(sumErrorBin_s0);
@@ -704,14 +670,14 @@ void AnalysisCategory::Print(RooFitResult* fr) {
 
     std::cout << "Category: " << this->getName() << std::endl;
     std::cout << TString::Format("%*s: %*.1f",pwidth,"data",dwidth,this->getData()) << std::endl;
-    for (TString p: this->proc_unused) {
+    for (TString p: this->proc_order) {
     
         TString sm = TString::Format("sm");
-        TString cf = TString::Format("fake");
+        TString cf = TString::Format("charge_flip");
         //if (!p.Contains(sm)) continue;
         /*
-        if (!(p.Contains(sm))) {
-            //cout << "Skip process: " << p << endl;
+        if (p.Contains(cf)) {
+            cout << "Skip process: " << p << endl;
             continue;
         }
         */
@@ -722,7 +688,7 @@ void AnalysisCategory::Print(RooFitResult* fr) {
         } else {
             err = 0.0;
         }
-        //if ((val < 0.1) | (err < 0.1)) continue;
+        if ((val < 0.1) & (err < 0.1)) continue;
         frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
         std::cout << TString::Format("%*s: %s",pwidth,p.Data(),frmt.Data()) << std::endl;
     }

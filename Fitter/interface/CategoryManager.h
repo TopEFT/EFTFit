@@ -56,7 +56,7 @@ CategoryManager::CategoryManager(RooWorkspace* ws, WSHelper ws_helper, std::vect
 
 // Default destructor
 CategoryManager::~CategoryManager() {
-    cout << "Deleting category manager......" << endl;
+    //cout << "Deleting category manager......" << endl;
     for (TString cat_name: this->cat_names) {
         AnalysisCategory* ana_cat = this->getCategory(cat_name);
         delete ana_cat;

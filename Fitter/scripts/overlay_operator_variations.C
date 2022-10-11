@@ -1,10 +1,13 @@
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
 #include <unordered_map>
 #include <utility>
+#include <stdio.h>
 
 #include "TString.h"
 #include "TLatex.h"
@@ -36,14 +39,10 @@
 #include "RooRealVar.h"
 
 #include "EFTFit/Fitter/interface/WSHelper.h"
-//#include "EFTFit/Fitter/interface/PlotMaker.h"
 #include "EFTFit/Fitter/interface/AnalysisCategory.h"
 #include "EFTFit/Fitter/interface/CategoryManager.h"
 #include "EFTFit/Fitter/interface/HistogramBuilder.h"
 #include "EFTFit/Fitter/interface/utils.h"
-
-// #include "tdrstyle.C"
-
 /*
 Desc:
     Monolithic ROOT macro for producing analysis plots/graphs/tables. It takes as input a directory
@@ -2519,6 +2518,76 @@ void make_fluct_compare_plots(
     return;
 }
 
+std::vector<std::string> stringSplit(std::string str, std::string delimiter) {
+    std::vector<std::string> substrs = {};
+    size_t pos = 0;
+    while ((pos = str.find(delimiter)) != std::string::npos) {
+        substrs.push_back(str.substr(0, pos));
+        str.erase(0, pos + delimiter.length());
+    }
+    return substrs;
+}
+
+void write_PlotData_to_file(PlotData pData, std::string filename) {
+    std::ofstream ofs(filename.c_str(), std::ios::out | std::ofstream::binary);
+    for (uint i=0; i < pData.SR_name.size(); i++) {
+        ofs << pData.SR_name[i] << " ";
+        ofs << pData.data[i] << " ";
+        ofs << pData.sum[i] << " ";
+        ofs << pData.err[i] << " ";
+        for (TString proc: ALL_PROCS) {
+            ofs << pData.procs[proc.Data()][i] << " ";
+        }
+        ofs << "\n";
+    }
+    ofs.close();
+}
+
+PlotData read_PlotData_from_file(std::string filename, PlotData pData) {
+    std::ifstream ifs(filename.c_str(), std::ios::in | std::ofstream::binary);
+    std::string line;
+    while (std::getline(ifs, line)) {
+        cout << line << endl;
+        if(line.size() <= 0) break;
+        std::vector<std::string> fields = stringSplit(line, " ");
+        pData.SR_name.push_back(fields[0]);
+        pData.data.push_back(std::stod(fields[1]));
+        pData.sum.push_back(std::stod(fields[2]));
+        pData.err.push_back(std::stod(fields[3]));
+        int proc_idx = 0;
+        for (TString proc: ALL_PROCS) {
+            pData.procs[proc.Data()].push_back(std::stod(fields[4+proc_idx]));
+            proc_idx++;
+        }
+    }
+    cout << "Read from " << filename << " with " << pData.SR_name.size() << " items." << endl;
+    return pData;
+}
+
+PlotData read_PlotData_from_file(std::string filename) {
+    PlotData pData;
+    pData = read_PlotData_from_file(filename, pData);
+    return pData;
+}
+
+PlotData read_PlotData_from_file(std::vector<std::string> filenames) {
+    PlotData pData;
+    for (std::string fname: filenames) {
+        pData = read_PlotData_from_file(fname, pData);
+    } 
+    return pData;
+}
+
+void print_PlotData(PlotData pData) {
+    for (TString SR: pData.SR_name) {
+        cout << SR << ' ';
+    }
+    cout << "\n" << endl;
+    for (double d: pData.data) {
+        cout << d << ' ';
+    }
+}
+
 /*
 Desc:
     Tries to open up a file specified by 'fpath', if successful it will set the TFile pointer 'f' to
@@ -2560,8 +2629,9 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     std::cout << "Output Dir:   " << out_dir << std::endl;
 
     // Read in objects from various files
-    TFile* ws_file = TFile::Open(in_dir + "wps_ptz-lj0pt.root");
+    //cname_procTFile* ws_file = TFile::Open(in_dir + "wps_ptz-lj0pt.root");
     //TFile* ws_file = TFile::Open(in_dir + "../card_pp/wps_reduced.root");
+    TFile* ws_file = TFile::Open("/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_test/wps_16WC_5sgnl_5bkgd_nuis_packed.root");
     
     if (!ws_file) {
         // Try looking for the SM workspace version (a directory should only have one or the other not both!)
@@ -2790,27 +2860,29 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
     };
     */
     
-    PlotData data_to_plot;
-
-    std::vector<TString> SR_to_plot = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
-    //std::vector<TString> SR_to_plot = {"3l_p_offZ_2b"};
+    std::vector<int> SR_index = {3, 7, 10};
+    std::vector<TString> SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
+    std::vector<std::string> file_names = {};
     
     bin_size = 2; // Warning: for testing only!!!
     
     AnalysisCategory::roo_counter = 0;
-    
-    for (TString SR: SR_to_plot) 
+
+    for (int idx: SR_index) 
     {
+        TString SR = SR_list[idx];
+        std::string file_name = TString::Format("SR%d", idx).Data();
+        file_names.push_back(file_name);
+        
         std::vector<TString> ch_to_plot = {};
         for (TString cat_name: cat_groups[SR.Data()]) {
             for (auto const& x : ch_map) {
                 if (x.first == cat_name) {
                     ch_to_plot.push_back(x.second);
-                    cout << x.second << " added for the SR " << SR << endl;
+                    //cout << x.second << " added for the SR " << SR << endl;
                 }
             }
         }
-    
         CategoryManager cat_manager = CategoryManager(ws, ws_helper, ch_to_plot, YIELD_TABLE_ORDER);
     
         // Set up the child categories and merge them into the parent category
@@ -2834,8 +2906,10 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
         
         // These are basically the bins of the histogram we want to make
         std::vector<AnalysisCategory*> cats_to_plot = cat_manager.getCategories(SR);
+        PlotData data_to_plot;
         for (AnalysisCategory* ana_cat: cats_to_plot) {
-            for (uint idx=0; idx < bin_size; idx++) {
+            cout << ana_cat->getName() << endl;
+            for (uint idx=0; idx < bin_size; idx++) {                
                 data_to_plot.SR_name.push_back(ana_cat->getName());
                 data_to_plot.data.push_back(ana_cat->getDataBin(idx));
                 data_to_plot.sum.push_back(ana_cat->getExpSumBin(idx));
@@ -2845,21 +2919,12 @@ void runit(TString in_dir,TString out_dir,std::set<std::string> skip_wcs,std::se
                 }
             }
         }
-        
-        cout << "Current existing RooAddition object count: " << AnalysisCategory::roo_counter << endl;
-        
-        /*
-        for (uint i=0; i < data_to_plot.SR_name.size(); i++) {
-            cout << data_to_plot.SR_name[i] << endl;
-            cout << data_to_plot.data[i] << endl;
-            cout << data_to_plot.err[i] << endl;
-            for (TString proc: ALL_PROCS) {
-                cout << proc << ": " << data_to_plot.procs[proc.Data()][i] << endl;
-            }
-        }
-        */
+        write_PlotData_to_file(data_to_plot, file_name);
     }
+    PlotData data_read = read_PlotData_from_file(file_names);
+    print_PlotData(data_read);
     
+    //file_to_write.close();
     cout << "The number of RooAddition objects after the run: " << AnalysisCategory::roo_counter << endl;
     // For testing purpose, REMOVE THIS AFTER TESTING!!!
     return;
