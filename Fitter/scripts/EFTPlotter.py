@@ -6,8 +6,11 @@ import numpy
 import itertools
 import subprocess as sp
 import os
+from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
+
+import parse_nll as nlltools
 
 class EFTPlot(object):
     def __init__(self,wc_ranges=None):
@@ -22,32 +25,32 @@ class EFTPlot(object):
 
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-6.0,6.0),
-            'cQei' : (-7.0,7.0),
-            'cQl3i': (-10.0,10.0),
-            'cQlMi': (-8.0,8.0),
-            'cQq11': (-1.5,1.5),
-            'cQq13': (-0.6,0.6),
-            'cQq81': (-4.0,3.0),
-            'cQq83': (-1.2,1.2),
-            'cQt1' : (-5.0,5.0),
-            'cQt8' : (-10.0,10.0),
-            'cbW'  : (-5.0,5.0),
-            'cpQ3' : (-10.0,7.0),
-            'cpQM' : (-11.0,30.0),
-            'cpt'  : (-25.0,20.0),
-            'cptb' : (-17.0,17.0),
-            'ctG'  : (-1.5,1.5),
-            'ctW'  : (-4.0,3.0),
-            'ctZ'  : (-4.0,4.0),
-            'ctei' : (-8.0,8.0),
-            'ctlSi': (-8.0,8.0),
-            'ctlTi': (-1.4,1.4),
-            'ctli' : (-8.0,8.0),
+            'cQQ1' : (-4.0,4.0),
+            'cQei' : (-4.0,4.0),
+            'cQl3i': (-5.5,5.5),
+            'cQlMi': (-4.0,4.0),
+            'cQq11': (-0.7,0.7),
+            'cQq13': (-0.35,0.35),
+            'cQq81': (-1.7,1.5),
+            'cQq83': (-0.6,0.6),
+            'cQt1' : (-4.0,4.0),
+            'cQt8' : (-8.0,8.0),
+            'cbW'  : (-3.0,3.0),
+            'cpQ3' : (-4.0,4.0),
+            'cpQM' : (-10.0,17.0),
+            'cpt'  : (-15.0,15.0),
+            'cptb' : (-9.0,9.0),
+            'ctG'  : (-0.8,0.8),
+            'ctW'  : (-1.5,1.5),
+            'ctZ'  : (-2.0,2.0),
+            'ctei' : (-4.0,4.0),
+            'ctlSi': (-5.0,5.0),
+            'ctlTi': (-0.9,0.9),
+            'ctli' : (-4.0,4.0),
             'ctp'  : (-11.0,35.0),
-            'ctq1' : (-1.4,1.4),
-            'ctq8' : (-3.0,3.0),
-            'ctt1' : (-3.0,3.0),
+            'ctq1' : (-0.6,0.6),
+            'ctq8' : (-1.4,1.4),
+            'ctt1' : (-2.1,2.1),
         }
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
@@ -81,33 +84,72 @@ class EFTPlot(object):
         #self.Lumi_text.Draw('same')
 
 
+
+    # Appends a given string to each item in a list of strings
+    def AppendStrToItemsInLst(self,in_lst,in_str):
+        out_lst = []
+        for item in in_lst:
+            if type(item) is not str:
+                raise Exception("Error: Cannot append the str to items in this list, not all items are str")
+            out_lst.append(item+in_str)
+        return out_lst
+
+
+
+    # Takes as input the name of a root file (assumed to be in ../fit_files)
+    # Retruns [wc vals in the scan, delta nll vals at each point]
+    # Optionally removes duplicate wc points (choosing min nll)
+    def GetWCsNLLFromRoot(self,base_name_lst,wc,unique=False):
+
+        graphwcs = []
+        graphnlls = []
+        for name in base_name_lst:
+            if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+                logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+                return [graphwcs,graphnlls]
+
+            # Get scan tree
+            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+            limitTree = rootFile.Get('limit')
+
+            # Get coordinates for TGraph
+            for entry in range(limitTree.GetEntries()):
+                limitTree.GetEntry(entry)
+                graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
+                graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+
+            rootFile.Close()
+
+        # Overwrite the lists with the new lists
+        # We should now have unique x values, with y corresponding to the min of the set of different y values for this x point
+        if unique:
+            unique_points_dict = nlltools.get_unique_points({"wcvals":graphwcs,"nllvals":graphnlls},scan_var="wcvals",minimize_var="nllvals")
+            graphwcs = unique_points_dict["wcvals"]
+            graphnlls = unique_points_dict["nllvals"]
+
+        return [graphwcs,graphnlls]
+
+
+
     def ResetHistoFile(self, name=''):
         ROOT.TFile('Histos{}.root'.format(name),'RECREATE')
         self.histosFileName = 'Histos{}.root'.format(name)
 
-    def LLPlot1DEFT(self, name='.test', frozen=False, wc='', log=False):
+
+
+    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
         if not wc:
             logging.error("No WC specified!")
             return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
-            return
-            
-        ROOT.gROOT.SetBatch(True)
 
+        ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
 
-        # Get scan tree
-        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-        limitTree = rootFile.Get('limit')
-
-        # Get coordinates for TGraph
-        graphwcs = []
-        graphnlls = []
-        for entry in range(limitTree.GetEntries()):
-            limitTree.GetEntry(entry)
-            graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
-            graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc,unique=True)
+        if graphwcs == [] or graphnlls == []:
+            # Something went wrong
+            print("Error, probably could not find root file")
+            return
 
         # Rezero the y axis and make the tgraphs
         graphnlls = [val-min(graphnlls) for val in graphnlls]
@@ -187,7 +229,6 @@ class EFTPlot(object):
         else:
             canvas.Print('{}1DNLL.png'.format(wc,'freeze' if frozen else 'float'),'png')
 
-        rootFile.Close()
 
     def duplicates(self, seq, item):
         start_at = -1
@@ -216,8 +257,8 @@ class EFTPlot(object):
         return [unique_wcs, unique_nlls]
 
     def OverlayLLPlot1DEFT(self,**kwargs):
-        name1 = kwargs.pop('name1','.test')
-        name2 = kwargs.pop('name2','.test')
+        name1_lst = kwargs.pop('name1_lst',['.test'])
+        name2_lst = kwargs.pop('name2_lst',['.test'])
         wc  = kwargs.pop('wc','')
         d1  = kwargs.pop('dir1','../fit_files')
         d2  = kwargs.pop('dir2','../fit_files')
@@ -230,12 +271,14 @@ class EFTPlot(object):
         if not wc:
             logging.error("No wc specified!")
             return
-        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
-            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
-            return
-        if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
-            logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
-            return
+        for name1 in name1_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
+                logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
+                return
+        for name2 in name1_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
+                logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
+                return
 
         ROOT.gROOT.SetBatch(True)
 
@@ -244,30 +287,10 @@ class EFTPlot(object):
         p1.Draw()
         p1.cd()
 
-        # Get scan trees
-        rootFile1 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1))
-        limitTree1 = rootFile1.Get('limit')
-
-        rootFile2 = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2))
-        limitTree2 = rootFile2.Get('limit')
-
         # Get coordinates for TGraphs
-        graph1wcs = []
-        graph2wcs = []
-        graph1nlls = []
-        graph2nlls = []
-        for entry in range(limitTree1.GetEntries()):
-            limitTree1.GetEntry(entry)
-            graph1wcs.append(limitTree1.GetLeaf(wc).GetValue(0))
-            graph1nlls.append(2*limitTree1.GetLeaf('deltaNLL').GetValue(0))
-        for entry in range(limitTree2.GetEntries()):
-            limitTree2.GetEntry(entry)
-            graph2wcs.append(limitTree2.GetLeaf(wc).GetValue(0))
-            graph2nlls.append(2*limitTree2.GetLeaf('deltaNLL').GetValue(0))
+        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True)
+        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True)
 
-        dup = [self.duplicates(graph1wcs, x) for x in graph1wcs]
-        graph1wcs, graph1nlls = self.clean_duplicates(graph1wcs, graph1nlls)
-        graph2wcs, graph2nlls = self.clean_duplicates(graph2wcs, graph2nlls)
         # Rezero the y axis and make the tgraphs
         #zero = graph1nlls.index(0)
         zero = 0
@@ -419,9 +442,6 @@ class EFTPlot(object):
         os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
         os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_Overlay1DNLL.eps')
 
-        rootFile1.Close()
-        rootFile2.Close()
-
     def OverlayZoomLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
         if not wc:
             logging.error("No wc specified!")
@@ -541,14 +561,15 @@ class EFTPlot(object):
         rootFile1.Close()
         rootFile2.Close()
 
-    def BatchLLPlot1DEFT(self, basename='.test', frozen=False, wcs=[], log=False):
+    def BatchLLPlot1DEFT(self, basename_lst=['.test'], frozen=False, wcs=[], log=False):
         if not wcs:
             wcs = self.wcs
 
         ROOT.gROOT.SetBatch(True)
 
         for wc in wcs:
-            self.LLPlot1DEFT(basename+'.'+wc, frozen, wc, log)
+            basename_lst_with_wc_appended = self.AppendStrToItemsInLst(basename_lst,"."+wc)
+            self.LLPlot1DEFT(basename_lst_with_wc_appended, frozen, wc, log)
 
     def BatchLLPlotNDEFT(self, basename='.test', frozen=False, wcs=[], log=False):
         if not wcs:
@@ -560,7 +581,8 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+        if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
 
@@ -568,7 +590,9 @@ class EFTPlot(object):
 
         for wc in wcs:
             print(wc)
-            self.OverlayLLPlot1DEFT(name1=basename1+'.'+wc, name2=basename2+'.'+wc, wc=wc, log=log, final=final, titles=titles)
+            basename1_lst_with_wc_appended = self.AppendStrToItemsInLst(basename1_lst,"."+wc)
+            basename2_lst_with_wc_appended = self.AppendStrToItemsInLst(basename2_lst,"."+wc)
+            self.OverlayLLPlot1DEFT(name1_lst=basename1_lst_with_wc_appended, name2_lst=basename2_lst_with_wc_appended, wc=wc, log=log, final=final, titles=titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
@@ -579,7 +603,7 @@ class EFTPlot(object):
         for wc in wcs:
             self.OverlayZoomLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
 
-    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False):
+    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False, final=False):
         if len(wcs)!=2:
             logging.error("Function 'LLPlot2D' requires exactly two wcs!")
             return
@@ -600,55 +624,39 @@ class EFTPlot(object):
             hname += "_log"
         minZ = limitTree.GetMinimum('deltaNLL')
 
-        hist = ROOT.TH3F(hname, hname, 150, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 150, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
-        #hist = ROOT.TH3F(hname, hname, 300, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], 300, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
-        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>{}(200,{},{},200,{},{})'.format(minZ,wcs[0],wcs[1],hname,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '2*deltaNLL<{}'.format(ceiling), 'prof colz')
-        #htemp = ROOT.TH2F(hname,hname,200,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],200,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
-        limitTree.Project(hname, '2*(deltaNLL-{}):{}:{}'.format(minZ,wcs[0],wcs[1]), '')
-        hist.Project3DProfile().Draw('colz')
-        hist.SetTitle(';{};{}'.format(wcs[1],wcs[0]))
-        
-        #hist = canvas.GetPrimitive(hname)
-
-        # Draw best fit point from grid scan
-        #for entry in range(limitTree.GetEntries()):
-        #    limitTree.GetEntry(entry)
-        #    currentnll = limitTree.GetLeaf('deltaNLL').GetValue(0)
-        #    if currentnll == minZ:
-        #        minentry = entry
-        #limitTree.GetEntry(minentry)
-        #xmin=limitTree.GetLeaf(wcs[1]).GetValue(0)
-        #ymin=limitTree.GetLeaf(wcs[0]).GetValue(0)
-        #print("Minimum: {}={}, {}={}".format(wcs[1],xmin,wcs[0],ymin))
+        points = 100
+        hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
+        hist = canvas.GetPrimitive("hist")
+        hist.Draw('colz')
+        hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
         # Change plot formats
-        hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])
-        hist.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         if log:
             canvas.SetLogz()
-        hist.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
-        hist.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
-        hist.SetTitle("2*deltaNLL < {}".format(ceiling))
+        hist.GetYaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        hist.GetXaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
+        hist.SetTitle('')#"2*deltaNLL < {}".format(ceiling))
         hist.SetStats(0)
 
         ROOT.gStyle.SetOptStat(0)
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.18, 0.96, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.1, 0.945, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(30)
+        self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        #self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
-        self.CMS_extra.SetTextSize(0.02)
-        self.CMS_extra.SetTextAlign(30)
+        self.CMS_extra.SetTextSize(0.04)
+        self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
-        self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.7, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        if not final: self.CMS_extra.Draw('same')
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
-        self.Lumi_text.SetTextSize(0.02)
+        self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
         self.Lumi_text.SetTextFont(42)
         self.Lumi_text.Draw('same')
@@ -681,12 +689,12 @@ class EFTPlot(object):
         # wcs[0] is y-axis variable, wcs[1] is x-axis variable
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
-        #gridTree.Draw('2*deltaNLL:{}:{}>>grid(200,{},{},200,{},{})'.format(wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*deltaNLL<100', 'prof colz')
         minZ = gridTree.GetMinimum('deltaNLL')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(150,{},{},150,{},{})'.format(minZ,wcs[0],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1]), '', 'prof colz')
+        points = 100
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
         #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',150,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],150,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
@@ -754,8 +762,8 @@ class EFTPlot(object):
         h_contour.SetStats(0)
         #h_contour.SetTitle("Significance Contours")
         h_contour.SetTitle("")
-        h_contour.GetYaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
-        h_contour.GetXaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        h_contour.GetYaxis().SetTitle(self.texdic[wcs[1].rstrip('i')])
+        h_contour.GetXaxis().SetTitle(self.texdic[wcs[0].rstrip('i')])
 
         # CMS-required text
         self.CMS_text = ROOT.TLatex(0.1, 0.945, "CMS")# Simulation")
@@ -825,7 +833,11 @@ class EFTPlot(object):
         self.Lumi_text.Draw('same')
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
-        else: canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+        else:
+            canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour.eps {}{}contour.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         if final: 
             #canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
@@ -1045,10 +1057,10 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
         #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(200,0,15,200,0,15)'.format(minZ,params[0],params[1]), '', 'prof colz')
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(150,{},{},150,{},{})'.format(minZ,params[0],params[1],self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(100,{},{},100,{},{})'.format(minZ,params[0],params[1],self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1]), '', 'prof colz')
         #gridTree.Draw('2*deltaNLL:{}:{}>>grid(50,0,30,50,0,30)'.format(params[0],params[1]), '', 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',150,self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],150,self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',100,self.sm_ranges[params[1]][0],self.sm_ranges[params[1]][1],100,self.sm_ranges[params[0]][0],self.sm_ranges[params[0]][1])
 
         # Adjust scale so that the best bin has content 0
         best2DeltaNLL = original.GetMinimum()
@@ -1277,10 +1289,10 @@ class EFTPlot(object):
         fit_file.Close()
         return best_vals
 
-    def batchGrid2DWC(self, name=''):
+    def batchGrid2DWC(self, name=['']):
         best = []
 
-        fits_float = self.getIntervalFits(name)
+        fits_float = self.getIntervalFits(basename_lst=name)
         fits = {lst[0] : lst[1] for lst in fits_float}
 
         for wc in self.wcs:
@@ -1327,6 +1339,9 @@ class EFTPlot(object):
             wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
             wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
             wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
+            # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
+            wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1353,7 +1368,7 @@ class EFTPlot(object):
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self,**kwargs):
-        basename    = kwargs.pop('basename','.EFT.SM.Float')
+        basename_lst= kwargs.pop('basename_lst',['.EFT.SM.Float'])
         params      = kwargs.pop('params',[])
         siginterval = kwargs.pop('siginterval',2)
         dir_path    = kwargs.pop('dir_path','../fit_files')
@@ -1370,23 +1385,22 @@ class EFTPlot(object):
 
         for param in params:
 
-            # Get scan TTree
-            logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
-            fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
             # This is mostly used to compare TOP-19-001 to Run II, it will skip the 10 WCs not in TOP-19-001 only and set them to +/- 999
-            try:
-                limit_tree = fit_file.Get('limit')
-            except:
-                fit_array.append([param,0,[-999 ],[999]])
-                continue
+            missing_wc = False
+            for basename in basename_lst:
+                logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
+                fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
+                try:
+                    _ = fit_file.Get('limit')
+                    fit_file.Close()
+                except:
+                    missing_wc = True
+                    if param not in map(itemgetter(0),fit_array):
+                        fit_array.append([param,0,[-999 ],[999]])
+            if missing_wc: continue
 
-            # Extract points
-            wc_values = []
-            nll_values = []
-            for entry in range(limit_tree.GetEntries()):
-                limit_tree.GetEntry(entry)
-                wc_values.append(limit_tree.GetLeaf(param).GetValue(0))
-                nll_values.append(2*limit_tree.GetLeaf('deltaNLL').GetValue(0))
+            basename_lst_with_wcs_appended = self.AppendStrToItemsInLst(basename_lst,"."+param)
+            wc_values, nll_values = self.GetWCsNLLFromRoot(basename_lst_with_wcs_appended,param,unique=True)
 
             # Rezero deltanll values
             bestNLL = min(nll_values)
@@ -1520,35 +1534,35 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float='', basename_freeze='', final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False):
+    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+
+        # Colors to use for the plots
+        clr_float = 1 # Black
+        clr_freeze = 2 # Red
+
         if wcs != []: self.wcs = wcs
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
-        if not basename_float: basename_float='.EFT.SM.Float.Mar8'
-        if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar8'
-        #if not basename_float: basename_float='.EFT.SM.Float.2sig.Feb27'
-        #if not basename_freeze: basename_freeze='.EFT.SM.Freeze.Mar4.2sig'
+        if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
+        if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
         print 'float'
-        fits_float = self.getIntervalFits(basename=basename_float)
+        fits_float = self.getIntervalFits(basename_lst=basename_float_lst)
         print 'freeze'
-        fits_freeze = self.getIntervalFits(basename=basename_freeze)
+        fits_freeze = self.getIntervalFits(basename_lst=basename_freeze_lst)
         if printFOM:
-            print('\n\nFoM (>1 is better)\nWC\tFoM')
-            #print('\n'.join([' '.join([lim[0][0], str(round(lim[1][2][0] / lim[0][2][0], 3)), str(round(lim[1][3][0] / lim[0][3][0],3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
-            # `(CI_(freeze high) - CI_(freeze low)) / (CI_(float high) - CI_(float low))`
-            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(basename_freeze, basename_freeze, basename_float, basename_float))
+            print('\n\nFoM (<1 is better)\nWC\tFoM')
+            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
             print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print '\n'
         print 'one sigma'
         print 'float'
-        #fits_freeze = self.getIntervalFits('.EFT.SM.Freeze.Jan27.500')
-        fits_float1sigma = self.getIntervalFits(basename=basename_float,siginterval=1)
+        fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
         print 'freeze'
-        fits_freeze1sigma = self.getIntervalFits(basename=basename_freeze,siginterval=1)
+        fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
@@ -1720,18 +1734,16 @@ class EFTPlot(object):
 
         # Set y-coordinates for points and lines
         numWC=len(self.wcs)
-        if '28redo' in basename_float:
-            numWC=15
         y_float = [n*4+3 for n in range(0,numWC)]
         y_freeze = [n*4+2 for n in range(0,numWC)]
 
         # Set up the pad and axes
         canvas = ROOT.TCanvas('canvas','Summary Plot (SM Expectation)',500,800)
-        if 'Asimov' not in basename_float:
+        if asimov_plotstyle_flag:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
-        if 'Asimov' not in basename_float:
+        if not asimov_plotstyle_flag:
             h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
@@ -1759,22 +1771,22 @@ class EFTPlot(object):
             #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
             y_labels[idy].SetTextAlign(22)
             y_labels[idy].SetTextSize(0.03)
-            if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
+            #if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
 
         # Set the best fit points
         graph_float = ROOT.TGraph()
         graph_float = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_float], dtype='float'), numpy.array(y_float, dtype='float'))
         graph_float.SetMarkerStyle(20)
         graph_float.SetMarkerSize(0.5)
-        graph_float.SetMarkerColor(1)
-        graph_float.SetLineColor(1)
+        graph_float.SetMarkerColor(clr_float)
+        graph_float.SetLineColor(clr_float)
 
         graph_freeze = ROOT.TGraph()
         graph_freeze = ROOT.TGraph(numWC, numpy.array([fittuple[1] for fittuple in fits_freeze], dtype='float'), numpy.array(y_freeze, dtype='float'))
         graph_freeze.SetMarkerStyle(3)
         graph_freeze.SetMarkerSize(0.5)
-        graph_freeze.SetMarkerColor(2)
-        graph_freeze.SetLineColor(2)
+        graph_freeze.SetMarkerColor(clr_freeze)
+        graph_freeze.SetLineColor(clr_freeze)
         graph_freeze.SetLineStyle(3)
 
         # Add lines for the errors, but print the value if line would go off the pad
@@ -1788,14 +1800,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1803,19 +1815,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(1)
+                    min_label.SetTextColor(clr_float)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(1)
+                    max_label.SetTextColor(clr_float)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
-                lines_float[-1].SetLineColor(1)
+                lines_float[-1].SetLineColor(clr_float)
         lines_float_1sigma = []
         for idx,fittuple in enumerate(fits_float1sigma):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -1824,14 +1836,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
-                    outside_label.SetMarkerColor(1)  
+                    outside_label.SetMarkerColor(clr_float)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1839,19 +1851,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(1)
+                    min_label.SetTextColor(clr_float)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(1)
+                    max_label.SetTextColor(clr_float)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float_1sigma.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
-                lines_float_1sigma[-1].SetLineColor(1)
+                lines_float_1sigma[-1].SetLineColor(clr_float)
                 lines_float_1sigma[-1].SetLineWidth(3)
 
 
@@ -1863,14 +1875,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)  
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1878,19 +1890,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(2)
+                    min_label.SetTextColor(clr_freeze)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(2)
+                    max_label.SetTextColor(clr_freeze)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
-                lines_freeze[-1].SetLineColor(2)
+                lines_freeze[-1].SetLineColor(clr_freeze)
                 lines_freeze[-1].SetLineStyle(3)
         lines_freeze_1sigma = []
         for idx,fittuple in enumerate(fits_freeze1sigma):
@@ -1900,14 +1912,14 @@ class EFTPlot(object):
                 # If a segment ends below the left edge
                 if xmax < h_fit.GetXaxis().GetXmin():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
                 # If a segment begins above the right edge
                 if xmin > h_fit.GetXaxis().GetXmax():
                     outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_freeze[idx],3)
-                    outside_label.SetMarkerColor(2)  
+                    outside_label.SetMarkerColor(clr_freeze)
                     outside_label.SetMarkerSize(2)
                     lines_labels.append(outside_label)
                     continue # Don't attempt to draw the line!
@@ -1915,19 +1927,19 @@ class EFTPlot(object):
                 if xmin < h_fit.GetXaxis().GetXmin():
                     min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_freeze[idx],str(round(xmin,1)))
                     min_label.SetTextSize(0.03)
-                    min_label.SetTextColor(2)
+                    min_label.SetTextColor(clr_freeze)
                     lines_labels.append(min_label)
                     xmin = h_fit.GetXaxis().GetXmin()
                 # If a segment ends above the right edge
                 if xmax > h_fit.GetXaxis().GetXmax():
                     max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_freeze[idx],str(round(xmax,1)))
                     max_label.SetTextSize(0.03)
-                    max_label.SetTextColor(2)
+                    max_label.SetTextColor(clr_freeze)
                     max_label.SetTextAlign(30)
                     lines_labels.append(max_label)
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
-                lines_freeze_1sigma[-1].SetLineColor(2)
+                lines_freeze_1sigma[-1].SetLineColor(clr_freeze)
                 lines_freeze_1sigma[-1].SetLineWidth(3)
                 lines_freeze_1sigma[-1].SetLineStyle(3)
 
@@ -1963,25 +1975,25 @@ class EFTPlot(object):
         for label in y_labels:
             label.Draw('same')
         legend.Draw('same')
-        self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
         #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.885, 0.87, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.83, self.arXiv)# Simulation")
+        self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
         self.arXiv_extra.SetNDC(1)
         self.arXiv_extra.SetTextSize(0.03)
         self.arXiv_extra.SetTextAlign(30)
         self.arXiv_extra.SetTextFont(42)
         if not final: self.CMS_extra.Draw('same')
         #if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
