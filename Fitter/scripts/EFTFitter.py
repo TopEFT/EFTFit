@@ -24,51 +24,68 @@ class EFTFit(object):
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
-        #2017 range
-        self.wc_ranges = {  'ctW':(-4,4),     'ctZ':(-5,5),
-                            'cpt':(-40,30),   'ctp':(-35,65),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-2,2),     'cpQM':(-10,30),  
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-5,5),
-                            'cQq13': (-1,1),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
-        #ptbl + ht offZ
-        self.wc_ranges = {  'ctW':(-2,2),     'ctZ':(-2,2),
-                            'cpt':(-15,15),   'ctp':(-10,20),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-10,10), 'cptb':(-20,20),
-                            'ctG':(-0.5,0.5),     'cpQM':(-10,20),  
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-5,5),    'cQlMi':(-5,5),
-                            'cpQ3':(-10,5),  'cbW':(-5,5),
-                            'cQq13': (-0.5,0.5),  'cQq83': (-0.5,0.5),
-                            'cQq11': (-0.5,0.5),'ctq1': (-0.5,0.5),
-                            'cQq81': (-1,1),  'ctq8': (-1,1),
-                            'ctt1': (-5,5), 'cQQ1': (-4,4),
-                            'cQt8': (-10,10), 'cQt1': (-10,10)
-                        }
-        #2017 range
-        self.wc_ranges = {  'ctW':(-5,5),     'ctZ':(-10,10),
-                            'cpt':(-20,20),   'ctp':(-20,50),
-                            'ctli':(-10,10),  'ctlSi':(-10,10),
-                            'cQl3i':(-20,20), 'cptb':(-50,50),
-                            'ctG':(-2,2),     'cpQM':(-10,50),
-                            'ctlTi':(-2,2),   'ctei':(-10,10),
-                            'cQei':(-10,10),  'cQlMi':(-10,10),
-                            'cpQ3':(-15,10),  'cbW':(-20,20),
-                            'cQq13': (-1,1),  'cQq83': (-2,2),
-                            'cQq11': (-2,2),'ctq1': (-2,2),
-                            'cQq81': (-5,5),'ctq8': (-5,5),
-                            'ctt1': (-5,5), 'cQQ1': (-10,10),
-                            'cQt8': (-20,20), 'cQt1': (-10,10)
-                         }
+
+        # Limits appropriate for asimov ptz-lj0pt fits (for prof, but can be used for frozen too)
+        self.wc_ranges_differential = {
+            'cQQ1' : (-4.0,4.0),
+            'cQei' : (-4.0,4.0),
+            'cQl3i': (-5.5,5.5),
+            'cQlMi': (-4.0,4.0),
+            'cQq11': (-0.7,0.7),
+            'cQq13': (-0.35,0.35),
+            'cQq81': (-1.7,1.5),
+            'cQq83': (-0.6,0.6),
+            'cQt1' : (-4.0,4.0),
+            'cQt8' : (-8.0,8.0),
+            'cbW'  : (-3.0,3.0),
+            'cpQ3' : (-4.0,4.0),
+            'cpQM' : (-10.0,17.0),
+            'cpt'  : (-15.0,15.0),
+            'cptb' : (-9.0,9.0),
+            'ctG'  : (-0.8,0.8),
+            'ctW'  : (-1.5,1.5),
+            'ctZ'  : (-2.0,2.0),
+            'ctei' : (-4.0,4.0),
+            'ctlSi': (-5.0,5.0),
+            'ctlTi': (-0.9,0.9),
+            'ctli' : (-4.0,4.0),
+            'ctp'  : (-11.0,35.0),
+            'ctq1' : (-0.6,0.6),
+            'ctq8' : (-1.4,1.4),
+            'ctt1' : (-2.1,2.1),
+        }
+
+        # Limits appropriate for asimov njets fits (for prof, but can be used for frozen too)
+        self.wc_ranges_njets = {
+            'cQQ1' : (-6.0,6.0),
+            'cQei' : (-7.0,7.0),
+            'cQl3i': (-10.0,10.0),
+            'cQlMi': (-8.0,8.0),
+            'cQq11': (-1.5,1.5),
+            'cQq13': (-0.6,0.6),
+            'cQq81': (-4.0,3.0),
+            'cQq83': (-1.2,1.2),
+            'cQt1' : (-5.0,5.0),
+            'cQt8' : (-10.0,10.0),
+            'cbW'  : (-5.0,5.0),
+            'cpQ3' : (-10.0,7.0),
+            'cpQM' : (-11.0,30.0),
+            'cpt'  : (-25.0,20.0),
+            'cptb' : (-17.0,17.0),
+            'ctG'  : (-1.5,1.5),
+            'ctW'  : (-4.0,3.0),
+            'ctZ'  : (-4.0,4.0),
+            'ctei' : (-8.0,8.0),
+            'ctlSi': (-8.0,8.0),
+            'ctlTi': (-1.4,1.4),
+            'ctli' : (-8.0,8.0),
+            'ctp'  : (-11.0,35.0),
+            'ctq1' : (-1.4,1.4),
+            'ctq8' : (-3.0,3.0),
+            'ctt1' : (-3.0,3.0),
+        }
+
+
         # Systematics names except for FR stats. Only used for debug
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
                             'missing_parton',
@@ -426,11 +443,14 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', ignore=[]):
+    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', ignore=[], wc_ranges=None):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
         #else: self.wcs = scan_wcs
+
+        # Set the WC ranges if not specified
+        if wc_ranges is None: wc_ranges = self.wc_ranges_njets
 
         zero_ignore = []
         freeze_ignore = []
@@ -441,7 +461,7 @@ class EFTFit(object):
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
         params = ','.join(['{}=0'.format(wc) for wc in scan_wcs])
         for wc in scan_wcs:
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in scan_wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params], mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in scan_wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
@@ -476,7 +496,7 @@ class EFTFit(object):
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in wcs if wc not in wcs]
                 #print pois, wcs_tracked
-                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],wcs[1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
+                self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],wc_ranges[wcs[0]][0],wc_ranges[wcs[0]][1],wcs[1],wc_ranges[wcs[1]][0],wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[], mask_syst=[]):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
@@ -926,11 +946,14 @@ class EFTFit(object):
             print ', '.join([str(ele) for ele in row])
             logging.debug(row)
 
-    def printIntervalFitsEFT(self, basename='.EFT.SM.Float', wcs=[]):
+    def printIntervalFitsEFT(self, basename='.EFT.SM.Float', wcs=[], wc_ranges=None):
         ### Print a table of wcs, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
         if not wcs:
             wcs = self.wcs
+
+        # Set the WC ranges if none are specified
+        if wc_ranges is None: wc_ranges = self.wc_ranges_njets
 
         ROOT.gROOT.SetBatch(True)
 
@@ -945,7 +968,7 @@ class EFTFit(object):
             fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.{}.MultiDimFit.root'.format(basename,wc))
             limit_tree = fit_file.Get('limit')
 
-            limit_tree.Draw('2*deltaNLL:{}>>{}1DNLL(50,{},{})'.format(wc,wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1]),'2*deltaNLL>-1','same')
+            limit_tree.Draw('2*deltaNLL:{}>>{}1DNLL(50,{},{})'.format(wc,wc,wc_ranges[wc][0],wc_ranges[wc][1]),'2*deltaNLL>-1','same')
             graph = canvas.GetPrimitive('Graph')
             #graph.SetName("Graph")
 
