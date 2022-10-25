@@ -8,6 +8,7 @@ import itertools
 import glob
 import getpass
 import array
+import random
 from collections import defaultdict
 from EFTFit.Fitter.findMask import findMask 
 from itertools import chain
@@ -25,6 +26,7 @@ class EFTFit(object):
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
+        self.at23v01_2sig_prof = {'ctlTi': [-0.37460753448249934, 0.37456553009578053], 'ctq1': [-0.2184374526296913, 0.21149076882524775], 'ctq8': [-0.6849733172669766, 0.25913443066575303], 'cQq83': [-0.1729820133118581, 0.1643935607326637], 'cQQ1': [-3.0622943484810774, 3.3295794607259963], 'cQt1': [-2.7549317478099273, 2.709140633280104], 'cQt8': [-5.208519171130861, 5.846070290900961], 'ctli': [-1.7912919548903847, 2.1313275751809675], 'cQq81': [-0.6931605230972014, 0.22472203594018714], 'cQlMi': [-1.5701580939064013, 2.308562271259127], 'cbW': [-0.774498659891837, 0.7785760997417999], 'cpQ3': [-0.7999267419016539, 2.1053510234908166], 'ctei': [-1.789099599899366, 2.219641594315739], 'ctlSi': [-2.6297986071455313, 2.6317949240743284], 'ctW': [-0.5595801509610011, 0.46706568379424357], 'cpQM': [-6.143737116235924, 8.096702605664662], 'cQei': [-1.9244486948695827, 1.9614340380338822], 'ctZ': [-0.7286708753806125, 0.6450395866915755], 'cQl3i': [-2.920952087582164, 2.639050916924742], 'ctG': [-0.2780854299079727, 0.23945699061451634], 'cQq13': [-0.07660660914160784, 0.07102679687100005], 'cQq11': [-0.19470826306682623, 0.1947277372883481], 'cptb': [-3.362661720898583, 3.361818811283507], 'ctt1': [-1.5812961023069028, 1.6227282264447938], 'ctp': [-9.34032472114984, 2.2960707194931254], 'cpt': [-10.507390689909828, 7.938575701774626]}
 
         # Limits appropriate for asimov ptz-lj0pt fits (for prof, but can be used for frozen too)
         self.wc_ranges_differential = {
@@ -257,6 +259,35 @@ class EFTFit(object):
         if os.path.isfile('multidimfit'+name+'.root'):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFitsEFT(name)
+
+    def dnnScan(self, name='.test', batch='crab', points=4, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[]):
+        ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
+        logging.info("Doing grid scan...")
+
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0']
+        args.extend(['--points','{}'.format(points)])
+        if name:              args.extend(['-n','{}'.format(name)])
+        if other:             args.extend(other)
+
+        point_scale = 8#hrs
+        wall_time  = 8#hrs
+        if batch=='crab':
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
+            rseed = random.randint(1000,1000000)
+            args.extend(['-s',str(rseed),'--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
+        # Implement condor later
+        #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+        #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        #elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        logging.info(' '.join(args))
+
+        # Run the combineTool.py command
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        process.wait()
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
@@ -491,7 +522,7 @@ class EFTFit(object):
             print 'Assuming',
             print 'njets' if not differential else 'differential',
             print 'based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.'
-            wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
+        wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
 
         # Use EVERY combination of wcs
         if allPairs:
@@ -505,14 +536,10 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
-            scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
-            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
-            scan_wcs = [('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
-            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
-            scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            scan_wcs = [('cQQ1', 'cQt8'), ('cQQ1', 'cQt1'), ('cQt1', 'ctt1'), ('cQt1', 'cQt8'), ('cpQM', 'cpt'), ('ctG', 'ctp'), ('ctW', 'ctZ')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -542,8 +569,6 @@ class EFTFit(object):
         if not allPairs:
             scan_wcs = [('ctZ','ctp','cpt')]
             if len(wc_triplet)>0: scan_wcs = wc_triplet
-            #scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
 
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
@@ -578,7 +603,6 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
             scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
 
             for wcs in scan_wcs:
@@ -607,11 +631,8 @@ class EFTFit(object):
 
         # Use each wc only once
         if not allPairs:
-            scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-            scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
-            scan_wcs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
-            scan_wcs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            scan_wcs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             if len(wcs) > 0:
@@ -636,7 +657,6 @@ class EFTFit(object):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
         elif not alreadyRun and not os.path.exists('higgsCombine{}.MultiDimFit.mH120.root'.format(name)):
-        #if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
 
@@ -854,7 +874,6 @@ class EFTFit(object):
         if not allPairs:
             scan_wcs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
             if len(wc_triplet)>0: scan_wcs = wc_triplet
-            #scan_wcs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             for wcs in scan_wcs:
                 self.retrieveGridScan('{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]),batch)
             
