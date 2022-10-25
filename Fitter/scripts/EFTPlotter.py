@@ -9,6 +9,7 @@ import os
 from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
+import numpy as np
 
 import parse_nll as nlltools
 
@@ -625,9 +626,14 @@ class EFTPlot(object):
         minZ = limitTree.GetMinimum('deltaNLL')
 
         points = 100
-        hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
+        hist = ROOT.TH3F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
+        #hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
         hist = canvas.GetPrimitive("hist")
+        hist = hist.Project3DProfile()
+        hist.SetContour(points)
+        ROOT.gStyle.SetOptStat(0)
         hist.Draw('colz')
         hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
@@ -691,10 +697,10 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
         points = 100
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '', 'prof colz')
         #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1,points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
         h_contour = original.Clone('h_conotour')
         #original.Copy(h_contour)
 
@@ -742,7 +748,7 @@ class EFTPlot(object):
         hc997.SetLineWidth(5)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
-        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kGreen-2,1,3)
+        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kBlue,1,3)
 
         # Marker for SM point
         marker_1 = ROOT.TMarker()
@@ -798,9 +804,6 @@ class EFTPlot(object):
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
-        #C681D.Draw('L SAME')
-        #C951D.Draw('L SAME')
-        #C9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
         marker_2.DrawMarker(0,0)
 
@@ -827,7 +830,6 @@ class EFTPlot(object):
         legend.SetTextSize(0.035)
         #legend.SetTextSize(0.025)
         #legend.SetNColumns(4)
-        legend.Draw('same')
         self.CMS_text.Draw('same')
         if not final: self.CMS_extra.Draw('same')
         self.Lumi_text.Draw('same')
@@ -851,6 +853,38 @@ class EFTPlot(object):
             canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
             os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim.eps {}{}contour_prelim.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+
+        # Versions with 1D lines included
+        c681D.Draw('L SAME')
+        c951D.Draw('L SAME')
+        c9971D.Draw('L SAME')
+        if final: canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
+        else:
+            canvas.Print('{}{}contour_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_1d.eps {}{}contour_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        if final: 
+            #canvas.Print('{}{}contour_final_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_final_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            #convert EPS to PDF to preserve \ell
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final_1d.eps {}{}contour_final_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        else: 
+            #canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_prelim_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim_1d.eps {}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        canvas = ROOT.TCanvas('cleg', 'cleg', 800, 800)
+        print('HERE', legend.GetX1NDC(), legend.GetX2NDC(), legend.GetY1NDC(), legend.GetY2NDC())
+        legend.Draw()
+        canvas.Print('contour_leg.png')
+        canvas.Print('contour_leg.eps')
+        canvas.Print('contour_leg.pdf')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" contour_leg.eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop contour_leg.eps contour_leg.pdf')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1329,7 +1363,8 @@ class EFTPlot(object):
         
         wcs_pairs = self.wcs_pairs
         if allpairs:
-            wcs_pairs = itertools.combinations(self.wcs,2)
+            wcs_pairs = itertools.combinations(wcs,2)
+            #wcs_pairs = itertools.combinations(self.wcs,2)
         else:
             wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
@@ -1342,6 +1377,9 @@ class EFTPlot(object):
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            wcs_pairs = [('ctZ', 'ctW'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW')]
+            wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
+            wcs_pairs = [('cQQ1', 'ctt1'), ('cQt8', 'ctt1'), ('cpQM', 'cpQ3'), ('ctp', 'cQQ1'), ('ctp', 'cQt8')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1349,6 +1387,48 @@ class EFTPlot(object):
                     if isinstance(wc, tuple): continue
                     wcs_pairs = wcs_pairs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
 
+        html = 'index.html'
+        htmlFile = open(html,'w')
+        htmlFile.write('<html>\n')
+        htmlFile.write('<head>\n')
+        htmlFile.write('    <title>Float</title>\n')
+        htmlFile.write('    <style type=\'text/css\'>\n')
+        htmlFile.write('        body {\n')
+        htmlFile.write('            font-family: "Candara", sans-serif;\n')
+        htmlFile.write('            font-size: 9pt;\n')
+        htmlFile.write('            line-height: 10.5pt;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic h3 {\n')
+        htmlFile.write('            font-size: 11pt;\n')
+        htmlFile.write('            margin: 0.5em 1em 0.2em 1em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic p {\n')
+        htmlFile.write('            font-size: 11pt;\n')
+        htmlFile.write('            margin: 0.2em 1em 0.1em 1em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic {\n')
+        htmlFile.write('            display: block;\n')
+        htmlFile.write('            float: left;\n')
+        htmlFile.write('            background-color: white;\n')
+        htmlFile.write('            border: 1px solid #ccc;\n')
+        htmlFile.write('            padding: 2px;\n')
+        htmlFile.write('            text-align: center;\n')
+        htmlFile.write('            margin: 2px 10px 10px 2px;\n')
+        htmlFile.write('            -moz-box-shadow: 7px 5px 5px rgb(80,80,80);    /* Firefox 3.5 */\n')
+        htmlFile.write('            -webkit-box-shadow: 7px 5px 5px rgb(80,80,80); /* Chrome, Safari */\n')
+        htmlFile.write('            box-shadow: 7px 5px 5px rgb(80,80,80);         /* New browsers */\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        a { text-decoration: none; color: rgb(80,0,0); }\n')
+        htmlFile.write('        a:hover { text-decoration: underline; color: rgb(255,80,80); }\n')
+        htmlFile.write('        div.dirlinks h2 {  margin-bottom: 4pt; margin-left: -24pt; color: rgb(80,0,0);  }\n')
+        htmlFile.write('        div.dirlinks {  margin: 0 24pt; }\n')
+        htmlFile.write('        div.dirlinks a {\n')
+        htmlFile.write('            font-size: 11pt; font-weight: bold;\n')
+        htmlFile.write('            padding: 0 0.5em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('    </style>\n')
+        htmlFile.write('</head>\n')
+        htmlFile.write('<div class=\'pic\'><h3><a href="contour_leg.pdf"></h><img src ="contour_leg.png" style="width: 400px;"></a></p></div>\n')
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
@@ -1360,12 +1440,23 @@ class EFTPlot(object):
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
-                if filename.endswith('contour.png') or filename.endswith('contour_final.png') or ('less' in filename and filename.endswith('.png')):            
+                if filename.endswith('contour.png') or filename.endswith('contour_final.png') or '_leg.' in filename or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.pdf') or filename.endswith('contour_final.pdf') or ('less' in filename and filename.endswith('.pdf')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                # 1D lines
+                if filename.endswith('contour_1d.png') or filename.endswith('contour_final_1d.png') or ('less' in filename and filename.endswith('_1d.png')):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour_1d.pdf') or filename.endswith('contour_final_1d.pdf') or ('less' in filename and filename.endswith('_1d.pdf')):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour_1d.eps') or filename.endswith('contour_final_1d.eps') or ('less' in filename and filename.endswith('_1d.eps')) or filename.endswith('contour_prelim_1d.eps'):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+            htmlFile.write('<div class=\'pic\'><h3><a href="{}less10.pdf"</h><img src ="{}less10.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
+            htmlFile.write('<div class=\'pic\'><h3><a href="{}contour.pdf"></h><img src ="{}contour.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
+        htmlFile.close()
+        sp.call(['mv', 'index.html', 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self,**kwargs):
         basename_lst= kwargs.pop('basename_lst',['.EFT.SM.Float'])
