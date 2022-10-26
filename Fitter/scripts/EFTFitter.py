@@ -260,7 +260,7 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFitsEFT(name)
 
-    def dnnScan(self, name='.test', batch='crab', points=4, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[]):
+    def batchDNNScan(self, name='.test', batch='crab', points=4, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[]):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
