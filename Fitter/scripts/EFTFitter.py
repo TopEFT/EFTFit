@@ -265,24 +265,27 @@ class EFTFit(object):
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0']
+
+        nsplit = 100 # 250 points per job
+        points_per_job = points // nsplit
+
+        # Generate nsplit jobs, since each needs its own random seed
+        logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-v 2', '-s -1']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if other:             args.extend(other)
 
-        point_scale = 8#hrs
-        wall_time  = 8#hrs
         if batch=='crab':
-            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
-            rseed = random.randint(1000,1000000)
-            args.extend(['-s',str(rseed),'--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
-        # Implement condor later
-        #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
-        #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-        #elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-        logging.info(' '.join(args))
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
+            args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
+            # Implement condor later
+            #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+            #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+            #elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+            logging.info(' '.join(args))
 
-        # Run the combineTool.py command
+            # Run the combineTool.py command
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
             self.log_subprocess_output(process.stdout,'info')
