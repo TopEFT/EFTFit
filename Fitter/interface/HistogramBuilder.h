@@ -283,10 +283,6 @@ TH1D* HistogramBuilder::buildProcessDifferentialHistogram(TString title, TString
             else {
                 h->SetBinContent(bin_idx, pData.procs[proc.Data()][i]);
             }
-
-            std::cout << proc.Data() << std::endl;
-            std::cout << bin_idx << std::endl;
-            std::cout << pData.procs[proc.Data()][i] << std::endl;
         }
     return h;
 }

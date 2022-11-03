@@ -164,7 +164,7 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         for (TString n: lst_name_pdf) {
             if (ws->function(n)) {
                 name_pdf_found = n;
-                std::cout << n << std::endl;
+                //std::cout << n << std::endl;
             }
         }
 
@@ -217,6 +217,9 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
             proc_yield = new RooAddition(name_ch + name_proc, name, set_proc, set_pdf);
+
+            cout << "New object " << name_ch + name_proc << " added." << endl;
+
             this->roo_counter++;
             idx_wrapper++;
         }
@@ -707,8 +710,8 @@ void AnalysisCategory::Print(RooFitResult* fr) {
     for (TString p: this->proc_unused) {
     
         TString sm = TString::Format("sm");
-        TString cf = TString::Format("fake");
-        //if (!p.Contains(sm)) continue;
+        TString cf = TString::Format("cQQ1");
+        if (!p.Contains(cf)) continue;
         /*
         if (!(p.Contains(sm))) {
             //cout << "Skip process: " << p << endl;
@@ -722,7 +725,7 @@ void AnalysisCategory::Print(RooFitResult* fr) {
         } else {
             err = 0.0;
         }
-        //if ((val < 0.1) | (err < 0.1)) continue;
+        if ((val < 0.01) & (err < 0.01)) continue;
         frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
         std::cout << TString::Format("%*s: %s",pwidth,p.Data(),frmt.Data()) << std::endl;
     }

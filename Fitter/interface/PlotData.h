@@ -36,13 +36,14 @@ vTStr BKGD_PROCS {"Diboson", "Triboson", "charge_flips", "fakes", "convs", "tWZ"
 
 vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
 
-vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
+vTStr SR_list_2 = SR_list;
+//vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
 
 vTStr SR_list_3 = {"2lss_p", "2lss_m", "2lss_4t", "3l_offZ", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
 
 vTStr SR_list_2lss = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m"};
 
-std::vector<std::string> kin_list = {"lj0pt", "ptz"};
+std::vector<std::string> kin_list = {"ptbl"};//{"lj0pt", "ptz"};
 
 std::unordered_map<std::string,std::vector<TString> > cat_groups {
     {"all",
@@ -502,7 +503,7 @@ PlotData removeEmptyBins(PlotData pData) {
     PlotData pData_new;
     std::vector<int> indices = {};
     for (int i=0; i<pData.SR_name.size(); i++) {
-        if ((abs(pData.data[i]) < pow(10, -6)) & (abs(pData.sum[i]) < pow(10, -6))) {
+        if ((abs(pData.data[i]) < pow(10, -4)) & (abs(pData.sum[i]) < pow(10, -4))) {
             indices.push_back(i);
             //cout << "Adding empty bin: " << i << endl;
         }

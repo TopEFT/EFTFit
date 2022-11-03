@@ -617,6 +617,49 @@ void draw_lines(
     }
 }
 
+void draw_labels (
+    std::vector<TString> labels,
+    PlotData pData,
+    double L_margin,
+    double R_margin,
+    double text_size = 0.03
+) {
+
+    if ((pData.SR_name.size()%labels.size()) != 0) {
+        std::cout << "[WARNING]Unmatching bin size for channel " << pData.SR_name.at(0) << ". Ignoring labels." << std::endl;
+        return;
+    }
+
+    double bin_width = (1.0 - L_margin - R_margin) / pData.SR_name.size();
+    for (uint idx=0; idx < pData.SR_name.size(); idx++) {
+
+        double x = L_margin + bin_width*idx;
+        double y = 0.33;
+        TString label = labels[idx%(labels.size())];
+        double x2 = x + double(label.Length())/200; //shift the label by half of the length of the label text
+
+        cout << idx%(labels.size()) << endl;
+        cout << labels[idx%(labels.size())] << endl;
+        cout << x2 << endl;
+
+        TLatex *label_latex = new TLatex(x2, y, label);
+        label_latex->SetTextAlign(33); // right+top adjusted
+        label_latex->SetTextSize(text_size);
+        label_latex->SetTextFont(42);
+        label_latex->Draw();
+
+        if (idx && (idx%(labels.size()) == 0) ) {
+            cout << "Drawing vertical line for " << idx << endl;
+
+            double y1 = 0.35;
+            double y2 = 0.93;
+            TLine* line = new TLine(x,y1,x,y2);
+            line->SetLineStyle(9);
+            line->Draw();
+        }
+    }
+}
+
 void make_overlay_njet_plot(
     TString title,
     std::vector<TLatex*> extra_text,
@@ -1582,6 +1625,19 @@ void make_overlay_sub_plots(
 ) {
     bool debug = false;
 
+    std::unordered_map<std::string,std::vector<TString> > BINNING {
+        {"ptbl" , {"0","100","200","400"}},
+        {"bl0pt", {"0","100","200","400"}},
+        {"ht"   , {"0","300","500","800"}},
+    };
+
+    bool do_binning = true;
+    std::string kin;
+    TString subtitle = title(title.Index("_")+1,title.Length());
+    if (subtitle.Index("_") == TString::kNPOS) do_binning = false;
+    else kin = subtitle(subtitle.Index("_")+1, subtitle.Length());
+    if (BINNING.find(kin)==BINNING.end()) do_binning = false;
+
     // Some configuration settings
     Float_t small = 1.e-5;
     const float padding = 1e-5;
@@ -1841,6 +1897,8 @@ void make_overlay_sub_plots(
     }
 
     c->cd();
+    if (do_binning) draw_labels(BINNING[kin], pData, L_margin, R_margin);
+
     TString save_format, save_name;
 
     // save_format = "png";
@@ -1893,7 +1951,7 @@ void plot_maker() {
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/k/kmohrman/Public/fullR2_files/datacards/anatest19/at19v01/combinedcard.txt";
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ptbl/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
     std::map<std::string,std::string> kin_map = {}; // map the name of channel to the name of kinamtic it uses
@@ -1906,13 +1964,14 @@ void plot_maker() {
         }
         std::string chstring = lstring.substr(0, counter);  // remove the last segment of the channel name, like "_lj0pt"
         kin_map[ch.Data()] = lstring.substr(counter+1, lstring.length()); // after the underscore to the end of the long string
+
         auto nodeHandler = ch_map.extract(lstring);
         nodeHandler.key() = chstring;
         ch_map.insert(std::move(nodeHandler));
     }
     
     // Plot options
-    bool incl_mega_plots = false;
+    bool incl_mega_plots = true;
     bool incl_njet_plots = true;
     bool incl_sub_plots  = true;
     bool incl_sum_plots  = true;
@@ -1926,13 +1985,12 @@ void plot_maker() {
     std::string year = "all";
     
     // Fit types
-    bool postfit = false;
+    bool do_postfit = true;
     std::string fit_type;
-    if (postfit) fit_type = "postfit";
-    else fit_type = "prefit";
+    if (do_postfit) fit_type = "postfit_ptbl";
+    else fit_type = "prefit_ptbl";
     
     std::string pData_path = TString::Format("%sSR_%s/", in_dir.c_str(), fit_type.c_str()).Data();
-    cout << pData_path << endl;
     std::vector<std::string> files = all_files(pData_path);
     
     PlotData pData_raw = read_PlotData_from_file(files);
@@ -1949,7 +2007,6 @@ void plot_maker() {
     PlotGroup megaGroup = autoPartition(pData_arranged, ch_map);
     PlotGroup njetGroup = SRPartition(pData_aggregated);
     PlotGroup repartGroup = SRRepartition(pData_arranged, megaGroup);
-
 
     PlotData pSum_aggregated;
     PlotGroup sumGroup;
