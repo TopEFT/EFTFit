@@ -66,5 +66,5 @@ retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 Note that this will _not_ check which jobs are done, so if some are still running, the results will be incomplete. To crab a particular task, use `retrieveGridScan` (don't forget to specify the batch type, as it defaults to `condor`).<br>
 Example:
 ```python
-fitter.retrieveGridScan('.11102022.EFT.Float.DNN.1M', batch='crab')
+fitter.retrieveGridScan('.11102022.EFT.Float.DNN.1M70', batch='crab')
 ```
