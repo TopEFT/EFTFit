@@ -31,14 +31,14 @@ These job submissions can take up a lot of space. If your `lxplus` home director
 # Submit jobs to CRAB
 Submission will take a while, so it is best to run in something like `tmux` or `screen`
 ### tmux
-First, make sure you save what `lxplus` node you're running on (use `uname -a` if unsure)
-Run `tmux` to start a new tmux session
-The AFS system has some permissions issues with tmux if you detach and log out. Run `kinit && aklog` to fix this.
-Start the job submissions (see below).
-Press `ctrl+b` followd by `d` to detach tmux.
+First, make sure you save what `lxplus` node you're running on (use `uname -a` if unsure)<br>
+Run `tmux` to start a new tmux session<br>
+The AFS system has some permissions issues with tmux if you detach and log out. Run `kinit && aklog` to fix this.<br>
+Start the job submissions (see below).<br>
+Press `ctrl+b` followd by `d` to detach tmux.<br>
 You can then logout .
 
-To come back to your jobs later, connect to lxplus, then ssh to the node from above (`ssh lxplus@node-number`)
+To come back to your jobs later, connect to lxplus, then ssh to the node from above (`ssh lxplus@node-number`)<br>
 Run `tmux -a` to attach the tmux session
 
 ### Initialize voms proxy
