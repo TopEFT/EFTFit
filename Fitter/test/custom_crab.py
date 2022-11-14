@@ -13,3 +13,4 @@ def custom_crab(config):
     config.Data.outLFNDirBase = '/store/user/byates/EFT/' # REPLACE with your username
     config.JobType.maxMemoryMB = 8000 # Request 5000 MB of RAM (works for 64 2D scan points per job)
     config.JobType.numCores = 4
+    config.JobType.maxJobRuntimeMin = 2880
