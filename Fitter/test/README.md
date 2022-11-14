@@ -4,7 +4,7 @@ Launch tmux<br>
 Submit with e.g.:
 `python -i $CMSSW_BASE/src/EFTFit/Fitter/scripts/EFTFitter.py`
 ```python
-fitter.batchDNNScan(name='.11102022.EFT.Float.DNN.1M', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=1000000)
+fitter.batchDNNScan(name='.11102022.EFT.Float.DNN.1M', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=100000)
 ```
 Detach TMUX
 
@@ -12,7 +12,7 @@ Monitor on [grafana task monitor](https://monit-grafana.cern.ch/d/cmsTMGlobal/cm
 
 Collect with e.g.:
 ```python
-retrieveDNNScan('.11102022.EFT.Float.DNN.1M')
+retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 ```
 <br>
 

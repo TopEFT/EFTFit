@@ -303,7 +303,7 @@ class EFTFit(object):
                 process.wait()
             os.system('find crab_* -size +1M -delete') # Remove input tgz files to save space
 
-    def retrieveDNNScan(self, name='.test', batch='crab', jobs=100, offset=0):
+    def retrieveDNNScan(self, name='.test', batch='crab', points=100, offset=0):
         nsplit = 100 # 50 points per job
         points_per_job = points // nsplit
         jobs_per_chunk = 10 # Only submit 10 in parallel at a time (too many can overload lxplus)
