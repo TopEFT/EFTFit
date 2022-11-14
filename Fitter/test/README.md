@@ -39,7 +39,7 @@ Start the job submissions (see below).<br>
 Press `ctrl+b` followd by `d` to detach tmux.<br>
 You can then logout .
 
-To come back to your jobs later, connect to lxplus, then ssh to the node from above (`ssh lxplus@node-number`)<br>
+To come back to your jobs later, connect to lxplus, then ssh to the node from above (`ssh lxplus<node-number>`)<br>
 Run `tmux -a` to attach the tmux session
 
 ### Initialize voms proxy
