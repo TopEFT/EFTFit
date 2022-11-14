@@ -61,7 +61,7 @@ The most reliable way to monitor jobs is to run `crab status -d <directory-of-ta
 ## Collecting jobs from CRAB
 Use `retrieveDNNScan` to collect the finished jobs. 
 ```python
-retrieveDNNScan('.11102022.EFT.Float.DNN.1M')
+retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 ```
 Note that this will _not_ check which jobs are done, so if some are still running, the results will be incomplete. To crab a particular task, use `retrieveGridScan` (don't forget to specify the batch type, as it defaults to `condor`).<br>
 Example:
