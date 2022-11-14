@@ -26,7 +26,7 @@ The modified settings of 8000 MB of RAM and 4 CPUs should be fine for running co
 The modified runtime is set to 48 hrs, but when checking the job status you'll see a warning about only allowing 2775. This is ok to ignore.
 
 ## Additional setup
-These job submissions can take up a lot of space. If your `lxplus` home directory is running low, consider using the `work` area (`/afs/cern.ch/user/<first-letter>\<user-name>/work/`). Either install CMSSW there, or make a symbolic link in your `test` directory.
+These job submissions can take up a lot of space. If your `lxplus` home directory is running low, consider using the `work` area (`/afs/cern.ch/user/<first-letter>/<user-name>/work/`). Either install CMSSW there, or make a symbolic link in your `test` directory.
 
 # Submit jobs to CRAB
 Submission will take a while, so it is best to run in something like `tmux` or `screen`
