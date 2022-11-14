@@ -1,6 +1,7 @@
 # TL;DR
 `cd` to submission directory<br>
 Launch tmux<br>
+Run `kinit && aklog` if this is a new tmux session<br>
 Submit with e.g.:
 `python -i $CMSSW_BASE/src/EFTFit/Fitter/scripts/EFTFitter.py`
 ```python
