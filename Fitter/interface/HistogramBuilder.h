@@ -131,7 +131,7 @@ TH1D* HistogramBuilder::buildDataDifferentialHistogram(TString title,std::vector
         for (uint bin_idx = 0; bin_idx < this->bin_size; bin_idx++) {
             double bin_val = cat->getDataBin(bin_idx);
             h_data->SetBinContent( cat_idx + bin_idx, bin_val);
-            h_data->SetBinErrorOption(TH1::kPoisson);
+            if (bin_val) h_data->SetBinErrorOption(TH1::kPoisson);
             if (bin_idx) {
                 TString sub_label = TString::Format("%d", bin_idx+1);
                 h_data->GetXaxis()->SetBinLabel(cat_idx+bin_idx, sub_label);  // set for place-holder

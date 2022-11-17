@@ -43,7 +43,7 @@ vTStr SR_list_3 = {"2lss_p", "2lss_m", "2lss_4t", "3l_offZ", "3l_onZ_2b_2j3j", "
 
 vTStr SR_list_2lss = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m"};
 
-std::vector<std::string> kin_list = {"ptbl"};//{"lj0pt", "ptz"};
+std::vector<std::string> kin_list = {"l0eta"};//{"lj0pt", "ptz"};
 
 std::unordered_map<std::string,std::vector<TString> > cat_groups {
     {"all",
@@ -363,7 +363,9 @@ PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::ma
     for (std::string kin: kin_list) {
         for (TString SR: SR_list) {
             for (int i=0; i<pData.SR_name.size(); i++) {
-                if (kin_map[pData.SR_name[i].Data()] != kin) continue;
+                if (kin_list.size() > 1) { // it's redundent to check the kinematic if there is only one kinematic.
+                    if (kin_map[pData.SR_name[i].Data()] != kin) continue;
+                }
                 bool sflag = false; // mark for finding a channel inside the current signal region being looped.
                 for (TString cat: cat_groups[SR.Data()]) {
                     TString ch_name = ch_map[cat.Data()];

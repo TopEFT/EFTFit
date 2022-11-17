@@ -56,6 +56,7 @@ typedef std::unordered_map<std::string,double> umapStrDbl;
 TString save_type1 = "png";
 TString save_type2 = "eps";
 TString save_type3 = "root";
+TString save_type4 = "pdf";
 
 /*
 vTStr PLOT_PROCS {
@@ -141,6 +142,14 @@ std::unordered_map<std::string,std::string> YIELD_LABEL_MAP {
     {"charge_flips","Charge Flips"},
     {"fakes","Fakes"},
     {"convs","Conversions"}
+};
+
+std::unordered_map<std::string,std::string> KIN_LABEL_MAP {
+    {"lj0pt", "p_{\\text{T}}(\\ell\\text{j0}) \\: \\text{(GeV)}"},
+    {"ptz",   "p_{\\text{T}}(\\text{Z}) \\: \\text{(GeV)}"},
+    {"ptbl",  "p_{\\text{T}}(\\text{b}\\ell) \\: \\text{(GeV)}"},
+    {"ht",    "H_{\\text{T}} \\: \\text{(GeV)}"},
+    {"l0eta", "\\eta(\\ell\\text{0})"},
 };
 
 struct CMSTextStyle {
@@ -252,7 +261,6 @@ TH1D* make_ratio_histogram(TString name, TH1D* h1, TH1D* h2) {
         }
         double val1 = h1->GetBinContent(i);
         double err1 = h1->GetBinError(i);
-
         double val2 = h2->GetBinContent(i);
         double err2 = h2->GetBinError(i);
 
@@ -268,7 +276,8 @@ TH1D* make_ratio_histogram(TString name, TH1D* h1, TH1D* h2) {
         if (h1->GetName() == h2->GetName()) {
             ratio_err = 0.001;    // Ignore the error for now (makes the y-axis errors tiny)
         } else {
-            ratio_err = h1->GetBinError(i) / h1->GetBinContent(i);
+            if (val1) ratio_err = err1 / val1;
+            else ratio_err = 0;
         }
         h_ratio->SetBinContent(i,ratio);
         h_ratio->SetBinError(i,ratio_err);
@@ -559,6 +568,9 @@ void make_external_legend(TLegend* leg, TString title) {
     save_name = TString::Format("%s%s.%s","plots/",title.Data(),save_type2.Data());
     ext_canv->Print(save_name,save_type2);
 
+    save_name = TString::Format("%s%s.%s","plots/",title.Data(),save_type4.Data());
+    ext_canv->Print(save_name,save_type4);
+
     delete ext_canv;
 }
 
@@ -584,14 +596,12 @@ void draw_lines(
         x1 = L_margin + bin_width*bin_idx;
         x2 = L_margin + bin_width*bin_idx;
 
-        y1 = 0.03;
-        y2 = 0.85;
-
-        TLine* line = new TLine(x1,y1,x2,y2);
-        line->SetLineStyle(9);
-
         if (draw_line) {
-            line->Draw();
+            y1 = 0.03;
+            y2 = 0.85;
+            TLine* line1 = new TLine(x1,y1,x2,y2);
+            line1->SetLineStyle(9);
+            line1->Draw();
         }
 
         x1 = (L_margin + bin_width*bin_idx) - bin_width*pGroup.gbins[idx]/2.0;
@@ -622,7 +632,7 @@ void draw_labels (
     PlotData pData,
     double L_margin,
     double R_margin,
-    double text_size = 0.03
+    double text_size = 0.04
 ) {
 
     if ((pData.SR_name.size()%labels.size()) != 0) {
@@ -634,28 +644,33 @@ void draw_labels (
     for (uint idx=0; idx < pData.SR_name.size(); idx++) {
 
         double x = L_margin + bin_width*idx;
-        double y = 0.33;
+        double y = 0.09;
         TString label = labels[idx%(labels.size())];
-        double x2 = x + double(label.Length())/200; //shift the label by half of the length of the label text
+        double x2 = x + (double(label.Length())/200) * 4./labels.size() * text_size/0.03; //shift the label by half of the length of the label text
 
-        cout << idx%(labels.size()) << endl;
-        cout << labels[idx%(labels.size())] << endl;
-        cout << x2 << endl;
+        //cout << idx%(labels.size()) << endl;
+        //cout << labels[idx%(labels.size())] << endl;
+        //cout << x2 << endl;
 
         TLatex *label_latex = new TLatex(x2, y, label);
         label_latex->SetTextAlign(33); // right+top adjusted
-        label_latex->SetTextSize(text_size);
+        label_latex->SetTextSize(text_size * 4./labels.size());
         label_latex->SetTextFont(42);
         label_latex->Draw();
 
         if (idx && (idx%(labels.size()) == 0) ) {
-            cout << "Drawing vertical line for " << idx << endl;
-
+            //cout << "Drawing vertical line for " << idx << endl;
             double y1 = 0.35;
             double y2 = 0.93;
-            TLine* line = new TLine(x,y1,x,y2);
-            line->SetLineStyle(9);
-            line->Draw();
+            TLine* line1 = new TLine(x,y1,x,y2);
+            line1->SetLineStyle(9);
+            line1->Draw();
+
+            double y3 = 0.10;
+            double y4 = 0.28;
+            TLine* line2 = new TLine(x,y3,x,y4);
+            line2->SetLineStyle(9);
+            line2->Draw();
         }
     }
 }
@@ -883,7 +898,7 @@ void make_overlay_njet_plot(
 
     //h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
-    for (TLatex* latex: extra_text) latex->Draw();
+    extra_text.at(0)->Draw();
 
     h_data->Draw("same,e,p");
     gr_err->Draw("same,2");
@@ -945,6 +960,9 @@ void make_overlay_njet_plot(
 
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type2.Data());
     c->Print(save_name,save_type2);
+
+    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1196,7 +1214,7 @@ void make_overlay_sum_plot(
     // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
     //h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
-    for (TLatex* latex: extra_text) latex->Draw();
+    extra_text.at(0)->Draw();
 
     h_data->Draw("same,e,p");
     gr_err->Draw("same,2");
@@ -1258,6 +1276,9 @@ void make_overlay_sum_plot(
 
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type2.Data());
     c->Print(save_name,save_type2);
+
+    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1515,7 +1536,7 @@ void make_overlay_mega_plot(
     // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
     //h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
-    for (TLatex* latex: extra_text) latex->Draw();
+    extra_text.at(0)->Draw();
 
     h_data->Draw("same,e,p");
     gr_err->Draw("same,2");
@@ -1582,6 +1603,9 @@ void make_overlay_mega_plot(
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type3.Data());
     c->Print(save_name,save_type3);
 
+    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    c->Print(save_name,save_type4);
+
     // Print an external legend
     if (ext_leg) {
         // save_name = TString::Format("ext_leg_%s",title.Data());
@@ -1626,17 +1650,25 @@ void make_overlay_sub_plots(
     bool debug = false;
 
     std::unordered_map<std::string,std::vector<TString> > BINNING {
+        {"lj0pt", {"0","150","250","500"}},
+        {"ptz"  , {"0","200","300","400","500"}},
         {"ptbl" , {"0","100","200","400"}},
         {"bl0pt", {"0","100","200","400"}},
-        {"ht"   , {"0","300","500","800"}},
+        //{"ht"   , {"0","300","500","800"}},
+        {"ht"   , {"0","100","200","300","400","600","800"}},
     };
 
     bool do_binning = true;
+    bool do_main_binning = false;
     std::string kin;
     TString subtitle = title(title.Index("_")+1,title.Length());
-    if (subtitle.Index("_") == TString::kNPOS) do_binning = false;
-    else kin = subtitle(subtitle.Index("_")+1, subtitle.Length());
-    if (BINNING.find(kin)==BINNING.end()) do_binning = false;
+    if (subtitle.Index("_") == TString::kNPOS) do_main_binning = true; // It's either lj0pt or ptz
+    else if (subtitle.Index("_", subtitle.Index("_")+1) == TString::kNPOS) kin = subtitle(subtitle.Index("_")+1, subtitle.Length());
+    else kin = subtitle(subtitle.Index("_")+1, subtitle.Index("_", subtitle.Index("_")+1) - (subtitle.Index("_")+1));
+    if (BINNING.find(kin)==BINNING.end() & !do_main_binning) do_binning = false;
+
+    cout << kin << endl;
+    cout << do_binning << endl;
 
     // Some configuration settings
     Float_t small = 1.e-5;
@@ -1657,6 +1689,34 @@ void make_overlay_sub_plots(
     std::vector<PlotData> pList = divide(pData_arranged, divider);
 
     for (PlotData pData: pList) {
+
+        cout << pData.SR_name.at(0) << endl;
+        cout << pData.SR_name.size() << endl;
+
+    if (do_main_binning) {
+        TString sr0 = pData.SR_name[0];
+        int sr_size = 0;
+        for (TString sr: pData.SR_name) {
+            if (sr != sr0) break;
+            sr_size++;
+        }
+        cout << "bin size: " << sr_size << endl;
+        if (sr_size == 4) kin = "lj0pt";      // lj0pt has 4 bins
+        else if (sr_size == 5) kin = "ptz";   // ptz has 5 bins
+        else {
+            cout << "[WARNING]Unknown kinematic with bin size " << pData.SR_name.size() << endl;
+            do_binning = false;
+        }
+        // Replace the kinematic label with either lj0pt or ptz
+        if (do_binning) {
+            TLatex* latex2 = extra_text.at(1);
+            double x_latex2 = latex2->GetX();
+            double y_latex2 = latex2->GetY();
+            latex2->SetText(x_latex2, y_latex2, KIN_LABEL_MAP[kin].c_str());
+            extra_text.at(1) = latex2;
+        }
+    }
+
     int pSize = pData.SR_name.size();
     TCanvas* c = new TCanvas("canv","canv",150,10,c_ww,c_hh);
     // TCanvas* c = new TCanvas("canv","canv",150,10,960*4,640);
@@ -1853,7 +1913,8 @@ void make_overlay_sub_plots(
     // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
     //h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
-    for (TLatex* latex: extra_text) latex->Draw();
+
+    extra_text.at(0)->Draw();
 
     h_data->Draw("same,e,p");
     gr_err->Draw("same,2");
@@ -1897,6 +1958,7 @@ void make_overlay_sub_plots(
     }
 
     c->cd();
+    if (incl_ratio) extra_text.at(1)->Draw();
     if (do_binning) draw_labels(BINNING[kin], pData, L_margin, R_margin);
 
     TString save_format, save_name;
@@ -1915,6 +1977,9 @@ void make_overlay_sub_plots(
 
     save_name = TString::Format("plots/%s_%s.%s",title.Data(),refSR[idx].Data(),save_type2.Data());
     c->Print(save_name,save_type2);
+
+    save_name = TString::Format("plots/%s_%s.%s",title.Data(),refSR[idx].Data(),save_type4.Data());
+    c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1951,7 +2016,7 @@ void plot_maker() {
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ptbl/combinedcard.txt";
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ht_7bins/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
     std::map<std::string,std::string> kin_map = {}; // map the name of channel to the name of kinamtic it uses
@@ -1971,10 +2036,10 @@ void plot_maker() {
     }
     
     // Plot options
-    bool incl_mega_plots = true;
-    bool incl_njet_plots = true;
+    bool incl_mega_plots = false;
+    bool incl_njet_plots = false;
     bool incl_sub_plots  = true;
-    bool incl_sum_plots  = true;
+    bool incl_sum_plots  = false;
     
     // Plot layout options
     bool incl_ratio = true;
@@ -1985,16 +2050,25 @@ void plot_maker() {
     std::string year = "all";
     
     // Fit types
-    bool do_postfit = true;
+    bool do_postfit = false;
     std::string fit_type;
-    if (do_postfit) fit_type = "postfit_ptbl";
-    else fit_type = "prefit_ptbl";
+    if (do_postfit) fit_type = "postfit_ht_7bins";
+    else fit_type = "prefit_ht_7bins";
+
+    std::string fit_type2 = fit_type.substr(0, fit_type.find("_"));
+    std::string kin_type = fit_type.substr(fit_type.find("_")+1, fit_type.find("_", fit_type.find("_")+1)-fit_type.find("_")-1);
+
+    cout << fit_type2 << endl;
+    cout << kin_type << endl;
     
     std::string pData_path = TString::Format("%sSR_%s/", in_dir.c_str(), fit_type.c_str()).Data();
     std::vector<std::string> files = all_files(pData_path);
     
     PlotData pData_raw = read_PlotData_from_file(files);
-    PlotData pData = removeEmptyBins(pData_raw);
+    PlotData pData;
+    if (fit_type.find("ht") != -1) pData = pData_raw;
+    else pData = removeEmptyBins(pData_raw);
+    
     
     PlotData pData_arranged = rearrange(pData, ch_map, kin_map);
     PlotData pData_arranged2 = rearrange(pData, ch_map);
@@ -2019,9 +2093,36 @@ void plot_maker() {
         sumGroup = autoPartition(pSum_aggregated);
     }
 
+    double cms_txt_xpos = 0.12;
+    double cms_txt_ypos = 0.94;
+    double extra_txt_xoffset  = 0.10;
+    double extra_txt_xoffset2 = 0.86;
+    double extra_txt_yoffset  =-0.02;
+    double extra_txt_yoffset2 =-0.88;
+    int extra_txt_align = 11;
+
+    // specify prefit or postfit
     TLatex* latex = new TLatex();
+    latex->SetNDC();
+    latex->SetTextFont(42);
+    latex->SetTextSize(0.080);
+    latex->SetTextAlign(extra_txt_align);
+    latex->SetText(cms_txt_xpos + extra_txt_xoffset, cms_txt_ypos + extra_txt_yoffset, fit_type2.c_str());
+
+    // specify kinematic
+    TLatex* latex2 = new TLatex(); // The coordinate of this latex is relative to the entire canvas (main plot + ratio plot)
+    latex2->SetNDC();
+    latex2->SetTextFont(42);
+    latex2->SetTextSize(0.040);
+    latex2->SetTextAlign(33);
+    latex2->SetText(cms_txt_xpos + extra_txt_xoffset2, cms_txt_ypos + extra_txt_yoffset2, KIN_LABEL_MAP[kin_type].c_str());
+
+    // specify category (which SR)
+    //TLatex* cat_label = new TLatex(R_margin, 32, BIN_LABEL_MAP[refSR[idx].Data()].c_str());
+
     std::vector<TLatex*> extra_text;
     extra_text.push_back(latex);
+    extra_text.push_back(latex2);
 
     CMSTextStyle cms_style;
     cms_style.cms_size  = 0.90;//0.85;
@@ -2033,18 +2134,6 @@ void plot_maker() {
 
     CMSTextStyle supp_style(cms_style);
     supp_style.extra_text = "";//"Supplementary";
-
-    double cms_txt_xpos = 0.12;
-    double cms_txt_ypos = 0.94;
-    double extra_txt_xoffset =  0.10;
-    double extra_txt_yoffset = -0.02;
-    int extra_txt_align = 11;
-          
-    latex->SetNDC();
-    latex->SetTextFont(42);
-    latex->SetTextSize(0.080);
-    latex->SetTextAlign(extra_txt_align);
-    latex->SetText(cms_txt_xpos+extra_txt_xoffset,cms_txt_ypos+extra_txt_yoffset,fit_type.c_str());
     
     if (incl_mega_plots) {
         make_overlay_mega_plot(TString::Format("mega_%s_layout1", fit_type.c_str()), extra_text, pData_arranged, megaGroup,   incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
