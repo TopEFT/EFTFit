@@ -23,8 +23,8 @@ Follow the instructions in https://github.com/TopEFT/EFTFit/#readme.
 ## NOTE
 We have for of the CombineHarvester repo designed for this task. It handles the custom seed generation when sending jobs to crab.<br>
 There are two ways to install this version:
-1. Instead of teh git clone command in the EFTFit README, run:
-`git clone git@github.com:TopEFT/CombineHarvester.git --branch crab_random`
+1. Instead of teh git clone command in the EFTFit README, run:<br>
+`git clone git@github.com:TopEFT/CombineHarvester.git --branch crab_random`<br>
 and run `scram b -j8` like normal
 2. If you've already installed the default CombineHarvester, run
 ```python
