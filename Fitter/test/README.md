@@ -20,6 +20,21 @@ retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 # Initial setup
 ## Install CMSSW
 Follow the instructions in https://github.com/TopEFT/EFTFit/#readme.
+## NOTE
+We have for of the CombineHarvester repo designed for this task. It handles the custom seed generation when sending jobs to crab.<br>
+There are two ways to install this version:
+1. Instead of teh git clone command in the EFTFit README, run:
+`git clone git@github.com:TopEFT/CombineHarvester.git --branch crab_random`
+and run `scram b -j8` like normal
+2. If you've already installed the default CombineHarvester, run
+```python
+cd $CMSSW_BASE/src/CombineHarvester/CombineTools/
+git remote add topeft git@github.com:TopEFT/CombineHarvester.git
+git fetch topeft
+git checkout -b crab_random topeft/crab_random
+scrab b -j8
+cd -
+```
 
 ## Adjust the custom CRAB config file
 Open `custom_crab.py` in `test` and modify the output path in `outLFNDirBase`. If you're using `CERNBOX`, chang it to `T3_CH_CERNBOX`.
