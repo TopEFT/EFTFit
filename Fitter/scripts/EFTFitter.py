@@ -267,54 +267,44 @@ class EFTFit(object):
         CMSSW_BASE = os.getenv('CMSSW_BASE')
 
         nsplit = 100 # 50 points per job
-        points_per_job = points // nsplit
-        jobs_per_chunk = 10 # Only submit 10 in parallel at a time (too many can overload lxplus)
-        jobs = points // nsplit
-        chunks = jobs / jobs_per_chunk
+        points_per_job = points# // nsplit
+        jobs = 1 #points // nsplit
 
         # Generate nsplit jobs, since each needs its own random seed
         logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
-        for chunk in range(chunks):
-            processes = []
-            for job in range(jobs_per_chunk):
-                rseed = random.randint(1000,1000000)
-                args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s', str(rseed)]
-                args.extend(['--points','{}'.format(points_per_job)])
-                if name:              args.extend(['-n','{}_{}'.format(name,job+jobs_per_chunk*chunk+offset)])
-                if other:             args.extend(other)
+        #for job in range(jobs):
+        rseed = random.randint(1000,1000000)
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s -1']
+        args.extend(['--points','{}'.format(points_per_job)])
+        if name:              args.extend(['-n','{}'.format(name)])
+        if other:             args.extend(other)
 
-                if batch=='crab':
-                    args.extend(['--job-mode','crab3','--task-name',name.replace('.','')+str(job+jobs_per_chunk*chunk),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
-                    args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
-                    # Implement condor later
-                    #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
-                    #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-                    #elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-                    logging.info(' '.join(args))
+        if batch=='crab':
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
+            args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
+            # Implement condor later
+            #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+            #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+            #elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+            logging.info(' '.join(args))
 
-                    # Run the combineTool.py command
-                processes.append(sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE))
-                #process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
-            print('Waiting for {} jobs to be accepted [{}/{}]'.format(jobs_per_chunk, chunk, chunks))
-            for process in processes:
-                with process.stdout,process.stderr:
-                    self.log_subprocess_output(process.stdout,'info')
-                    self.log_subprocess_output(process.stderr,'err')
-                process.wait()
-            os.system('find crab_* -size +1M -delete') # Remove input tgz files to save space
+            # Run the combineTool.py command
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        process.wait()
+        os.system('find crab_* -size +1M -delete') # Remove input tgz files to save space
 
     def retrieveDNNScan(self, name='.test', batch='crab', points=100, offset=0):
         nsplit = 100 # 50 points per job
         points_per_job = points // nsplit
-        jobs_per_chunk = 10 # Only submit 10 in parallel at a time (too many can overload lxplus)
         jobs = points // nsplit
-        chunks = jobs / jobs_per_chunk
 
         # Generate nsplit jobs, since each needs its own random seed
         logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
-        for chunk in range(chunks):
-            for job in range(jobs):
-                self.retrieveGridScan(name+job+jobs_per_chunk*chunk+offset, batch='crab')
+        for job in range(jobs):
+            self.retrieveGridScan(name+job+offset, batch='crab')
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
