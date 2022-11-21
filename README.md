@@ -1,6 +1,11 @@
 # EFTFit
 This repository holds the custom files needed to run a EFT fit topcoffea datacards.
 
+## New fancy install script
+To quickly install this repo, simply run:<br>
+`wget -O - https://raw.githubusercontent.com/TopEFT/EFTFit/master/install.sh | sh`<br>
+NOTE: This will install the TopEFT custom CombineHarvester fork. If you need to use `-s -1` as implemented in combine, you'll need to install the main CombineHarvester repo.
+
 ### Setting up
  
   In order to run combine, you will need to get the appropriate CMSSW release and to clone several repositories.
