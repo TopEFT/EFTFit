@@ -282,12 +282,12 @@ class EFTFit(object):
         # Generate nsplit jobs, since each needs its own random seed
         logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'points for a total of', str(points)]))
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s -1']
-        args.extend(['--points','{}'.format(points_per_job)])
+        args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if other:             args.extend(other)
 
         if batch=='crab':
-            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(points_per_job)])
             args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
             # Implement condor later
             #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
@@ -301,7 +301,7 @@ class EFTFit(object):
             self.log_subprocess_output(process.stdout,'info')
             self.log_subprocess_output(process.stderr,'err')
         process.wait()
-        os.system('find crab_* -size +1M -delete') # Remove input tgz files to save space
+        os.system('find -type d crab_* -size +1M -delete') # Remove input tgz files to save space
 
     def retrieveDNNScan(self, name='.test', batch='crab', points=100, offset=0):
         nsplit = 100 # 50 points per job
