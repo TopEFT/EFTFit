@@ -1,13 +1,10 @@
 # TL;DR
 `cd` to submission directory<br>
-Launch tmux<br>
-Run `kinit && aklog` if this is a new tmux session<br>
 Submit with e.g.:
 `python -i $CMSSW_BASE/src/EFTFit/Fitter/scripts/EFTFitter.py`
 ```python
 fitter.batchDNNScan(name='.11102022.EFT.Float.DNN.1M', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=100000)
 ```
-Detach TMUX
 
 Monitor on [grafana task monitor](https://monit-grafana.cern.ch/d/cmsTMGlobal/cms-tasks-monitoring-globalview?orgId=11)
 
@@ -51,18 +48,6 @@ The modified runtime is set to 48 hrs, but when checking the job status you'll s
 These job submissions can take up a lot of space. If your `lxplus` home directory is running low, consider using the `work` area (`/afs/cern.ch/user/<first-letter>/<user-name>/work/`). Either install CMSSW there, or make a symbolic link in your `test` directory.
 
 # Submit jobs to CRAB
-Submission will take a while, so it is best to run in something like `tmux` or `screen`
-### tmux
-First, make sure you save what `lxplus` node you're running on (use `uname -a` if unsure)<br>
-Run `tmux` to start a new tmux session<br>
-The AFS system has some permissions issues with tmux if you detach and log out. Run `kinit && aklog` to fix this.<br>
-Start the job submissions (see below).<br>
-Press `ctrl+b` followd by `d` to detach tmux.<br>
-You can then logout .
-
-To come back to your jobs later, connect to lxplus, then ssh to the node from above (`ssh lxplus<node-number>`)<br>
-Run `tmux -a` to attach the tmux session
-
 ### Initialize voms proxy
 This must be done before any jobs are submitted
 `voms-proxy-init --rfc --voms cms -valid 192:00`
