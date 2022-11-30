@@ -22,7 +22,14 @@ cd -
 
 echo "Installing the  EFTFit"
 cd $CMSSW_BASE/src/
-git clone git@github.com:TopEFT/CombineHarvester.git --branch crab_random
+## Old commands for custom fork
+#git clone git@github.com:TopEFT/CombineHarvester.git --branch crab_random
+git clone git@github.com:cms-analysis/CombineHarvester.git
+cd - # This one is just so we can use `cd -` again later
+cd $CMSSW_BASE/src/CombineHarvester/CombineTools/python/combine/
+cp $CMSSW_BASE/src/EFTFit/Fitter/test/crab_random.patch .
+# Apply patch to CombineToolBase.py
+git apply crab_random.patch
 scram b -j8
 cd -
 
