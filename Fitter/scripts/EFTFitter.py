@@ -261,19 +261,26 @@ class EFTFit(object):
         self.printBestFitsEFT(name)
 
     def batchDNNScan(self, name='.test', batch='crab', points=4, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[], offset=0):
-        ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
+        '''
+        This function is designed to submit large scale jobs to CRAB.
+        It is confirmed to run on LXPLUS, but has not been tested on Earth (issues with CRAB on slc7) or PSI (should work in principle).
+        Submitting jobs relies on the `crab_random` branch on the TopEFT CombineHarvester fork (https://github.com/TopEFT/EFTFit/blob/master/Fitter/test/README.md), 
+        or you can make the following changes to the master branch: 
+        https://github.com/cms-analysis/CombineHarvester/compare/master...TopEFT:CombineHarvester:crab_random?expand=1#diff-b73f13966085e4d83dee1cae08cd0b9c0e422a257113dbc33ab15b851292fdf7
+
+        Example submission:
+        `fitter.batchDNNScan(name='.11302022.EFT.Float.DNN.1M', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=1000000)`
+        '''
+        ### Runs deltaNLL Scan in for a single parameter using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
 
-        nsplit = 100 # 50 points per job
-        points_per_job = points# // nsplit
-        jobs = 1 #points // nsplit
+        nsplit = 100 # points per job
+        points_per_job = points // nsplit
 
         # Generate nsplit jobs, since each needs its own random seed
         logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
-        #for job in range(jobs):
-        rseed = random.randint(1000,1000000)
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s -1']
         args.extend(['--points','{}'.format(points_per_job)])
         if name:              args.extend(['-n','{}'.format(name)])
@@ -299,12 +306,10 @@ class EFTFit(object):
     def retrieveDNNScan(self, name='.test', batch='crab', points=100, offset=0):
         nsplit = 100 # 50 points per job
         points_per_job = points // nsplit
-        jobs = points // nsplit
 
         # Generate nsplit jobs, since each needs its own random seed
         logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
-        for job in range(jobs):
-            self.retrieveGridScan(name+job+offset, batch='crab')
+        self.retrieveGridScan(name+job+offset, batch='crab')
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
