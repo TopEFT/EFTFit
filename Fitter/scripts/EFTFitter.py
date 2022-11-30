@@ -276,11 +276,11 @@ class EFTFit(object):
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
 
-        nsplit = 100 # points per job
-        points_per_job = points // nsplit
+        nsplit = 10000 # jobs per task
+        points_per_job = points // nsplit # points per job
 
         # Generate nsplit jobs, since each needs its own random seed
-        logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
+        logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'points for a total of', str(points)]))
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s -1']
         args.extend(['--points','{}'.format(points_per_job)])
         if name:              args.extend(['-n','{}'.format(name)])
