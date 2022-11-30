@@ -21,7 +21,9 @@ retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 ## New fancy install script
 To quickly install this repo, simply run:<br>
 `wget -O - https://raw.githubusercontent.com/TopEFT/EFTFit/master/install.sh | sh`<br>
-NOTE: This will install the TopEFT custom CombineHarvester fork. If you need to use `-s -1` as implemented in combine, you'll need to install the main CombineHarvester repo.
+NOTE: This will patch the CombineHarvester with a custom submission option. If you need to use `-s -1` as implemented in combine, you'll need to install the main CombineHarvester repo.
+If you do not have an SSH key configured for GitHub, you can use the http install script instead:<br>
+`wget -O - https://raw.githubusercontent.com/TopEFT/EFTFit/master/install_http.sh | sh`<br>
 ## Install CMSSW
 Follow the instructions in https://github.com/TopEFT/EFTFit/#readme.
 ## NOTE
