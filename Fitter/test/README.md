@@ -66,12 +66,9 @@ NOTE: You must have the workspace in whatever directory you run the submission c
 The most reliable way to monitor jobs is to run `crab status -d <directory-of-task>` from the directory where you submitted your jobs. The [grafana task monitor](https://monit-grafana.cern.ch/d/cmsTMGlobal/cms-tasks-monitoring-globalview?orgId=11) is also very useful, but can be slow to update.
 
 ## Collecting jobs from CRAB
-Use `retrieveDNNScan` to collect the finished jobs. 
-```python
-retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
-```
+Use `retrieveDNNScan` to collect the finished jobs.<br>
 Note that this will _not_ check which jobs are done, so if some are still running, the results will be incomplete. To crab a particular task, use `retrieveGridScan` (don't forget to specify the batch type, as it defaults to `condor`).<br>
 Example:
 ```python
-fitter.retrieveGridScan('.11102022.EFT.Float.DNN.1M70', batch='crab')
+fitter.retrieveGridScan('.11102022.EFT.Float.DNN.1M', batch='crab')
 ```
