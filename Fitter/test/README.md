@@ -59,7 +59,8 @@ Launch the `EFTFitter.py` script with `python -i $CMSSW_BASE/src/EFTFit/Fitter/s
 An example command to submit 1M jobs is
 ```python
 fitter.batchDNNScan(name='.11102022.EFT.Float.DNN.1M', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=1000000)
-```
+```<br>
+NOTE: You must have the workspace in whatever directory you run the submission command from. The latest workspace is `ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root`.
 
 ## Monitoring CRAB jobs
 The most reliable way to monitor jobs is to run `crab status -d <directory-of-task>` from the directory where you submitted your jobs. The [grafana task monitor](https://monit-grafana.cern.ch/d/cmsTMGlobal/cms-tasks-monitoring-globalview?orgId=11) is also very useful, but can be slow to update.

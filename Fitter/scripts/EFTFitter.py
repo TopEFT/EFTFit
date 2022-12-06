@@ -260,7 +260,7 @@ class EFTFit(object):
             sp.call(['mv','multidimfit'+name+'.root','../fit_files/'])
         self.printBestFitsEFT(name)
 
-    def batchDNNScan(self, name='.test', batch='crab', points=4, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[], offset=0):
+    def batchDNNScan(self, name='.test', batch='crab', points=1000000, workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', other=[]):
         '''
         This function is designed to submit large scale jobs to CRAB.
         It is confirmed to run on LXPLUS, but has not been tested on Earth (issues with CRAB on slc7) or PSI (should work in principle).
@@ -305,13 +305,13 @@ class EFTFit(object):
         process.wait()
         os.system('find -type d crab_* -size +1M -delete') # Remove input tgz files to save space
 
-    def retrieveDNNScan(self, name='.test', batch='crab', points=100, offset=0):
+    def retrieveDNNScan(self, name='.test', batch='crab'):
         nsplit = 100 # 50 points per job
-        points_per_job = points // nsplit
+        jobs = points // nsplit
 
         # Generate nsplit jobs, since each needs its own random seed
-        logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'for a total of', str(points)]))
-        self.retrieveGridScan(name+job+offset, batch='crab')
+        logging.info(' '.join(['Collecting', name])
+        self.retrieveGridScan(name, batch='crab')
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
