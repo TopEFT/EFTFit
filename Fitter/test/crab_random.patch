@@ -1,5 +1,5 @@
 diff --git a/CombineTools/python/combine/CombineToolBase.py b/CombineTools/python/combine/CombineToolBase.py
-index aebd9c9..6269d81 100755
+index aebd9c9..abc93ff 100755
 --- a/CombineTools/python/combine/CombineToolBase.py
 +++ b/CombineTools/python/combine/CombineToolBase.py
 @@ -2,6 +2,8 @@ import os
@@ -11,7 +11,7 @@ index aebd9c9..6269d81 100755
  
  DRY_RUN = False
  
-@@ -345,6 +347,12 @@ class CombineToolBase:
+@@ -345,6 +347,17 @@ class CombineToolBase:
                  for line in self.job_queue[j:j + self.merge]:
                      newline = line
                      if line.startswith('combine'): newline = self.pre_cmd + line.replace('combine', './combine', 1)
@@ -21,6 +21,11 @@ index aebd9c9..6269d81 100755
 +                        rseed = random.randint(1000,1000000)
 +                        # Update the seed on the combine call
 +                        newline = re.sub('-s +-1', '-s {}'.format(rseed), newline)
++                        points = re.findall('--points \d*', newline)[0].split()[-1]
++                        fpoint = re.findall('--firstPoint \d*', newline)[0].split()[-1]
++                        lpoint = re.findall('--lastPoint \d*', newline)[0].split()[-1]
++                        split = int(lpoint) - int(fpoint) + 1
++                        newline = re.sub('--points \d*', '--points {}'.format(split), newline)
                      wsp = str(self.extract_workspace_arg(newline.split()))
  
                      newline = newline.replace(wsp, os.path.basename(wsp))

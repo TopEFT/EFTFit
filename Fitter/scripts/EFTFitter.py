@@ -276,19 +276,21 @@ class EFTFit(object):
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
 
-        nsplit = 10000 # jobs per task
-        points_per_job = points // nsplit # points per job
+        nsplit = 100 # jobs per task
+        jobs = points // nsplit # points per job
 
         # Generate nsplit jobs, since each needs its own random seed
-        logging.info(' '.join(['Generating', str(nsplit), 'jobs each with', str(points_per_job), 'points for a total of', str(points)]))
+        logging.info(' '.join(['Generating', str(jobs), 'jobs each with', str(nsplit), 'points for a total of', str(points)]))
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','random','--skipInitialFit','--cminDefaultMinimizerStrategy=0', '-s -1']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if other:             args.extend(other)
 
         if batch=='crab':
-            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(points_per_job)])
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
             args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
+            args.extend(['-P',' -P '.join(self.wcs)])
+            args.extend(['--saveToys'])
             # Implement condor later
             #if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
             #elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
