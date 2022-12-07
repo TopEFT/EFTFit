@@ -10,28 +10,26 @@ echo "##################################################"
 echo -e "\n"
 
 ## CMSSW part
-if [[ -z $CMSSW_BASE && -z $cmssw ]]; then
+if [[ -z $CMSSW_BASE && -z $cmssw && -d "CMSSW_10_2_13" ]]; then
     echo "Please specify a CMSSW path or cd into your local CMSSW directory and run: \`cmsenv\`"
     exit
+elif [[ -z $CMSSW_BASE && -z $cmssw && ! -d "CMSSW_10_2_13" ]]; then
+  cmssw="CMSSW_10_2_13"
+  echo $cmssw
 fi
-if [[ ! -z $cmssw ]]; then
-  if [[ -d $cmssw && $cmssw == *"CMSSW_10_2_13"* ]]; then
-    echo "Using CMSSW installed at: ${cmssw}"
-    cd $cmssw/src
-    cmsenv
-  elif [[ -d $cmssw ]]; then
-    # Install CMSSW in the specified directory
-    echo "Installing CMSSW in: ${cmssw}"
-    cd $cmssw
-    export SCRAM_ARCH=slc7_amd64_gcc700
-    scram project CMSSW CMSSW_10_2_13
-    cd CMSSW_10_2_13/src
-    cmsenv
-    exit 
-    scram b -j8
-  fi
-elif [[ ! -z $MCSSW_BASE ]]; then
-    echo "Using ${CMSSW_BASE}"
+if [[ -d $cmssw && $cmssw == *"CMSSW_10_2_13"* ]]; then
+  echo "Using CMSSW installed at: ${cmssw}"
+  cd $cmssw/src
+  cmsenv
+elif [[ -d $cmssw ]]; then
+  # Install CMSSW in the specified directory
+  echo "Installing CMSSW in: ${cmssw}"
+  export SCRAM_ARCH=slc7_amd64_gcc700
+  scram project CMSSW CMSSW_10_2_13
+  cd CMSSW_10_2_13/src
+  cmsenv
+  exit 
+  scram b -j8
 fi
 
 ## combine part
@@ -60,8 +58,6 @@ fi
 if [[ ! -d $CMSSW_BASE/src/EFTFit ]]; then
   echo "Installing the  EFTFit"
   cd $CMSSW_BASE/src/
-  ## Old commands for custom fork
-  #git clone http://github.com:TopEFT/CombineHarvester.git --branch crab_random
   git clone http://github.com:cms-analysis/CombineHarvester.git
   scram b -j8
   cd -
