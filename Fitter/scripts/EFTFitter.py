@@ -310,7 +310,7 @@ class EFTFit(object):
         jobs = points // nsplit
 
         # Generate nsplit jobs, since each needs its own random seed
-        logging.info(' '.join(['Collecting', name])
+        logging.info(' '.join(['Collecting', name]))
         self.retrieveGridScan(name, batch='crab')
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
