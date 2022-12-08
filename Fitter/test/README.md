@@ -15,7 +15,7 @@ retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 <br>
 
 # Initial setup
-## New fancy install script
+## New fancy install/submission script
 NOTE: This script requires a few things:
 1. An LXPLUS account
 2. A valid grid certificate (https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookStartingGrid#BasicGrid)
