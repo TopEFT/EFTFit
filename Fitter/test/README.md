@@ -16,6 +16,11 @@ retrieveDNNScan('.11102022.EFT.Float.DNN.1M', points=1000000)
 
 # Initial setup
 ## New fancy install script
+NOTE: This script requires a few things:
+1. An LXPLUS account
+2. A valid grid certificate (https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookStartingGrid#BasicGrid)
+3. A CERNBox space (simply log into https://cernbox.cern.ch/ to create one)
+
 There are a few ways to use this script:
 1. If you want a fresh install, please `cd` to a directory where CMSSW is NOT installed
 2. If you already have CMSSW 10_2_13 installed, please make sure you run `cmsenv` in the base directory first.
