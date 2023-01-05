@@ -56,7 +56,7 @@ message="You may find ${USER}'s files in"
 echo "Extracting tar files: this will take some time"
 for dir in $dirs
 do
-  if [[ ! "$dir[*]" =~ "$1" ]]; then
+  if [[ ! "$dir[$1]" =~ "$dir" ]]; then
     echo $dir
     echo ${dirs[$1]}
     continue
