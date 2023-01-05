@@ -7,7 +7,7 @@ echo "# Collecting all ROOT files from combine jobs #"
 echo "#                                             #"
 echo "###############################################"
 echo -e "\n"
-echo "Plese make sure to clik the share link for the \`Combine\` folder at https://cernbox.cern.ch/files/spaces/eos/user/${USER:0:1}/${USER}/EFT?items-per-page=100"
+echo "Please make sure to click the share link for the \`Combine\` folder at https://cernbox.cern.ch/files/spaces/eos/user/${USER:0:1}/${USER}/EFT?items-per-page=100"
 echo -e "\n"
 
 eos="/eos/user/${USER:0:1}/${USER}/EFT/Combine"
