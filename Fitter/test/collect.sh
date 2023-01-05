@@ -14,9 +14,7 @@ dirs=`find /eos/user/${USER:0:1}/${USER}/EFT/Combine/ -name "*DNN*" -type d`
 message=""
 for dir in $dirs
 do
-  path=(${dir//\// })
-  path="${path[${#path[@]} - 1]}"
-  message+="${dir}/${path}.root\n"
+  message+="${dir}.root\n"
 done
 echo -e $message
 
@@ -74,9 +72,9 @@ do
   do
     tar xvf $file --skip-old-files -C tmp/
   done
-  hadd -f -j $dir/$name $dir/tmp/*POINTS*.root
+  hadd -f -j $dir.root $dir/tmp/*POINTS*.root
   rm -rf tmp
-  message+=`ls -lrth $dir/$name`
+  message+=`ls -lrth $dir.root`
 done
 
 echo -e "All done, sending email"
