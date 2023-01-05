@@ -14,7 +14,9 @@ dirs=`find /eos/user/${USER:0:1}/${USER}/EFT/Combine/ -name "*DNN*" -type d`
 message=""
 for dir in $dirs
 do
-  message+="${dir}/${dir}.root\n"
+  path=(${dir//\// })
+  path="${path[${#path[@]} - 1]}"
+  message+="${dir}/${path}.root\n"
 done
 echo -e $message
 
