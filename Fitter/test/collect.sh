@@ -11,7 +11,6 @@ echo "Please make sure to click the share link for the \`Combine\` folder at htt
 echo -e "\n"
 
 eos="/eos/user/${USER:0:1}/${USER}/EFT/Combine"
-eos="/eos/cms/store/user/byates/EFT/Combine"
 dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
 message="This script will create:\n"
 count=0
