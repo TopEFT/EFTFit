@@ -11,11 +11,14 @@ echo "Please make sure to click the share link for the \`Combine\` folder at htt
 echo -e "\n"
 
 eos="/eos/user/${USER:0:1}/${USER}/EFT/Combine"
-dirs=`find ${eos}/ -name "*DNN*" -type d`
+eos="/eos/cms/store/user/byates/EFT/Combine"
+dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
 message="This script will create:\n"
+count=0
 for dir in $dirs
 do
-  message+="${dir}.root\n"
+  message+="$count: ${dir}.root\n"
+  count=$(($count + 1))
 done
 echo -e $message
 
@@ -34,20 +37,20 @@ if [[ -z $1 ]]; then
   echo "RunAsOwner            = True" >> collect.sub
   echo "notify_user           = ${USER}@cern.ch,byates@cern.ch"  >> collect.sub
   echo "notification          = always" >> collect.sub
-  echo "queue ${#dirs[@]}" >> collect.sub
+  echo "queue ${count}" >> collect.sub
   condor_submit collect.sub --batch-name "Collect DNN"
   rm collect.sub
   echo -e $message | mail -s "${USER} has started a DNN collection run" brent.yates@cern.ch,$USER@mail.cern.ch
   exit
 fi
 
-dirs=`find ${eos}/ -name "*DNN*" -type d`
+dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
 echo "Will run over the following directories:"
 echo $dirs
 echo -e "\n"
 
-if [[ $1 -gt ${#dirs[@]} ]]; then
-  echo "$1 is larger than the number of directories (${#dirs[@]})"
+if [[ $1 -ge ${count} ]]; then
+  echo "$1 is larger than the number of directories (${count})"
   exit
 fi
 
