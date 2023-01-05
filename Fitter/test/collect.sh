@@ -10,8 +10,9 @@ echo -e "\n"
 echo "Plese make sure to clik the share link for the \`Combine\` folder at https://cernbox.cern.ch/files/spaces/eos/user/${USER:0:1}/${USER}/EFT?items-per-page=100"
 echo -e "\n"
 
-dirs=`find /eos/user/${USER:0:1}/${USER}/EFT/Combine/ -name "*DNN*" -type d`
-message=""
+eos="/eos/user/${USER:0:1}/${USER}/EFT/Combine"
+dirs=`find ${eos}/ -name "*DNN*" -type d`
+message="This script will create:\n"
 for dir in $dirs
 do
   message+="${dir}.root\n"
@@ -40,10 +41,13 @@ if [[ -z $1 ]]; then
   exit
 fi
 
-dirs=`find /eos/user/${USER:0:1}/${USER}/EFT/Combine/ -name "*DNN*" -type d`
+dirs=`find ${eos}/ -name "*DNN*" -type d`
+echo "Will run over the following directories:"
 echo $dirs
+echo -e "\n"
 
 if [[ $1 -gt ${#dirs[@]} ]]; then
+  echo "$1 is larger than the number of directories (${#dirs[@]})"
   exit
 fi
 
@@ -61,17 +65,22 @@ do
   cd $dir
   name=(${dir//\// })
   name="${name[${#name[@]} - 1]}.root"
-  done=`find $dir -maxdepth 1 -name "$name" -type f`
+  done=`find $eos/ -maxdepth 1 -name "$name" -type f`
+  message+="\n"
+  message+="${eos}/${name}"
   if [[ ! -z $done ]]; then
+    echo "${eos}/${name} already exists, will not remake"
     continue
   fi
   message+="\n"
-  files=`find -L . -name "*.tar" -type f`
+  files=`find -L . -name "*.tar" -type f -not -name "*tmp*"`
   eval `mkdir -p tmp`
+  echo "Unpacking tar files"
   for file in $files
   do
     tar xvf $file --skip-old-files -C tmp/
   done
+  echo "Creating ${eos}/${name}"
   hadd -f -j $dir.root $dir/tmp/*POINTS*.root
   rm -rf tmp
   message+=`ls -lrth $dir.root`
