@@ -79,6 +79,7 @@ if ! git apply --reverse --check crab_random.patch; then
   fi
   # Apply patch to CombineToolBase.py
   git apply crab_random.patch
+  cd -
 fi
 
 cd $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/
@@ -98,9 +99,8 @@ if ! git apply --reverse --check crab_random.patch; then
   # Apply patch to CombineToolBase.py
   git apply crab_random.patch
   scram b -j8
+  cd -
 fi
-
-cd $CMSSW_BASE/src/EFTFit/Fitter/test/crab_random.patch .
 
 ## Initialize voms proxy
 echo "Initializing voms proxy. Please make sure this line succeeds before tyring to submit to crab!"
