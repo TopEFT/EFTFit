@@ -82,6 +82,26 @@ if ! git apply --reverse --check crab_random.patch; then
   cd -
 fi
 
+cd $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/
+cp $CMSSW_BASE/src/EFTFit/Fitter/test/combine_rnd_nll.patch .
+if ! git apply --reverse --check crab_random.patch; then
+  echo "Checking to see if the patch is applied"
+  echo "The above \"error\" simply means the patch must be applied."
+  gdiff=$(git diff --name-only master | wc -l)
+  if [[ $gdiff -gt 0 ]]; then
+    echo "### WARNING ###"
+    echo "I've found uncommited changes. I will stash these before applying our patch to the combine"
+    echo "To view these changes, cd to the combine directory and run: \`git stash show -p\`"
+    echo "To recover them (if you're sure they won't conflict with our patch, run: \`git stash pop\`)"
+    echo ""
+    git stash
+  fi
+  # Apply patch to CombineToolBase.py
+  git apply crab_random.patch
+  scram b -j8
+  cd -
+fi
+
 ## Initialize voms proxy
 echo "Initializing voms proxy. Please make sure this line succeeds before tyring to submit to crab!"
 echo "If the initialization fails, but you have a valid proxy certificate, rerun:"
