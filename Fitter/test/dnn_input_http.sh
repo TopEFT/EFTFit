@@ -79,6 +79,7 @@ if ! git apply --reverse --check crab_random.patch; then
   fi
   # Apply patch to CombineToolBase.py
   git apply crab_random.patch
+  scram b -j8
   cd -
 fi
 
