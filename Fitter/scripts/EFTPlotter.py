@@ -26,7 +26,7 @@ class EFTPlot(object):
 
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-4.0,4.0),
+            'cQQ1' : (-4.5,4.5),
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
@@ -51,7 +51,7 @@ class EFTPlot(object):
             'ctp'  : (-11.0,35.0),
             'ctq1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
-            'ctt1' : (-2.1,2.1),
+            'ctt1' : (-2.6,2.6),
         }
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
@@ -299,9 +299,15 @@ class EFTPlot(object):
             if abs(z) < abs(graph1nlls[zero]): zero = n
         #zero = graph1nlls.index(min(graph1nlls))
         print graph1nlls[zero], graph1wcs[zero]
+        print graph2nlls[zero], graph2wcs[zero]
+        print graph2nlls
+        min_2 = min([g for g in graph2nlls if g > 0.1])
         #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
+        #graph2nlls = [val-min_2 for val in graph2nlls]
+        print graph2nlls
+        print 'Min is', min_2
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
         graph2 = ROOT.TGraph(len(graph2wcs),numpy.asarray(graph2wcs),numpy.asarray(graph2nlls))
         del graph1nlls,graph2nlls,graph1wcs,graph2wcs
@@ -594,6 +600,8 @@ class EFTPlot(object):
             self.OverlayLLPlot1DEFT(name1_lst=basename1_lst, name2_lst=basename2_lst, wc=wc, log=log, final=final, titles=titles)
 
     def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+        if type(basename1_lst) == str: basename1_lst = [basename1_lst]
+        if type(basename2_lst) == str: basename2_lst = [basename2_lst]
         if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
@@ -690,6 +698,176 @@ class EFTPlot(object):
             hist.Write()
             outfile.Close()
 
+    '''
+    Example:
+    plotter.LLPlot2DVarEFT(['.100322.EFT.Frozen.top19001.100.10.n10p0.ctp.cpt', '.100322.EFT.Frozen.top19001.100.n10p0.ctp.cpt', '.100322.EFT.Frozen.top19001.10.ctp.cpt', '.100322.EFT.Frozen.top19001.100.ctp.cpt'], wcs=['ctp','cpt'], edge_x=[-11, -10, 0, 35], edge_y=[-5, 5], ceiling=10)
+    '''
+    def LLPlot2DVarEFT(self, names=['.test'], wcs=[], ceiling=1, log=False, final=False, edge_x = [-11,10,0,35], edge_y = [-5,5], bins_x=[10, 100], bins_y=[10]):
+        if type(names) == str: names = [names]
+        if len(wcs)!=2:
+            logging.error("Function 'LLPlot2DVar' requires exactly two wcs!")
+            return
+        for name in names:
+            if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+                logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+                return
+
+        # Setup ROOT stuff
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas('c','c',800,800)
+ 
+        # Error checking
+        if len(edge_x) % 2 > 0: raise Exception('Please specify an even number of x bin edges!')
+        if len(edge_y) % 2 > 0: raise Exception('Please specify an even number of y bin edges!')
+        if len(edge_x) % len(bins_x) > 0 or (len(bins_x) == 1 and len(edge_x) != 2): raise Exception('Please specify ' + str(len(edge_x)/2) + ' bins for x (' + ','.join([str(e) for e in edge_x]) + ')!')
+        if len(edge_y) % len(bins_y) > 0 or (len(bins_y) == 1 and len(edge_y) != 2): raise Exception('Please specify ' + str(len(edge_y)/2) + ' bins for y (' + ','.join([str(e) for e in edge_y]) + ')!')
+
+        # Build arrays for bins
+        nedge = len(edge_x)/2
+        full_edge_x = edge_x
+        full_edge_y = edge_y
+        edge_x = np.linspace(full_edge_x[0], full_edge_x[-1], bins_x[0])
+        for edge in range(1, nedge):
+            edge_x = np.append(edge_x, np.linspace(full_edge_x[edge], full_edge_x[-1 - edge], bins_x[edge]))
+        nedge = len(edge_y)/2
+        edge_y = np.linspace(full_edge_y[0], full_edge_y[-1], bins_y[0])
+        for edge in range(1, nedge):
+            edge_y = np.append(edge_y, np.linspace(full_edge_y[edge], full_edge_y[-1 - edge], bins_y[edge]))
+            
+        edge_x = np.sort(edge_x)
+        edge_y = np.sort(edge_y)
+        #edge_x = np.unique(np.sort(edge_x))
+        #edge_y = np.unique(np.sort(edge_y))
+        z = np.linspace(0, ceiling, ceiling*10)
+
+        # hadd all inputs
+        snames = ' '.join(['../fit_files/higgsCombine{}.MultiDimFit.root'.format(name) for name in names])
+        os.system('hadd -f ../fit_files/higgsCombine.var{}.MultiDimFit.root {}'.format(names[0], snames))
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
+
+        # Get limits
+        limitTree = rootFile.Get('limit')
+        minZ = limitTree.GetMinimum('deltaNLL')
+
+        # Create hist
+        hname = '{}{}less{}'.format(wcs[0],wcs[1],ceiling)
+        if log:
+            hname += "_log"
+        hist = ROOT.TH3F('hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z)
+        '''
+        for ibinx in range(1,hist.GetNbinsX()-2):
+            for ibiny in range(1,hist.GetNbinsX()-2):
+                if hist.GetXaxis().GetBinLowEdge(ibinx) - edge_x[ibinx-1] > 0 or hist.GetYaxis().GetBinLowEdge(ibiny) - edge_y[ibiny-1] > 0:
+                    print('low diff', hist.GetXaxis().GetBinLowEdge(ibinx) - edge_x[ibinx-1], hist.GetYaxis().GetBinLowEdge(ibiny) - edge_y[ibiny-1])
+                    print('low vals', hist.GetXaxis().GetBinLowEdge(ibinx), edge_x[ibinx-1], hist.GetYaxis().GetBinLowEdge(ibiny), edge_y[ibiny-1])
+                    print('up diff', hist.GetXaxis().GetBinUpEdge(ibinx) - edge_x[ibinx-1], hist.GetYaxis().GetBinUpEdge(ibiny) - edge_y[ibiny-1])
+                    print('up vals', hist.GetXaxis().GetBinUpEdge(ibinx), edge_x[ibinx-1], hist.GetYaxis().GetBinUpEdge(ibiny), edge_y[ibiny-1])
+        '''
+        # Draw 3D wc[0], wc[1], 2*deltaNLL
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        hist.GetYaxis().SetRangeUser(full_edge_x[0], full_edge_x[-1])
+        hist.GetZaxis().SetRangeUser(full_edge_y[0], full_edge_y[-1])
+        #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
+        print(wcs[0], self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        print(wcs[1], self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
+        hist.GetZaxis().SetRangeUser(0, ceiling)
+        # Profile
+        hist = hist.Project3DProfile()
+        ROOT.gStyle.SetOptStat(0)
+        hist.Draw('colz')
+        hist.SetTitle(';{};{}'.format(self.texdic[wcs[0].rstrip('i')],self.texdic[wcs[1].rstrip('i')]))
+
+        # Save plot
+        canvas.Print(hname+".png",'png')
+        canvas.Print(hname+".eps",'eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(hname,hname))
+
+        # Adjust scale so that the best bin has content 0
+        #'hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z
+        #original = hist.Clone('h_conotour')
+        #h_contour = hist.Clone('h_contour')
+        #h_contour.Clear('ICE')
+        #hist = ROOT.TH3F('hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z)
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        #hist = hist.Project3DProfile()
+        #hist.Draw('colz')
+
+        '''
+        hist.SetMaximum(6.8)
+        hist.SetContour(2,np.array(6.8))
+        hist.GetXaxis().SetRangeUser(edge_x[0], edge_x[-1])
+        hist.GetYaxis().SetRangeUser(edge_y[0], edge_y[-1])
+        hist.Draw('cont z list')
+        canvas.Update()
+        conts = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+        print(conts)
+        l = conts.At(0)
+        c95 = ROOT.TList()
+        if conts.GetSize() > 1:
+            print "Woah, multiple contours!"
+       
+        contLevel = conts.At(0)
+        for idy in range(0,contLevel.GetSize()):
+            gr1=contLevel.At(idy)
+            if(gr1.GetN() > 50):
+                c95.Add(gr1.Clone())
+        #hc95.SetLineColor(ROOT.kCyan-2)
+        #hc95.SetLineStyle(6)
+        #hc95.SetLineWidth(5)
+        hc95 = ROOT.TH2F('hc95', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y)
+        hc95.Draw()
+        #c95.Draw('P')
+        #c68.Draw('L SAME')
+        c95.Draw('L SAME')
+        #c997.Draw('L SAME')
+        '''
+        '''
+        c68 = self.ContourHelper.GetContour(hist,2.30, list(edge_y), list(edge_x))
+        c95 = self.ContourHelper.GetContour(hist,6.18, list(edge_y), list(edge_x))
+        c997 = self.ContourHelper.GetContour(hist,11.83, list(edge_y), list(edge_x))
+        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,4,1)
+        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,4,6)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,4,3)
+        #place holders for the legend, since TLine is weird
+        '''
+        levels = np.array([2.3, 6.18, 11.83])
+        hist.SetContour(1, levels)
+        hist.Draw('cont1 z')
+        hist.GetYaxis().SetRangeUser(full_edge_x[0], full_edge_x[-1])
+        hist.GetXaxis().SetRangeUser(full_edge_y[0], full_edge_y[-1])
+        canvas.Update()
+        '''
+        conts = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+        c68 = self.ContourHelper.GetContour(hist,2.30, list(edge_y), list(edge_x))
+        hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
+        hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
+        hc997 = ROOT.TH1F('c997', 'c68', 1, 0, 1)
+        hc68.SetLineColor(ROOT.kYellow+1)
+        hc95.SetLineColor(ROOT.kCyan-2)
+        hc997.SetLineColor(ROOT.kBlue)
+        hc68.SetLineStyle(1)
+        hc95.SetLineStyle(6)
+        hc997.SetLineStyle(3)
+        hc68.SetLineWidth(5)
+        hc95.SetLineWidth(5)
+        hc997.SetLineWidth(5)
+        h_contour = ROOT.TH2F('hist', 'h_contour', len(edge_x)-1, edge_x, len(edge_y)-1, edge_y)
+
+        #h_contour.Draw()
+        #c68.Draw('L SAME')
+        #c95.Draw('L SAME')
+        #c997.Draw('L SAME')
+        '''
+        canvas.SetGrid()
+        canvas.Print(hname+"contour.png",'png')
+        canvas.Print(hname+"contour.eps",'eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}contour.eps {}contour.pdf'.format(hname,hname))
+
+        # Close and delete temporary file
+        rootFile.Close()
+        os.system('rm ../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
+
     def ContourPlotEFT(self, name='.test', wcs=[], final=False):
         if len(wcs)!=2:
             logging.error("Function 'ContourPlot' requires exactly two wcs!")
@@ -708,11 +886,15 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
         points = 100
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '', 'prof colz')
-        #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
+        nLL997 = 11.83
+        #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '2*(deltaNLL-{})<{}'.format(minZ, nLL997*2), 'prof colz')
+        # Double the 99.7% CI for better plotting
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '2*(deltaNLL-{})<{}'.format(minZ, nLL997*2), 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
         h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1,points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
         h_contour = original.Clone('h_conotour')
+        canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
+        print '\n\n\n\n', h_contour.GetXaxis().GetXmin(), h_contour.GetXaxis().GetXmax(), '\n\n\n\n'
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -733,6 +915,8 @@ class EFTPlot(object):
         #h_contour.GetZaxis().SetRangeUser(0,21);
         h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
+        #h_contour.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1)
+        #h_contour.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
 
         # Set Contours
         c68 = self.ContourHelper.GetContour(h_contour,2.30)
@@ -831,16 +1015,6 @@ class EFTPlot(object):
         #marker_2.DrawMarker(0,0)
 
 
-        legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
-        # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
-        # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
-        legend.AddEntry(hc68,"68.27%",'l')
-        legend.AddEntry(hc95,"95.45%",'l')
-        legend.AddEntry(hc997,"99.73%",'l')
-        legend.AddEntry(hSM,"SM value",'p')
-        legend.SetTextSize(0.035)
-        #legend.SetTextSize(0.025)
-        #legend.SetNColumns(4)
         self.CMS_text.Draw('same')
         if not final: self.CMS_extra.Draw('same')
         self.Lumi_text.Draw('same')
@@ -888,8 +1062,23 @@ class EFTPlot(object):
             canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
             os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim_1d.eps {}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-        canvas = ROOT.TCanvas('cleg', 'cleg', 800, 800)
-        print('HERE', legend.GetX1NDC(), legend.GetX2NDC(), legend.GetY1NDC(), legend.GetY2NDC())
+        canvas = ROOT.TCanvas('cleg', 'cleg', 600, 100)
+        hSM.SetMarkerSize(2)
+        hc68.SetMarkerSize(2)
+        hc95.SetMarkerSize(2)
+        hc997.SetMarkerSize(2)
+        canvas.cd()
+        legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
+        legend = ROOT.TLegend(0.01,0.01,0.99,0.99)
+        # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
+        # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
+        legend.AddEntry(hc68,"68.27%",'l')
+        legend.AddEntry(hc95,"95.45%",'l')
+        legend.AddEntry(hc997,"99.73%",'l')
+        legend.AddEntry(hSM,"SM value",'p')
+        legend.SetTextSize(0.3)
+        #legend.SetTextSize(0.025)
+        legend.SetNColumns(4)
         legend.Draw()
         canvas.Print('contour_leg.png')
         canvas.Print('contour_leg.eps')
@@ -1219,7 +1408,7 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
 
-    def CorrelationMatrix(self, name='', nuisances=False, SMfit=True, freeze=False):
+    def CorrelationMatrix(self, name='', nuisances=False, SMfit=True, freeze=False, abs_min=0.):
 
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
@@ -1231,6 +1420,47 @@ class EFTPlot(object):
         # Get correlation matrix
         rooFit.correlationHist().Draw('colz')
         matrix = canvas.GetPrimitive('correlation_matrix')
+
+        # Find pairs above abs_min
+        corr = []
+        cov = []
+        m = []
+        wcs = []
+        mwcs = []
+        for ibinx in range(1, matrix.GetXaxis().GetNbins()):
+            for ibiny in range(1, matrix.GetYaxis().GetNbins()):
+                val = matrix.GetBinContent(ibinx, ibiny)
+                cx = matrix.GetXaxis().GetBinLabel(ibinx)
+                cy = matrix.GetYaxis().GetBinLabel(ibiny)
+                if cx[0] is not 'c' or cy[0] is not 'c': continue
+                if 'charge' in cx or 'charge' in cy: continue
+                if cx not in wcs: wcs.append(cx)
+                ex = rooFit.floatParsFinal().find(cx).getError()
+                ey = rooFit.floatParsFinal().find(cy).getError()
+                m.append(val/(ex*ey))
+                print 'x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey)
+                if abs(val) > abs_min:
+                    # skip e.g. (ctG, cpQM) <-> (cpQM, ctG)
+                    if any(cx in c and cy in c for c in corr): continue
+                    # skip e.g. (ctG, ctG)
+                    if cx == cy: continue
+                    corr.append((cx, cy))#, val))
+
+        # Eigenvalue/eigenvector stuff
+        nwcs = len(wcs)
+        m = np.array(m).reshape(nwcs,nwcs)
+        print(m)
+        eigenval, eigenvec = np.linalg.eig(m)
+        print 'Eigenvalues=', eigenval
+        for n,eig in enumerate(eigenvec.T):
+            mask = np.abs(eig)>abs_min
+            if not any(mask): continue
+            print 'Eigenvector for', eigenval[n]
+            print '    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]]
+            print '    |basis| >', abs_min, eig[mask]
+
+
+        print 'Interesting pairs: ', corr
 
         # Decide whether or not to keep the nuisance parameters in
         # If not, the number of bins (parameters) varies on whether the scan froze the others
@@ -1274,27 +1504,39 @@ class EFTPlot(object):
                 outfile.Close()
                     
             else:
-                matrix.SetName("corrMatrix_noNuisances")
-                nbins = matrix.GetNbinsX()
-                if freeze:
-                    matrix.GetYaxis().SetRange(1,2)
-                    matrix.GetXaxis().SetRange(nbins-1,nbins)
-                else:
-                    nwcs = len(self.wcs)
-                    matrix.GetYaxis().SetRange(1,nwcs)
-                    matrix.GetXaxis().SetRange(nbins-(nwcs-1),nbins)
-                    matrix.GetXaxis().LabelsOption("v")
-                    #matrix.GetYaxis().SetRangeUser(12,12+nwcs)
-                    #matrix.GetXaxis().SetRangeUser(52,52+nwcs)
+                nbinsx = matrix.GetNbinsX()
+                nbinsy = matrix.GetNbinsY()
+                orig = matrix.Clone('orig')
+                matrix = ROOT.TH2F("corrMatrix_noNuisances", "corrMatrix_noNuisances", nwcs, 0, nwcs, nwcs, 0, nwcs)
+                for ibinx in range(1, nbinsx+1):
+                    for ibiny in range(1, nbinsy+1):
+                        val = orig.GetBinContent(ibinx, ibiny)
+                        cx = orig.GetXaxis().GetBinLabel(ibinx)
+                        cy = orig.GetYaxis().GetBinLabel(ibiny)
+                        if cx[0] is not 'c' or cy[0] is not 'c': continue
+                        if 'charge' in cx or 'charge' in cy: continue
+                        matrix.SetBinContent(matrix.FindBin(wcs.index(cx)+0, wcs.index(cy)+0), val)
+                        matrix.GetXaxis().SetBinLabel(wcs.index(cx)+1, cx)
+                        matrix.GetYaxis().SetBinLabel(wcs.index(cy)+1, cy)
+                matrix.GetXaxis().LabelsOption('v')
 
                 # Change format of plot
                 matrix.SetStats(0)
                 matrix.SetTitle("Correlation Matrix")
 
                 # Save the plot
+                canvas.Clear()
+                matrix.Draw('colz')
+                ROOT.gStyle.SetPaintTextFormat('.2f')
+
+                # Save the plot
                 canvas.Print(matrix.GetName()+'.png','png')
                 canvas.Print(matrix.GetName()+'.eps','eps')
                 os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(matrix.GetName(), matrix.GetName()))
+                matrix.Draw('same text')
+                canvas.Print(matrix.GetName()+'text.png','png')
+                canvas.Print(matrix.GetName()+'text.eps','eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}text.eps {}text.pdf'.format(matrix.GetName(), matrix.GetName()))
 
                 # Save the plot to the histogram file
                 outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1391,6 +1633,8 @@ class EFTPlot(object):
             wcs_pairs = [('ctZ', 'ctW'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW')]
             wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
             wcs_pairs = [('cQQ1', 'ctt1'), ('cQt8', 'ctt1'), ('cpQM', 'cpQ3'), ('ctp', 'cQQ1'), ('ctp', 'cQt8')]
+            wcs_pairs = [('cQQ1', 'cQt1'),  ('cQQ1', 'cQt8'),  ('cQt1', 'cQt8'),  ('cQt1', 'ctt1'),  ('cpQM', 'cpt'),  ('ctG', 'ctp'), ('ctG', 'ctp'),  ('ctW', 'ctZ')]
+            wcs_pairs = [('ctW', 'ctZ')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1439,7 +1683,7 @@ class EFTPlot(object):
         htmlFile.write('        }\n')
         htmlFile.write('    </style>\n')
         htmlFile.write('</head>\n')
-        htmlFile.write('<div class=\'pic\'><h3><a href="contour_leg.pdf"></h><img src ="contour_leg.png" style="width: 400px;"></a></p></div>\n')
+        htmlFile.write('<div class=\'pic\'><h3><a href="contour_leg.pdf"></h><img src ="contour_leg.png" style="width: 40px;"></a></p></div><br/>\n')
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
@@ -1600,7 +1844,7 @@ class EFTPlot(object):
             elif siginterval==1: fit_array.append([param,true_minimum,l1sigma,h1sigma])
             else: fit_array.append([param,true_minimum,lowedges,highedges])
 
-        for line in fit_array:
+        for line in fit_array[::-1]: # Flip order to match plot
             pline = line[:]
             if pline[0][-1] == 'i': pline[0] = pline[0][:-1] 
             pline[0] = '\\' + pline[0] + '$/\\Lambda^{2}$'
@@ -1646,6 +1890,8 @@ class EFTPlot(object):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
+        if type(basename_float_lst) == str: basename_float_lst = [basename_float_lst]
+        if type(basename_freeze_lst) == str: basename_freeze_lst = [basename_freeze_lst]
         if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
         if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
 
@@ -2082,8 +2328,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(33)
