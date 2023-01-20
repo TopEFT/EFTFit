@@ -58,7 +58,7 @@ fi
 if [[ ! -d $CMSSW_BASE/src/EFTFit ]]; then
   echo "Installing the  EFTFit"
   cd $CMSSW_BASE/src/
-  git clone http://github.com:cms-analysis/CombineHarvester.git
+  git clone https://github.com/TopEFT/EFTFit.git
   scram b -j8
   cd -
 
