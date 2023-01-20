@@ -2,12 +2,19 @@
 1. If you want a fresh install, please `cd` to a directory where CMSSW is NOT installed
 2. If you already have CMSSW 10_2_13 installed, please make sure you run `cmsenv` in the base directory first.<br>
 To quickly install this repo and/or submit 1M scan points, simply run:<br>
-`wget -O - https://raw.githubusercontent.com/TopEFT/EFTFit/master/Fitter/test/dnn_input.sh | sh`
+```bash
+wget https://raw.githubusercontent.com/TopEFT/EFTFit/master/Fitter/test/dnn_input.sh
+source dnn_input.sh
+```
 <br>
 
 NOTE: This will patch the CombineHarvester with a custom submission option. If you need to use `-s -1` as implemented in combine, you'll need to install the main CombineHarvester repo.
 If you do not have an SSH key configured for GitHub, you can use the http install script instead:<br>
-`wget -O - https://raw.githubusercontent.com/TopEFT/EFTFit/master/Fitter/test/dnn_input_http.sh | sh`<br>
+```bash
+wget https://raw.githubusercontent.com/TopEFT/EFTFit/master/Fitter/test/dnn_input_http.sh
+source dnn_input_http.sh
+```
+<br>
 
 Monitor on [grafana task monitor](https://monit-grafana.cern.ch/d/cmsTMGlobal/cms-tasks-monitoring-globalview?orgId=11)
 
