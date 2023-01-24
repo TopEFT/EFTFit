@@ -37,6 +37,7 @@ elif [[ -d $cmssw ]]; then
 fi
 
 cmsenv
+source /cvmfs/cms.cern.ch/crab3/crab.sh
 
 ## combine part
 if [[ ! -d $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit ]]; then
