@@ -35,7 +35,7 @@ fi
 ## combine part
 if [[ ! -d $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit ]]; then
   echo "Installing combine"
-  git clone http://github.com:cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+  git clone https://github.com:cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
   cd HiggsAnalysis/CombinedLimit/
   git checkout v8.2.0
   scram b -j8
@@ -47,7 +47,7 @@ fi
 if [[ ! -d $CMSSW_BASE/src/CombineHarvester ]]; then
   # Install CombineHarvester
   echo "Installing CombineHarvester"
-  git clone http://github.com:cms-analysis/CombineHarvester.git
+  git clone https://github.com:cms-analysis/CombineHarvester.git
   cd CombineHarvester
   git checkout v8.2.0
   scram b -j8
