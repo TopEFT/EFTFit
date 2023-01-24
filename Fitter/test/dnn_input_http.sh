@@ -10,6 +10,10 @@ echo "##################################################"
 echo -e "\n"
 
 ## CMSSW part
+if [[ $PWD == *"CMSSW_10_2_13"* ]]; then
+  # Already in a CMSSW environment
+  cmsenv
+fi
 if [[ -z $CMSSW_BASE && -z $cmssw && -d "CMSSW_10_2_13" ]]; then
     echo "Please specify a CMSSW path or cd into your local CMSSW directory and run: \`cmsenv\`"
     exit
