@@ -32,6 +32,8 @@ elif [[ -d $cmssw ]]; then
   scram b -j8
 fi
 
+cmsenv
+
 ## combine part
 if [[ ! -d $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit ]]; then
   echo "Installing combine"
