@@ -27,7 +27,7 @@ if [[ -d $cmssw && $cmssw == *"CMSSW_10_2_13"* ]]; then
   echo "Using CMSSW installed at: ${cmssw}"
   cd $cmssw/src
   cmsenv
-elif [[ -d $cmssw ]]; then
+elif [[ ! -d $cmssw ]]; then
   # Install CMSSW in the specified directory
   echo "Installing CMSSW in: ${cmssw}"
   export SCRAM_ARCH=slc7_amd64_gcc700
