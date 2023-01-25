@@ -9,6 +9,7 @@ echo "#                                                #"
 echo "##################################################"
 echo -e "\n"
 
+source /cvmfs/cms.cern.ch/crab3/crab.sh
 ## CMSSW part
 if [[ $PWD == *"CMSSW_10_2_13"* ]]; then
   # Already in a CMSSW environment
@@ -36,13 +37,10 @@ elif [[ -d $cmssw ]]; then
   scram b -j8
 fi
 
-cmsenv
-source /cvmfs/cms.cern.ch/crab3/crab.sh
-
 ## combine part
 if [[ ! -d $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit ]]; then
   echo "Installing combine"
-  git clone https://github.com:cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+  git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
   cd HiggsAnalysis/CombinedLimit/
   git checkout v8.2.0
   scram b -j8
@@ -54,9 +52,8 @@ fi
 if [[ ! -d $CMSSW_BASE/src/CombineHarvester ]]; then
   # Install CombineHarvester
   echo "Installing CombineHarvester"
-  git clone https://github.com:cms-analysis/CombineHarvester.git
+  git clone https://github.com/cms-analysis/CombineHarvester.git
   cd CombineHarvester
-  git checkout v8.2.0
   scram b -j8
   cd -
 fi
@@ -68,11 +65,12 @@ if [[ ! -d $CMSSW_BASE/src/EFTFit ]]; then
   git clone https://github.com/TopEFT/EFTFit.git
   scram b -j8
   cd -
-
 fi
-cd $CMSSW_BASE/src/CombineHarvester/CombineTools/python/combine/
+
+cd $CMSSW_BASE/src/CombineHarvester/
 cp $CMSSW_BASE/src/EFTFit/Fitter/test/crab_random.patch .
 if ! git apply --reverse --check crab_random.patch; then
+  git checkout ed6098dc # This is a SSH hash based on the main branch
   echo "Checking to see if the patch is applied"
   echo "The above \"error\" simply means the patch must be applied."
   gdiff=$(git diff --name-only master | wc -l)
@@ -93,6 +91,7 @@ fi
 cd $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/
 cp $CMSSW_BASE/src/EFTFit/Fitter/test/combine_rnd_nll.patch .
 if ! git apply --reverse --check crab_random.patch; then
+  git checkout v8.2.0
   echo "Checking to see if the patch is applied"
   echo "The above \"error\" simply means the patch must be applied."
   gdiff=$(git diff --name-only | wc -l)

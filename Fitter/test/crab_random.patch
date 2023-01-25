@@ -1,17 +1,17 @@
 diff --git a/CombineTools/python/combine/CombineToolBase.py b/CombineTools/python/combine/CombineToolBase.py
-index 64c0da7..6abeef4 100755
+index aebd9c9..abc93ff 100755
 --- a/CombineTools/python/combine/CombineToolBase.py
 +++ b/CombineTools/python/combine/CombineToolBase.py
-@@ -5,6 +5,8 @@ import stat
+@@ -2,6 +2,8 @@ import os
+ import stat
  from functools import partial
  from multiprocessing import Pool
- from six.moves import range
 +import re
 +import random
  
  DRY_RUN = False
  
-@@ -348,6 +350,17 @@ class CombineToolBase:
+@@ -345,6 +347,17 @@ class CombineToolBase:
                  for line in self.job_queue[j:j + self.merge]:
                      newline = line
                      if line.startswith('combine'): newline = self.pre_cmd + line.replace('combine', './combine', 1)
