@@ -103,7 +103,7 @@ if ! git apply --reverse --check combine_rnd_nll.patch; then
     echo ""
     git stash
   fi
-  # Apply patch to CombineToolBase.py
+  # Apply patch to src/MultiDimFit.cc
   git apply combine_rnd_nll.patch
   scram b -j8
   cd -

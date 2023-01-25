@@ -73,7 +73,7 @@ if ! git apply --reverse --check crab_random.patch; then
   git checkout ed6098dc # This is a SSH hash based on the main branch
   echo "Checking to see if the patch is applied"
   echo "The above \"error\" simply means the patch must be applied."
-  gdiff=$(git diff --name-only master | wc -l)
+  gdiff=$(git diff --name-only | wc -l)
   if [[ $gdiff -gt 0 ]]; then
     echo "### WARNING ###"
     echo "I've found uncommited changes. I will stash these before applying our patch to the CombineHarvester"
@@ -90,7 +90,7 @@ fi
 
 cd $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit/
 cp $CMSSW_BASE/src/EFTFit/Fitter/test/combine_rnd_nll.patch .
-if ! git apply --reverse --check crab_random.patch; then
+if ! git apply --reverse --check combine_rnd_nll.patch; then
   git checkout v8.2.0
   echo "Checking to see if the patch is applied"
   echo "The above \"error\" simply means the patch must be applied."
@@ -103,8 +103,8 @@ if ! git apply --reverse --check crab_random.patch; then
     echo ""
     git stash
   fi
-  # Apply patch to CombineToolBase.py
-  git apply crab_random.patch
+  # Apply patch to src/MultiDimFit.cc
+  git apply combine_rnd_nll.patch
   scram b -j8
   cd -
 fi
