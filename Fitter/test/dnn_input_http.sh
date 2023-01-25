@@ -70,7 +70,7 @@ fi
 cd $CMSSW_BASE/src/CombineHarvester/
 cp $CMSSW_BASE/src/EFTFit/Fitter/test/crab_random.patch .
 if ! git apply --reverse --check crab_random.patch; then
-  git checkout ed6098dc # This is a SSH hash based on the main branch
+  git checkout b7ca691 # This is a SSH hash based on the main branch
   echo "Checking to see if the patch is applied"
   echo "The above \"error\" simply means the patch must be applied."
   gdiff=$(git diff --name-only | wc -l)
