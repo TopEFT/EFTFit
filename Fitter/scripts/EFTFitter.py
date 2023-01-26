@@ -9,9 +9,13 @@ import glob
 import getpass
 import array
 import random
+import json
+import uproot
+import numpy as np
 from collections import defaultdict
 from EFTFit.Fitter.findMask import findMask 
 from itertools import chain
+from scipy.stats import chi2
 
 # Batch modes supported are: CRAB3 ('crab') and Condor ('condor')
 
@@ -90,13 +94,16 @@ class EFTFit(object):
 
 
         # Systematics names except for FR stats. Only used for debug
+        #TOP-19-001
         self.systematics = ['CERR1','CERR2','CMS_eff_em','CMS_scale_j','ChargeFlips','FR_FF','LEPID','MUFR','PDF','PSISR','PFSR','PU',
                             'missing_parton',
                             'QCDscale_V','QCDscale_VV','QCDscale_VVV','QCDscale_tHq','QCDscale_ttG','QCDscale_ttH','QCDscale_ttbar',
                             'hf','hfstats1','hfstats2','lf','lfstats1','lfstats2','lumi_13TeV_2017','pdf_gg','pdf_ggttH','pdf_qgtHq','pdf_qq',
                            ]
-        self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2016APV', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2016APV', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
-        self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'ONE', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch11_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin1', 'prop_binch12_bin2', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin0', 'prop_binch13_bin1', 'prop_binch13_bin2', 'prop_binch13_bin3', 'prop_binch14_bin0', 'prop_binch14_bin1', 'prop_binch14_bin2', 'prop_binch14_bin3', 'prop_binch15_bin0', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin1', 'prop_binch16_bin2', 'prop_binch16_bin3_fakes_sm', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch17_bin2', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch18_bin2', 'prop_binch18_bin3', 'prop_binch19_bin0', 'prop_binch19_bin1', 'prop_binch19_bin2', 'prop_binch19_bin3', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin0_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch20_bin3_fakes_sm', 'prop_binch21_bin0', 'prop_binch21_bin1', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin0', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin1', 'prop_binch23_bin2_fakes_sm', 'prop_binch23_bin3', 'prop_binch24_bin0_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch25_bin0', 'prop_binch25_bin1', 'prop_binch25_bin2', 'prop_binch25_bin3', 'prop_binch26_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch26_bin3', 'prop_binch26_bin4', 'prop_binch27_bin0', 'prop_binch27_bin1', 'prop_binch28_bin0', 'prop_binch28_bin1', 'prop_binch28_bin3', 'prop_binch29_bin0', 'prop_binch29_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch2_bin0_fakes_sm', 'prop_binch2_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch30_bin0', 'prop_binch30_bin1', 'prop_binch31_bin0', 'prop_binch31_bin2', 'prop_binch32_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch32_bin3_fakes_sm', 'prop_binch33_bin0', 'prop_binch33_bin1', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin0', 'prop_binch34_bin1', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin0_fakes_sm', 'prop_binch36_bin1_fakes_sm', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch39_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch3_bin0_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin2_fakes_sm', 'prop_binch6_bin3_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin1', 'prop_binch9_bin2', 'prop_binch9_bin3', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_tWZ', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renormfact', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018'] # nuisances like `prop_binch3_bin1_fakes_sm` are for FF auto MC stats
+        #TOP-22-006
+        self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'ISR_gg', 'ISR_qg', 'ISR_qq', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'fact_Diboson', 'fact_Triboson', 'fact_convs', 'fact_tHq', 'fact_tWZ', 'fact_tllq', 'fact_ttH', 'fact_ttll', 'fact_ttlnu', 'fact_tttt', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch11_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin1', 'prop_binch12_bin2', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin0', 'prop_binch13_bin1',
+         'prop_binch13_bin2', 'prop_binch13_bin3', 'prop_binch14_bin0', 'prop_binch14_bin1', 'prop_binch14_bin2', 'prop_binch14_bin3', 'prop_binch15_bin0', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin1', 'prop_binch16_bin2', 'prop_binch16_bin3_fakes_sm', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch17_bin2', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch18_bin2', 'prop_binch18_bin3', 'prop_binch19_bin0', 'prop_binch19_bin1', 'prop_binch19_bin2', 'prop_binch19_bin3', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin0_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch20_bin3_fakes_sm', 'prop_binch21_bin0', 'prop_binch21_bin1', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin0', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin1', 'prop_binch23_bin2_fakes_sm', 'prop_binch23_bin3', 'prop_binch24_bin0_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch25_bin0', 'prop_binch25_bin1', 'prop_binch25_bin2', 'prop_binch25_bin3', 'prop_binch26_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch26_bin3', 'prop_binch26_bin4', 'prop_binch27_bin0', 'prop_binch27_bin1', 'prop_binch28_bin0', 'prop_binch28_bin1', 'prop_binch28_bin3', 'prop_binch29_bin0', 'prop_binch29_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch2_bin0_fakes_sm', 'prop_binch2_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch30_bin0', 'prop_binch30_bin1', 'prop_binch31_bin0', 'prop_binch32_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch32_bin3_fakes_sm', 'prop_binch33_bin0', 'prop_binch33_bin1', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin0', 'prop_binch34_bin1', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin0_fakes_sm', 'prop_binch36_bin1', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch39_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch3_bin0_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin2_fakes_sm', 'prop_binch6_bin3_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin1', 'prop_binch9_bin2', 'prop_binch9_bin3', 
+        'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_tWZ', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renorm_Diboson', 'renorm_Triboson', 'renorm_convs', 'renorm_tHq', 'renorm_tWZ', 'renorm_tllq', 'renorm_ttH', 'renorm_ttll', 'renorm_ttlnu', 'renorm_tttt', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
 
     def log_subprocess_output(self,pipe,level):
         ### Pipes Popen streams to logging class ###
@@ -514,6 +521,209 @@ class EFTFit(object):
                 os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
+
+    def EFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_prof_data_best.json', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=1, doBest=False, asimov=False, fixed=False, wc=None, sig=0):
+        '''
+        Submit jobs for GoodnessOfFit:
+            doBest = False - Fix all NPs to 0, run toys with seed(s) speicfied below
+            doBest = True  - Fix all WCs to their best fit values and all NPs to 0
+            fixed = True - Compare fixed point (e.g., 2sigma) to best fit point
+            sig = -2, 0, 2 - -2 for -2sigma, 0 for best fit, 2 for +2sigma
+        '''
+        # Update `sig` to access list: `[best, [-2sigma, +2sigma]]`
+        if sig not in [-2, 0, 2]:
+            raise Exception('Please specifiy 0 for best fit, or +/-2 for +/-2 sigma!')
+        if sig == -2:
+            sig == 0
+        if sig == 2:
+            sig == 1
+        with open(limits) as jf:
+            limits = json.load(jf)
+        if doBest:
+            name += '.BestFit'
+        best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items()])
+        if not doBest:
+            best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items() if key in self.wcs])
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','GoodnessOfFit','--algo','saturated','--cminPreScan','--cminDefaultMinimizerStrategy=0', '--noMCbonly=1']
+        if fixed:
+            args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','fixed','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+            args.extend(['-P',' -P '.join(self.wcs)]) # Preserves constraints
+        #args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','none','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        if wc is not None:
+            # If a WC is specified, set it to it's requested value, and start all others at 0
+            best = ','.join(['{}=0'.format(key) if key != wc else '{}={}'.format(key,limits[wc][1][sig]) for key,value in limits.items()])
+        args.extend(['--setParameters', best]) # Set all WCs to their best fit values
+        args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--dry-run'])
+        args.extend(['-n',name])
+        if doBest:
+            if not fixed:
+                if wc is not None:
+                    args.extend(['--freezeParameters', 'rgx{.*},' + '{}'.format(wc), '--fixedSignalStrength=1']) # Float all WCs except `wc`
+                    #args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc]), '--fixedSignalStrength=1']) # Freeze all WCs except `wc` #FIXME
+                else:
+                    args.extend(['--freezeParameters', 'var{.*}', '--fixedSignalStrength=1']) # Freeze all parameters
+            #args.extend(['--fixedSignalStrength=1']) # Freeze all parameters
+            if asimov:
+                args.extend(['-t', '-1']) # 1 toys, default seed `123456`
+        else:
+            if not fixed:
+                if wc is not None:
+                    args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc])]) # Freeze all WCs except `wc`
+                else:
+                    args.extend(['--freezeParameters', 'rgx{.*}']) # Freeze all NPs
+            #args.extend(['--freezeParameters', 'rgx{.*}', '--fixedSignalStrength=1']) # Freeze all NPs
+            #args.extend(['-t', '1', '-s', '123456', '--saveToys']) # 1 toys, default seed `123456`
+            args.extend(['-t', '5', '-s', '1:100:1', '--saveToys']) # 5 toys, vary seed between 1-100
+        args.extend(['--trackParameters',','.join(self.wcs)])
+        logging.info(' '.join(args))
+
+        # Run the combineTool.py command
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        process.wait()
+
+        if os.path.exists('condor{}'.format(name)):
+            logging.error("Directory condor{} already exists!".format(name))
+            logging.error("Aborting submission.")
+            #return
+        sp.call(['mkdir','condor{}'.format(name)])
+        sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
+        sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+        logging.info('Now submitting condor jobs.')
+        condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
+        with condorsub.stdout,condorsub.stderr:
+            self.log_subprocess_output(condorsub.stdout,'info')
+            self.log_subprocess_output(condorsub.stderr,'err')
+        condorsub.wait()
+        '''
+        for wc in limits:
+            if wc != 'ctW': continue
+            params = ','.join(['{}=0'.format(wcs) for wcs in self.wcs if wc != wcs])
+            if wc not in self.wcs:
+                raise Exception('The WC {} was not found!'.format(wc))
+            if len(limits[wc]) == 2:
+                self.gridScan(name=name+'.'+wc+'-2sigma', batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(limits[wc][0])+params])
+                self.gridScan(name=name+'.'+wc+'+2sigma', batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(limits[wc][1])+params])
+            else:
+                print wc, 'has', len(limits[wc]), 'limits'
+                print 'Assuming they are -2sgima, 2sgima, -2sgima, 2sgima'
+                for ilim,lim in enumerate(limits[wc][::2]):
+                    self.gridScan(name=name+'.'+wc+'-2sigma'+'.'+str(ilim), batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(lim)+params])
+                for ilim,lim in enumerate(limits[wc][1::2]):
+                    self.gridScan(name=name+'.'+wc+'+2sigma'+'.'+str(ilim), batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(lim)+params])
+        '''
+
+    def getEFTBestFit(self, name, asimov=False):
+        best_fit = 170
+        fin = 'higgsCombine{}.GoodnessOfFit.mH120.root'.format(name)
+        if asimov:
+            fin = 'higgsCombine{}.Asimov.BestFit.GoodnessOfFit.mH120.root'.format(name)
+        print('Opening {}'.format(fin))
+        fit_file = ROOT.TFile.Open(fin)
+        limit_tree = fit_file.Get('limit')
+        best_fit = limit_tree.GetMinimum('limit')
+        fit_file.Close()
+        return best_fit
+
+    def getEFTNLL(self, name, asimov=False):
+        fin = 'higgsCombine{}.BestFit.MultiDimFit.mH120.root'.format(name)
+        if asimov:
+            fin = 'higgsCombine{}.Asimov.BestFit.MultiDimFit.mH120.root'.format(name)
+        print('Opening {}'.format(fin))
+        with uproot.open(fin) as limit_tree:
+            limits = limit_tree['limit']['deltaNLL'].array()
+            mask = limit_tree['limit']['quantileExpected'].array() >= 0
+            limits = limits[mask]
+            nll_fit = 2 * np.min(limits[limits>1])
+        return nll_fit
+
+    def computeEFTWilks(self, name='.122022.Wilks', asimov=False):
+        best_fit = self.getEFTBestFit(name=name, asimov=asimov)
+        self.drawEFTWilks(name, best_fit, best_fit, dof=178, asimov=asimov)
+        #self.drawEFTWilks(name, best_fit, best_fit, nll_fit, dof=178, asimov=asimov)
+
+    def drawEFTWilks(self, name, best_fit, alt_fit, nll_fit=0, dof=1, asimov=False):
+        if not glob.glob('higgsCombine{}.GoodnessOfFit.mH120*.root'.format(name)):
+            logging.info("No files to hadd. Returning.")
+        elif not os.path.exists('../fit_files/higgsCombine'+name+'.GoodnessOfFit.root'):
+            haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.GoodnessOfFit.root']+sorted(glob.glob('higgsCombine{}.GoodnessOfFit.mH120*.root'.format(name)))
+            process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
+            with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
+            process.wait()
+        fin = '../fit_files/higgsCombine{}.GoodnessOfFit.root'.format(name)
+        with uproot.open(fin) as limit_tree:
+            print('Opening {}'.format(fin))
+            limits = limit_tree['limit']['limit'].array()
+            mask = limit_tree['limit']['quantileExpected'].array() > -2
+            limits = limits[mask]
+            alt_limits = np.min(limits[limits>1])
+            alt_limits = np.min(limits)
+            print '\n\n', 'AlternativeFit =', alt_fit, 'BestFit =', best_fit
+            print '\n\nP({}>test statistic)='.format(alt_fit) + str(limits[limits > alt_fit].size/float(limits.size)) + '\n'
+            '''
+            >>> scipy.stats.chi2.ppf(.68, 1)
+            0.988946481478023
+            >>> scipy.stats.chi2.cdf(4, 1)
+            0.9544997361036415
+            '''
+            prob = chi2.cdf(alt_fit - best_fit, 1)
+            target = 4
+            print 'P({}-{}={}, {})={}'.format(alt_fit, best_fit, alt_fit - best_fit, dof, prob)
+            if prob < target:
+                print '\tPossible UNDER coverage!'
+            else:
+                print '\tPossible OVER coverage!'
+            print '\tTarget is P({}, {})={}'.format(target, dof, chi2.cdf(target, dof))
+            #print 'P({}-{}={}, 26)={}'.format(alt_limits, best_fit, alt_limits - best_fit, chi2.cdf(alt_limits - best_fit, 26))
+
+        ROOT.gROOT.SetBatch(True)
+        ROOT.gStyle.SetOptStat(0)
+        hname = '{}.GoodnessOfFit'.format(name)
+        if asimov:
+            hname = hname.replace('Goodness','Asimov.Goodness')
+        fit_file = ROOT.TFile.Open('../fit_files/higgsCombine{}.GoodnessOfFit.root'.format(name))
+        limit_tree = fit_file.Get('limit')
+        canvas = ROOT.TCanvas('c','c',800,800)
+        canvas.cd()
+        limit_tree.Draw('limit>>hist', 'quantileExpected>-2')
+        h = canvas.GetPrimitive("hist")
+        line = ROOT.TLine(best_fit, 0, best_fit, 10)
+        line.SetLineStyle(9)
+        line.Draw("same")
+        arrow = ROOT.TArrow(best_fit, 5, best_fit+5, 5, 5, '>')
+        #arrow.Draw("same")
+        h.SetName(hname)
+        h.SetTitle("")
+        canvas.Print(hname+'.png','png')
+        canvas.Print(hname+'.eps','eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop c{}.eps c{}.pdf'.format(hname,hname))
+        fit_file.Close()
+
+    def computeEFTWilksWC(self, name='.012023.Wilks.NP', wc='ctp', asimov=False):
+        best_fit = self.getEFTBestFit(name=name, asimov=asimov)
+        sigma_fit = self.getEFTBestFit(name='{}.{}-2sigma'.format(name, wc), asimov=asimov)
+        self.drawEFTWilks(name, best_fit, sigma_fit, dof=1, asimov=asimov)
+
+    def getInterval(fin='', wc=[]):
+        rootFile = ROOT.TFile.Open(fin)
+        limitTree = rootFile.Get('limit')
+        graphwcs = []
+        graphnlls = []
+
+        # Get coordinates for TGraph
+        for entry in range(limitTree.GetEntries()):
+            limitTree.GetEntry(entry)
+            graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
+            graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
+
+        rootFile.Close()
+
+        return (graphwcs, graphnlls)
 
     def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', ignore=[], wc_ranges=None):
         ### For each wc, run a 1D deltaNLL Scan.
@@ -1082,7 +1292,17 @@ class EFTFit(object):
         for line in fit_array:
             print line              
 
-    def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False):
+    def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
+        if not os.path.exists('asimov'):
+            os.mkdir('asimov')
+            os.system('ln -s {} asimov/'.format(workspace))
+        if not os.path.exists('unblind'):
+            os.mkdir('unblind')
+            os.system('ln -s {} unblind/'.format(workspace))
+        job_dir = 'asimov'
+        if unblind:
+            job_dir = 'unblind'
+        os.system(job_dir)
         if not wcs: wcs = self.wcs
         for wc in wcs:
             print 'Submitting', wc
@@ -1094,12 +1314,12 @@ class EFTFit(object):
             condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
-            condorFile.write('  combine -M MultiDimFit -n _initialFit_%s --algo singles --redefineSignalPOIs %s --robustFit 1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, wc, wc, wc, wc, workspace))
+            condorFile.write('  combine -M MultiDimFit -n _initialFit_%s%s --algo singles --redefineSignalPOIs %s --robustFit 1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wc, wc, wc, workspace))
             if unblind: print('Running over ACTUAL DATA!'); condorFile.write('\n')
-            else: condorFile.write('-t -1\n')
+            else: condorFile.write(' -t -1\n')
             condorFile.write('fi\n')
             condorFile.close()
 
@@ -1123,10 +1343,18 @@ class EFTFit(object):
 
             os.system('chmod 777 condor_%s.sh' % wc)
             os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('cd ../')
 
-    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False):
+    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
+        job_dir = 'asimov'
+        if unblind:
+            job_dir = 'unblind'
+        os.system('cd {}'.format(job_dir))
         if not wcs: wcs = self.wcs
+        redo = ['ctq1_FF', 'ctq1_FFcloseEl_2017', 'ctq1_FFcloseEl_2018', 'ctq1_FFcloseMu_2017', 'ctq1_FFeta', 'ctq1_FFpt', 'ctq1_ISR_qg', 'cQq11_prop_binch35_bin3_fakes_sm', 'cQq11_prop_binch36_bin2_fakes_sm', 'cQq11_prop_binch3_bin2_fakes_sm', 'cQq11_prop_binch40_bin3_fakes_sm', 'cQq11_prop_binch4_bin2_fakes_sm', 'cQq11_prop_binch6_bin2_fakes_sm', 'cQq11_prop_binch7_bin2_fakes_sm', 'cQq11_prop_binch7_bin3_fakes_sm', 'cQq11_qcd_scale_tWZ', 'cQq11_qcd_scale_ttll', 'cQq11_qcd_scale_tttt', 'cQq11_renorm_Diboson', 'cQq11_renorm_Triboson', 'cQq11_renorm_tllq', 'cQq11_renorm_ttll', 'cQq11_triggerSF_2018']
         for wc in wcs:
+            if not any(wc in w for w in redo): continue
+            print('redoing {}'.format(wc))
             print 'Submitting', wc
             target = 'condor_%s_fit.sh' % wc
             condorFile = open(target,'w')
@@ -1136,13 +1364,21 @@ class EFTFit(object):
             condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
+            bredo = False
+            nredo = 0
             for i,np in enumerate(self.systematics):
-                condorFile.write('if [ $1 -eq %d ]; then\n' % i)
+                if '{}_{}'.format(wc,np) not in redo: continue
+                bredo = True
+                print('redoing {}_{}'.format(wc,np))
+                condorFile.write('if [ $1 -eq %d ]; then\n' % nredo)
+                nredo += 1
                 condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
-                if unblind: print('Running over ACTUAL DATA!'); condorFile.write('\n')
-                else: condorFile.write('-t -1\n')
+                if unblind:
+                    print('Running over ACTUAL DATA!'); condorFile.write('\n')
+                else:
+                    condorFile.write( ' -t -1\n')
                 condorFile.write('fi\n')
             condorFile.close()
 
@@ -1162,15 +1398,23 @@ class EFTFit(object):
             condorFile.write('\n')
             condorFile.write('requestMemory=8192\n')
             condorFile.write('\n')
-            condorFile.write('queue %d\n' % len(self.systematics))
+            condorFile.write('queue %d\n' % nredo)
+            #condorFile.write('queue %d\n' % len(self.systematics))
             condorFile.close()
 
             os.system('chmod 777 condor_%s_fit.sh' % wc)
-            os.system('condor_submit %s -batch-name %s' % (target, wc))
+            if bredo: os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('cd ../')
 
-    def ImpactCollect(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False):
+    def ImpactCollect(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
+        job_dir = 'asimov'
+        if unblind:
+            job_dir = 'unblind'
+        os.system(job_dir)
         if not wcs: wcs = self.wcs
+        redo  = ['cQq11', 'ctq1']
         for wc in wcs:
+            if wc not in redo: continue
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1179,15 +1423,16 @@ class EFTFit(object):
             condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
-            condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s.json --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, wc, wc))
-            if unblind: print('Running over ACTUAL DATA!'); condorFile.write('\n')
-            else: condorFile.write('-t -1\n')
+            condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wc, wc))
+            if unblind: print('Running over ACTUAL DATA!')
+            else: condorFile.write(' -t -1')
             if len(wcs) > 1:
-                exclude = ' --exclude' + ','.join([w for w in wcs if w != wc])
-                condorFile.write(exclude + '\n')
-            condorFile.write('\nplotImpacts.py -i impacts%s.json -o impacts%s\n' % (wc, wc))
+                exclude = ' --exclude ' + ','.join([w for w in wcs if w != wc])
+                condorFile.write(exclude)
+            condorFile.write('\n')
+            condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s\n' % (wc, version, wc))
             condorFile.close()
 
             target = 'condor_%s_collect.sub' % wc
@@ -1210,6 +1455,7 @@ class EFTFit(object):
 
             os.system('chmod 777 condor_%s_collect.sh' % wc)
             os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('cd ../')
 
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'
