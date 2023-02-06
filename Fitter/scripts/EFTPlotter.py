@@ -59,8 +59,61 @@ class EFTPlot(object):
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]'}
-        self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}}', 'ctZ': '\it{c}_{\mathrm{tZ}}}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 'ctG': '\it{c}_{\mathrm{tG}}}', 'cbW': '\it{c}_{\mathrm{bW}}}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}','cQt8': '\it{c}^{8}_{\mathrm{Qt}}','cQt1': '\it{c}^{1}_{\mathrm{Qt}}'}
+        self.texdic = {
+            'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]'
+        }
+        self.texdicfrac = {
+            'ctW': '\it{c}_{\mathrm{tW}}}', 
+            'ctZ': '\it{c}_{\mathrm{tZ}}}', 
+            'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 
+            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 
+            'ctG': '\it{c}_{\mathrm{tG}}}', 
+            'cbW': '\it{c}_{\mathrm{bW}}}', 
+            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 
+            'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 
+            'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 
+            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 
+            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 
+            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 
+            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 
+            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 
+            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 
+            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
+            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}'
+        }
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
@@ -75,7 +128,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
         #self.CMS_extra.Draw('same')
-        self.lumi = 137
+        self.lumi = 138
         self.arXiv = "arXiv:2012.04120"
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
