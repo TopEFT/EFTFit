@@ -25,8 +25,8 @@ class EFTFit(object):
 
         # WCs lists for easy use
         # Full list of opeators
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ]
-        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
+        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
         # Scan ranges of the wcs
@@ -522,7 +522,7 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def EFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_prof_data_best.json', workspace='ptz-lj0pt_fullR2_anatest23v01_withAutostats_withSys.root', points=1, doBest=False, asimov=False, fixed=False, wc=None, sig=0):
+    def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0):
         '''
         Submit jobs for GoodnessOfFit:
             doBest = False - Fix all NPs to 0, run toys with seed(s) speicfied below
@@ -534,48 +534,60 @@ class EFTFit(object):
         if sig not in [-2, 0, 2]:
             raise Exception('Please specifiy 0 for best fit, or +/-2 for +/-2 sigma!')
         if sig == -2:
-            sig == 0
-        if sig == 2:
             sig == 1
+        if sig == 2:
+            sig == 2
         with open(limits) as jf:
             limits = json.load(jf)
-        if doBest:
-            name += '.BestFit'
         best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items()])
+        '''
         if not doBest:
             best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items() if key in self.wcs])
+        '''
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','GoodnessOfFit','--algo','saturated','--cminPreScan','--cminDefaultMinimizerStrategy=0', '--noMCbonly=1']
+        if not doBest:
+            args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo', 'none', '--skipInitialFit', '--cminPreScan','--cminDefaultMinimizerStrategy=0']
         if fixed:
-            args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','fixed','--cminPreScan','--cminDefaultMinimizerStrategy=0']
-            args.extend(['-P',' -P '.join(self.wcs)]) # Preserves constraints
+            args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo', 'fixed', '--cminPreScan','--cminDefaultMinimizerStrategy=0']
+            args.extend(['-P', wc]) # Preserves constraints
         #args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','none','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         if wc is not None:
             # If a WC is specified, set it to it's requested value, and start all others at 0
-            best = ','.join(['{}=0'.format(key) if key != wc else '{}={}'.format(key,limits[wc][1][sig]) for key,value in limits.items()])
-        args.extend(['--setParameters', best]) # Set all WCs to their best fit values
+            best = ','.join(['{}=0'.format(key) if key != wc else '{}={}'.format(key,limits[wc][sig]) for key,value in limits.items()])
+        if fixed:
+            args.extend(['--setParameters', '=0,'.join(self.wcs)]) # Set all WCs to their best fit values
+            args.extend(['--floatOtherPOIs', '1'])
+        else:
+            args.extend(['--setParameters', best]) # Set all WCs to their best fit values
         args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--dry-run'])
         args.extend(['-n',name])
         if doBest:
-            if not fixed:
-                if wc is not None:
-                    args.extend(['--freezeParameters', 'rgx{.*},' + '{}'.format(wc), '--fixedSignalStrength=1']) # Float all WCs except `wc`
-                    #args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc]), '--fixedSignalStrength=1']) # Freeze all WCs except `wc` #FIXME
-                else:
-                    args.extend(['--freezeParameters', 'var{.*}', '--fixedSignalStrength=1']) # Freeze all parameters
+            if wc is not None:
+                args.extend(['--freezeParameters', 'rgx{.*}']) # Float all WCs except `wc`
+                #args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}={}'.format(key,val) for key,val in limits.items() if key != wc])]) # Float all WCs except `wc`
+                #args.extend(['--freezeParameters', 'rgx{.*},' + '{}'.format(wc)]) # Float all WCs except `wc`
+                #args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc]), '--fixedSignalStrength=1']) # Freeze all WCs except `wc` #FIXME
+            else:
+                args.extend(['--freezeParameters', 'rgx{.*}']) # Freeze all parameters
             #args.extend(['--fixedSignalStrength=1']) # Freeze all parameters
             if asimov:
                 args.extend(['-t', '-1']) # 1 toys, default seed `123456`
         else:
-            if not fixed:
-                if wc is not None:
-                    args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc])]) # Freeze all WCs except `wc`
-                else:
-                    args.extend(['--freezeParameters', 'rgx{.*}']) # Freeze all NPs
+            if wc is not None and not fixed:
+                args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc])]) # Freeze all WCs except `wc`
+            else:
+                args.extend(['--freezeParameters', 'rgx{.*}']) # Freeze all NPs
             #args.extend(['--freezeParameters', 'rgx{.*}', '--fixedSignalStrength=1']) # Freeze all NPs
             #args.extend(['-t', '1', '-s', '123456', '--saveToys']) # 1 toys, default seed `123456`
-            args.extend(['-t', '5', '-s', '1:100:1', '--saveToys']) # 5 toys, vary seed between 1-100
+            #args.extend(['-t', '1', '-s', '1:100:1', '--saveToys', '--toysNoSystematics']) # 5 toys, vary seed between 1-100
+            args.extend(['-t', '100', '-s', '123456:124455:1']) # 5 toys, vary seed between 1-100
+            #args.extend(['-t', '5', '-s', '1:100:1', '--saveToys', '--toysNoSystematics']) # 5 toys, vary seed between 1-100 FIXME
+        if not fixed:
+            args.extend(['--fixedSignalStrength=1'])
         args.extend(['--trackParameters',','.join(self.wcs)])
+        wc_ranges = self.wc_ranges_njets
+        args.extend(['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])])
         logging.info(' '.join(args))
 
         # Run the combineTool.py command
@@ -592,29 +604,21 @@ class EFTFit(object):
         sp.call(['mkdir','condor{}'.format(name)])
         sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
         sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+        sp.call(['sed','-i','s/cd .*EFTFit.*test/cd \/scratch365\/{}\//'.format(getpass.getuser()),'condor_{}.sh'.format(name.replace('.',''))]) # Run in /scratch365/{user}
         logging.info('Now submitting condor jobs.')
         condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
         with condorsub.stdout,condorsub.stderr:
             self.log_subprocess_output(condorsub.stdout,'info')
             self.log_subprocess_output(condorsub.stderr,'err')
         condorsub.wait()
-        '''
-        for wc in limits:
-            if wc != 'ctW': continue
-            params = ','.join(['{}=0'.format(wcs) for wcs in self.wcs if wc != wcs])
-            if wc not in self.wcs:
-                raise Exception('The WC {} was not found!'.format(wc))
-            if len(limits[wc]) == 2:
-                self.gridScan(name=name+'.'+wc+'-2sigma', batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(limits[wc][0])+params])
-                self.gridScan(name=name+'.'+wc+'+2sigma', batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(limits[wc][1])+params])
-            else:
-                print wc, 'has', len(limits[wc]), 'limits'
-                print 'Assuming they are -2sgima, 2sgima, -2sgima, 2sgima'
-                for ilim,lim in enumerate(limits[wc][::2]):
-                    self.gridScan(name=name+'.'+wc+'-2sigma'+'.'+str(ilim), batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(lim)+params])
-                for ilim,lim in enumerate(limits[wc][1::2]):
-                    self.gridScan(name=name+'.'+wc+'+2sigma'+'.'+str(ilim), batch='condor', workspace=workspace, freeze=False, scan_params=[wc], points=points, params_tracked=[wcs for wcs in self.wcs if wcs != wc], other=['--setParameters', wc+'='+str(lim)+params])
-        '''
+
+    def submitEFTWilksWC(self, name='.012023.Wilks.NP', wc='ctp'):
+        wcs=['cQq81' 'ctq8' 'ctG' 'ctp' 'cpQM' 'cpt'] #TOP-22-00 linear dominant terms
+        for wc in wcs:
+            self.submitEFTWilks(name+'.'+wc, wc=wc, sig=-2, doBest=False, fixed=True, workspace='EFTWorkspace.root')
+        #print 'Submitting +/-2 sigma s:seaturated tests for {}'.format(wc)
+        #self.submitEFTWilks(name+'.'+wc+'-2sigma', wc=wc, sig=-2, doBest=True)
+        #self.submitEFTWilks(name+'.'+wc+'+2sigma', wc=wc, sig=+2, doBest=True)
 
     def getEFTBestFit(self, name, asimov=False):
         best_fit = 170
