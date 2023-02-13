@@ -26,7 +26,7 @@ class EFTPlot(object):
 
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-4.5,4.5),
+            'cQQ1' : (-6.0,6.0),
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
@@ -34,11 +34,11 @@ class EFTPlot(object):
             'cQq13': (-0.35,0.35),
             'cQq81': (-1.7,1.5),
             'cQq83': (-0.6,0.6),
-            'cQt1' : (-4.0,4.0),
+            'cQt1' : (-6.0,6.0),
             'cQt8' : (-8.0,8.0),
             'cbW'  : (-3.0,3.0),
             'cpQ3' : (-4.0,4.0),
-            'cpQM' : (-10.0,17.0),
+            'cpQM' : (-15.0,20.0),
             'cpt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
@@ -48,7 +48,7 @@ class EFTPlot(object):
             'ctlSi': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
             'ctli' : (-4.0,4.0),
-            'ctp'  : (-11.0,35.0),
+            'ctp'  : (-15.0,40.0),
             'ctq1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
             'ctt1' : (-2.6,2.6),
@@ -947,7 +947,6 @@ class EFTPlot(object):
         h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1,points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
         h_contour = original.Clone('h_conotour')
         canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
-        print '\n\n\n\n', h_contour.GetXaxis().GetXmin(), h_contour.GetXaxis().GetXmax(), '\n\n\n\n'
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -1003,10 +1002,10 @@ class EFTPlot(object):
         marker_1.SetMarkerSize(3.0)
         marker_1.SetMarkerColor(97)
         marker_1.SetMarkerStyle(33)
-        marker_2 = ROOT.TMarker()
-        marker_2.SetMarkerSize(1.8)
-        marker_2.SetMarkerColor(89)
-        marker_2.SetMarkerStyle(33)
+        #marker_2 = ROOT.TMarker()
+        #marker_2.SetMarkerSize(1.8)
+        #marker_2.SetMarkerColor(89)
+        #marker_2.SetMarkerStyle(33)
         hSM = ROOT.TH1F('SM', 'SM', 1, 0, 1)
         hSM.SetMarkerStyle(33)
         hSM.SetMarkerColor(97)
@@ -1053,7 +1052,7 @@ class EFTPlot(object):
         c95.Draw('L SAME')
         c997.Draw('L SAME')
         marker_1.DrawMarker(0,0)
-        marker_2.DrawMarker(0,0)
+        #marker_2.DrawMarker(0,0)
 
         #c = [2.3, 6.18, 11.83]
         #original.SetContourLevel(0, c[0])
@@ -1125,9 +1124,9 @@ class EFTPlot(object):
         legend = ROOT.TLegend(0.01,0.01,0.99,0.99)
         # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
         # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
-        legend.AddEntry(hc68,"68.27%",'l')
-        legend.AddEntry(hc95,"95.45%",'l')
-        legend.AddEntry(hc997,"99.73%",'l')
+        legend.AddEntry(hc68,"68.3%",'l')
+        legend.AddEntry(hc95,"95.5%",'l')
+        legend.AddEntry(hc997,"99.7%",'l')
         legend.AddEntry(hSM,"SM value",'p')
         legend.SetTextSize(0.3)
         #legend.SetTextSize(0.025)
@@ -1685,9 +1684,8 @@ class EFTPlot(object):
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             wcs_pairs = [('ctZ', 'ctW'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW')]
             wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
-            wcs_pairs = [('cQQ1', 'ctt1'), ('cQt8', 'ctt1'), ('cpQM', 'cpQ3'), ('ctp', 'cQQ1'), ('ctp', 'cQt8')]
-            wcs_pairs = [('cQQ1', 'cQt1'),  ('cQQ1', 'cQt8'),  ('cQt1', 'cQt8'),  ('cQt1', 'ctt1'),  ('cpQM', 'cpt'),  ('ctG', 'ctp'), ('ctG', 'ctp'),  ('ctW', 'ctZ')]
-            wcs_pairs = [('ctW', 'ctZ')]
+            # All diagrams in TOP-22-006 or in AN
+            wcs_pairs = [('cQQ1', 'cQt1'), ('cQQ1', 'cQt8'), ('cQlMi', 'cQei'), ('cQt1', 'cQt8'), ('cQt1', 'ctt1'), ('cpQ3', 'cbW'), ('cpQM', 'cpt'), ('cptb', 'cQl3i'), ('ctG', 'cpQM'), ('ctG', 'ctp'), ('ctW', 'ctZ'), ('ctp', 'cpt')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1748,9 +1746,9 @@ class EFTPlot(object):
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
-                if filename.endswith('contour.png') or filename.endswith('contour_final.png') or '_leg.' in filename or ('less' in filename and filename.endswith('.png')):            
+                if filename.endswith('contour.png') or filename.endswith('contour_prelim.png') or filename.endswith('contour_final.png') or '_leg.' in filename or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
-                if filename.endswith('contour.pdf') or filename.endswith('contour_final.pdf') or ('less' in filename and filename.endswith('.pdf')):            
+                if filename.endswith('contour.pdf') or filename.endswith('contour_prelim.pdf') or filename.endswith('contour_final.pdf') or '_leg.' in filename or ('less' in filename and filename.endswith('.pdf')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
