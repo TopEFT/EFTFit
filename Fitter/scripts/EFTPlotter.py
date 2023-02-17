@@ -321,7 +321,7 @@ class EFTPlot(object):
         log = kwargs.pop('log',False)
         ceiling = kwargs.pop('log',10)
         final = kwargs.pop('final',False)
-        titles = kwargs.pop('titles',['Others Profiled', 'Others Fixed to SM'])
+        titles = kwargs.pop('titles',['Others profiled', 'Others fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
             return
@@ -641,7 +641,7 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DDNN(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def BatchOverlayLLPlot1DDNN(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
         if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
@@ -652,7 +652,7 @@ class EFTPlot(object):
             print(wc)
             self.OverlayLLPlot1DEFT(name1_lst=basename1_lst, name2_lst=basename2_lst, wc=wc, log=log, final=final, titles=titles)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
         if type(basename1_lst) == str: basename1_lst = [basename1_lst]
         if type(basename2_lst) == str: basename2_lst = [basename2_lst]
         if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
