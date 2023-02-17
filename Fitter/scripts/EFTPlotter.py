@@ -1933,7 +1933,7 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;profiled}', '\mathrm{Others\;fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
 
         # Colors to use for the plots
         clr_float = 1 # Black
