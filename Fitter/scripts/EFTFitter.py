@@ -34,7 +34,7 @@ class EFTFit(object):
 
         # Limits appropriate for asimov ptz-lj0pt fits (for prof, but can be used for frozen too)
         self.wc_ranges_differential = {
-            'cQQ1' : (-4.0,4.0),
+            'cQQ1' : (-5.0,5.0),
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
@@ -56,10 +56,10 @@ class EFTFit(object):
             'ctlSi': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
             'ctli' : (-4.0,4.0),
-            'ctp'  : (-11.0,35.0),
+            'ctp'  : (-15.0,40.0),
             'ctq1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
-            'ctt1' : (-2.1,2.1),
+            'ctt1' : (-2.6,2.6),
         }
 
         # Limits appropriate for asimov njets fits (for prof, but can be used for frozen too)
@@ -313,12 +313,57 @@ class EFTFit(object):
         os.system('find -type d crab_* -size +1M -delete') # Remove input tgz files to save space
 
     def retrieveDNNScan(self, name='.test', batch='crab'):
-        nsplit = 100 # 50 points per job
-        jobs = points // nsplit
-
-        # Generate nsplit jobs, since each needs its own random seed
+        taskname = name.replace('.','')
+        logging.info("Retrieving gridScan files. Task name: "+taskname)
         logging.info(' '.join(['Collecting', name]))
-        self.retrieveGridScan(name, batch='crab')
+        # Find crab output files (defaults to user's hadoop directory)
+        host = os.uname()[1]
+        if 'lxplus' in host: hadooppath = '/eos/user/{}/{}/EFT/Combine/{}/*/*'.format(os.getlogin()[0], os.getlogin(), taskname)
+        #if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(os.getlogin(), taskname)
+        elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}/*/*'.format(os.getlogin(), taskname)
+        else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
+        paths = glob.glob(hadooppath)
+        paths = [p for p in (chain.from_iterable(os.walk(path) for path in paths)) if 'log' not in p]
+        if not paths[0][2]:
+            logging.error("No files found in store!")
+            sys.exit()
+
+        # Make a temporary folder to hold the extracted root files
+        if not os.path.isdir(taskname+'tmp'):
+            sp.call(['mkdir',taskname+'tmp'])
+        else:
+            logging.error("Directory {}tmp/ already exists! Please rename this directory.".format(taskname))
+            return
+
+        def divide_chunks(farray, dfile=1000):
+            for i in range(0, len(farray), dfile):
+                yield farray[i:i+dfile]
+        # Extract the root files
+        print 'Extracting root files, this will take a few minutes'
+        tars = [tarfiles[0]+'/'+tarfile for tarfiles in paths for tarfile in tarfiles[2] if 'log' not in tarfile]
+        for tar in divide_chunks(tars, dfile=100):
+            process = [sp.Popen(['tar', '-xf', tarfile,'-C', taskname+'tmp'], stdout=sp.PIPE, stderr=sp.PIPE) for tarfile in tar]
+            for p in process:
+                p.wait()
+        '''
+        for tarfiles in paths:
+            for tarfile in tarfiles[2]:
+                if tarfile.endswith('.tar'):
+                    #print tarfiles[0]+'/'+tarfile
+                    sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
+        '''
+        haddargs = ['hadd', '-f', chunk[0].split('.POINT')[0], '.MultiDimFit_', str(ichunk), '.root', ' '.join(chunk)]
+        #haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
+        print haddargs
+        return
+        process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
+        with process.stdout,process.stderr:
+            self.log_subprocess_output(process.stdout,'info')
+            self.log_subprocess_output(process.stderr,'err')
+        process.wait()
+
+        # Remove the temporary directory and split root files
+        sp.call(['rm','-r',taskname+'tmp'])
 
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
@@ -471,7 +516,8 @@ class EFTFit(object):
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
             host = os.uname()[1]
-            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
+            if 'lxplus' in host: hadooppath = '/eos/user/{}/{}/EFT/Combine/{}/*/*'.format(os.getlogin()[0], os.getlogin(), taskname)
+            #if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
             elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
             else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
             paths = glob.glob(hadooppath)
@@ -522,7 +568,7 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0):
+    def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
         '''
         Submit jobs for GoodnessOfFit:
             doBest = False - Fix all NPs to 0, run toys with seed(s) speicfied below
@@ -537,9 +583,11 @@ class EFTFit(object):
             sig == 1
         if sig == 2:
             sig == 2
+        '''
         with open(limits) as jf:
             limits = json.load(jf)
         best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items()])
+        '''
         '''
         if not doBest:
             best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items() if key in self.wcs])
@@ -552,15 +600,19 @@ class EFTFit(object):
             args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo', 'fixed', '--cminPreScan','--cminDefaultMinimizerStrategy=0']
             args.extend(['-P', wc]) # Preserves constraints
         #args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','none','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        '''
         if wc is not None:
             # If a WC is specified, set it to it's requested value, and start all others at 0
             best = ','.join(['{}=0'.format(key) if key != wc else '{}={}'.format(key,limits[wc][sig]) for key,value in limits.items()])
+        '''
         if fixed:
-            args.extend(['--setParameters', '=0,'.join(self.wcs)]) # Set all WCs to their best fit values
+            args.extend(['--setParameters', ','.join(['{}=0'.format(key) for key in self.wcs])]) # Set all WCs to their best fit values
             args.extend(['--floatOtherPOIs', '1'])
+            if wc is not None:
+                wc_ranges = self.wc_ranges_njets
+                args.extend(['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])])
         else:
             args.extend(['--setParameters', best]) # Set all WCs to their best fit values
-        args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--dry-run'])
         args.extend(['-n',name])
         if doBest:
             if wc is not None:
@@ -576,46 +628,48 @@ class EFTFit(object):
         else:
             if wc is not None and not fixed:
                 args.extend(['--freezeParameters', 'rgx{.*},' + ','.join(['{}'.format(w) for w in self.wcs if w != wc])]) # Freeze all WCs except `wc`
-            else:
+            elif 'noSyst' not in workspace:
                 args.extend(['--freezeParameters', 'rgx{.*}']) # Freeze all NPs
             #args.extend(['--freezeParameters', 'rgx{.*}', '--fixedSignalStrength=1']) # Freeze all NPs
             #args.extend(['-t', '1', '-s', '123456', '--saveToys']) # 1 toys, default seed `123456`
             #args.extend(['-t', '1', '-s', '1:100:1', '--saveToys', '--toysNoSystematics']) # 5 toys, vary seed between 1-100
-            args.extend(['-t', '100', '-s', '123456:124455:1']) # 5 toys, vary seed between 1-100
+            args.extend(['-t', '100', '-s', '123456:133455:1', '--toysNoSystematics']) # 5 toys, vary seed between 1-100
             #args.extend(['-t', '5', '-s', '1:100:1', '--saveToys', '--toysNoSystematics']) # 5 toys, vary seed between 1-100 FIXME
         if not fixed:
             args.extend(['--fixedSignalStrength=1'])
         args.extend(['--trackParameters',','.join(self.wcs)])
-        wc_ranges = self.wc_ranges_njets
-        args.extend(['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])])
-        logging.info(' '.join(args))
 
-        # Run the combineTool.py command
-        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
-        with process.stdout,process.stderr:
-            self.log_subprocess_output(process.stdout,'info')
-            self.log_subprocess_output(process.stderr,'err')
-        process.wait()
+        if batch=='crab':
+            args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py'])
+            logging.info(' '.join(args))
+            # Run the combineTool.py command
+            process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+            with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
+            process.wait()
+        elif batch=='condor':
+            args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--dry-run'])
+            logging.info(' '.join(args))
+            if os.path.exists('condor{}'.format(name)):
+                logging.error("Directory condor{} already exists!".format(name))
+                logging.error("Aborting submission.")
+                #return
+            sp.call(['mkdir','condor{}'.format(name)])
+            sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+            sp.call(['sed','-i','s/cd .*EFTFit.*test/cd \/scratch365\/{}\//'.format(getpass.getuser()),'condor_{}.sh'.format(name.replace('.',''))]) # Run in /scratch365/{user}
+            logging.info('Now submitting condor jobs.')
+            condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
+            with condorsub.stdout,condorsub.stderr:
+                self.log_subprocess_output(condorsub.stdout,'info')
+                self.log_subprocess_output(condorsub.stderr,'err')
+            condorsub.wait()
 
-        if os.path.exists('condor{}'.format(name)):
-            logging.error("Directory condor{} already exists!".format(name))
-            logging.error("Aborting submission.")
-            #return
-        sp.call(['mkdir','condor{}'.format(name)])
-        sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-        sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
-        sp.call(['sed','-i','s/cd .*EFTFit.*test/cd \/scratch365\/{}\//'.format(getpass.getuser()),'condor_{}.sh'.format(name.replace('.',''))]) # Run in /scratch365/{user}
-        logging.info('Now submitting condor jobs.')
-        condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
-        with condorsub.stdout,condorsub.stderr:
-            self.log_subprocess_output(condorsub.stdout,'info')
-            self.log_subprocess_output(condorsub.stderr,'err')
-        condorsub.wait()
-
-    def submitEFTWilksWC(self, name='.012023.Wilks.NP', wc='ctp'):
-        wcs=['cQq81' 'ctq8' 'ctG' 'ctp' 'cpQM' 'cpt'] #TOP-22-00 linear dominant terms
+    def submitEFTWilksWC(self, name='.012023.Wilks.NP', wc='ctp', batch='condor', workspace='EFTWorkspace.root'):
+        wcs=['cQq81', 'ctq8', 'ctG', 'ctp', 'cpQM', 'cpt'] #TOP-22-00 linear dominant terms
         for wc in wcs:
-            self.submitEFTWilks(name+'.'+wc, wc=wc, sig=-2, doBest=False, fixed=True, workspace='EFTWorkspace.root')
+            self.submitEFTWilks(name+'.'+wc, wc=wc, sig=0, doBest=False, fixed=True, workspace=workspace, batch=batch)
         #print 'Submitting +/-2 sigma s:seaturated tests for {}'.format(wc)
         #self.submitEFTWilks(name+'.'+wc+'-2sigma', wc=wc, sig=-2, doBest=True)
         #self.submitEFTWilks(name+'.'+wc+'+2sigma', wc=wc, sig=+2, doBest=True)
@@ -873,6 +927,7 @@ class EFTFit(object):
             scan_wcs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             scan_wcs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
+            scan_wcs = [('cQQ1', 'ctt1'), ('cQt8', 'ctt1'), ('cQQ1', 'ctp'), ('cQt8', 'ctp'), ('cpQM', 'cpQ3')]
             if len(wcs) > 0:
                 scan_wcs = []
                 if isinstance(wcs, str): wcs = [wcs]

@@ -40,7 +40,7 @@ if [[ -z $1 ]]; then
   condor_submit collect.sub --batch-name "Collect DNN"
   rm collect.sub
   echo -e $message | mail -s "${USER} has started a DNN collection run" brent.yates@cern.ch,$USER@mail.cern.ch
-  exit
+  return 0
 fi
 
 dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
@@ -50,7 +50,7 @@ echo -e "\n"
 
 if [[ $1 -ge ${count} ]]; then
   echo "$1 is larger than the number of directories (${count})"
-  exit
+  return 1
 fi
 
 message="You may find ${USER}'s files in"
