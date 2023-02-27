@@ -65,6 +65,8 @@ class HistogramBuilder {
         TH1D* buildSummedHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0);
         TH1D* buildSummedDifferentialHistogram(TString name, TString title, std::vector<AnalysisCategory*> cats, std::unordered_map<std::string,std::string> bin_labels, RooFitResult* fr=0);
         TH1D* buildSummedDifferentialHistogram(TString name, TString title, PlotData pData, std::unordered_map<std::string,std::string> bin_labels);
+
+        TH1D* buildRatioHistogram(TString name, TString title, PlotData pData1, PlotData pData2, std::unordered_map<std::string,std::string> bin_labels);
         
         TH1D* buildExtremumHistogram(TString title, TString proc, std::vector<ExtremumPoint> pts, TString pt_type, std::unordered_map<std::string,std::string> bin_labels, std::unordered_map<std::string,Color_t> color_map);
         
@@ -347,16 +349,32 @@ TH1D* HistogramBuilder::buildSummedDifferentialHistogram(TString name, TString t
     
     int bin_idx = 0;
     // Fill and label thehistogram
-        for (uint i = 0; i < pSize; i++) {
-            bin_idx++;
-            TString bin_label = pData.SR_name[i];
-            if (bin_labels.count(bin_label.Data())) {
-                bin_label = bin_labels[bin_label.Data()];
-            }
-            h->GetXaxis()->SetBinLabel(bin_idx, bin_label);
-            h->SetBinContent(bin_idx, pData.sum[i]);
-            h->SetBinError(bin_idx, pData.err[i]);
+    for (uint i = 0; i < pSize; i++) {
+        bin_idx++;
+        TString bin_label = pData.SR_name[i];
+        if (bin_labels.count(bin_label.Data())) {
+            bin_label = bin_labels[bin_label.Data()];
         }
+        bin_label = TString::Format(" ");
+        h->GetXaxis()->SetBinLabel(bin_idx, bin_label);
+        h->SetBinContent(bin_idx, pData.sum[i]);
+        h->SetBinError(bin_idx, pData.err[i]);
+    }
+    return h;
+}
+
+TH1D* HistogramBuilder::buildRatioHistogram(TString name, TString title, PlotData pData1, PlotData pData2, std::unordered_map<std::string,std::string> bin_labels) {
+    int pSize = pData1.SR_name.size();
+    TH1D* h = new TH1D(name, title, pSize, 0.0, pSize); // Total number of bins = number of kin bins * number of the processes
+    int bin_idx = 0;
+    TString bin_label = TString::Format(" ");
+    for (uint i = 0; i < pSize; i++) {
+        bin_idx++;
+        double val1 = pData1.sum[i];
+        double val2 = pData2.sum[i];
+        h->SetBinContent(bin_idx, val1/val2);
+        h->GetXaxis()->SetBinLabel(bin_idx, bin_label);
+    }
     return h;
 }
 
@@ -390,9 +408,6 @@ TH1D* HistogramBuilder::buildExtremumHistogram(TString title, TString proc, std:
     if (color_map.count(proc.Data())) {
         h_clr = color_map[proc.Data()];
     }
-    // h->SetFillColor(h_clr);
-    // h->SetLineColor(h_clr);
-    // h->SetLineWidth(0);
 
     h->SetFillColor(h_clr);
     h->SetLineColor(kBlack);

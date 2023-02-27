@@ -72,7 +72,7 @@ RooFitResult* load_fitresult(TString fpath, TString fr_key, TFile* f) {
 
 void struct_maker(int SR_selector) {
     //TFile* ws_file = TFile::Open("/scratch365/kmohrman/forFurong/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys.root");
-    std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest23/";
+    std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/";
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
 
     TString fpath_workspace = TString::Format("%s%s", in_dir.c_str(), "wps.root");
@@ -86,9 +86,7 @@ void struct_maker(int SR_selector) {
         AnalysisCategory::index_mapping.push_back(half_int);
     }
     AnalysisCategory::roo_counter = 0;
-    bool do_postfit = false;
-    
-    //ws->allVars().Print("V");
+    bool do_postfit = false; // true: do postfit, false: do prefit
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub_2017/combinedcard.txt";  // hard-coded path for the datacard for now.
     TString fpath_datacard = TString::Format("%s%s", in_dir.c_str(), "combinedcard.txt");
@@ -113,13 +111,12 @@ void struct_maker(int SR_selector) {
     RooFitResult* postfit = nullptr;
     
     if (do_postfit) {
-        //postfit = load_fitresult(in_dir + "multidimfitPrep.root", FR_MDKEY, postfit_file);
         postfit = load_fitresult(in_dir + "multidimfit.root", FR_MDKEY, postfit_file);
         ws->saveSnapshot("postfit_i",postfit->floatParsInit(),kTRUE);
         ws->saveSnapshot("postfit_f",postfit->floatParsFinal(),kTRUE);
     }
     else {
-        prefit  = load_fitresult(in_dir + "prefit.root", FR_DIAGKEY, prefit_file);
+        prefit  = load_fitresult(in_dir + "prefit.root", FR_DIAGKEY, prefit_file);//"multidimfitNPonly.root", FR_MDKEY
         ws->saveSnapshot("prefit_i",prefit->floatParsInit(),kTRUE);
         ws->saveSnapshot("prefit_f",prefit->floatParsFinal(),kTRUE);        
     }
@@ -148,11 +145,6 @@ void struct_maker(int SR_selector) {
     std::string file_path_sum = TString::Format("%sSR_sum_%s/", out_dir.c_str(), folder_suffix.c_str()).Data();
     
     cout << "After loading:" << endl;
-    
-    //ws->var("cQQ1")->setVal(10.0);
-    //ws->var("cQei")->setVal(1.0);
-    //ws->var("cQl3i")->setVal(1.0);
-    
     ws->allVars().Print("V");
     
     for (int idx: SR_index) 
@@ -217,12 +209,19 @@ void struct_maker(int SR_selector) {
                 data_to_plot.data.push_back(ana_cat->getDataBin(idx));
                 data_to_plot.sum.push_back(ana_cat->getExpSumBin(idx));
                 data_to_plot.err.push_back(ana_cat->getExpSumErrorBin(idx, fr));
+
                 for (TString proc: ALL_PROCS) {
+                    // cout << "Getting per process yields for process " << proc << endl;
+
                     data_to_plot.procs[proc.Data()].push_back(ana_cat->getExpProcBin(proc, idx));
+                    //data_to_plot.procs_error[proc.Data()].push_back(ana_cat->getExpProcErrorBin(proc, idx, fr));
                 }
             }
         }
+
+        cout << "Writing data..." << endl;
         write_PlotData_to_file(data_to_plot, file_name);
+        cout << "Done writing data!" << endl;
         
         // Make PlotData struct of the merged categories (SRs) for the summary plots.
         cat_manager.mergeCategories(SR.Data(), mrg_groups, YIELD_TABLE_ORDER);
@@ -233,7 +232,7 @@ void struct_maker(int SR_selector) {
         PlotData sum_to_plot;
         for (AnalysisCategory* ana_cat: SRs_to_plot) {
             //cout << ana_cat->getName() << endl;
-            ana_cat->Print(fr);
+            //ana_cat->Print(fr);
             
             for (TString mrg_name: ALL_PROCS) {
                 ana_cat->mergeProcesses(mrg_name,mrg_name.Data());
@@ -246,9 +245,20 @@ void struct_maker(int SR_selector) {
                 sum_to_plot.err.push_back(ana_cat->getExpSumErrorBin(idx, fr));
                 for (TString proc: ALL_PROCS) {
                     sum_to_plot.procs[proc.Data()].push_back(ana_cat->getExpProcBin(proc, idx));
+                    //sum_to_plot.procs_error[proc.Data()].push_back(ana_cat->getExpProcErrorBin(proc, idx, fr));
                 }
             }
+        
+            // std::cout << ana_cat->getName() << " " << ana_cat->getData() <<  " " << ana_cat->getExpSum() <<  " " << ana_cat->getExpSumError() << " ";
+            // for (TString proc: ALL_PROCS) {
+            //     std::cout << ana_cat->getExpProc(proc) << " ";
+            // }
+            // for (TString proc: ALL_PROCS) {
+            //     std::cout << ana_cat->getExpProcError(proc, fr) << " ";
+            // }
+        
         }
+
         write_PlotData_to_file(sum_to_plot, file_name_sum);
     }    
     return;

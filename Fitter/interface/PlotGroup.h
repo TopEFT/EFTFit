@@ -21,19 +21,19 @@ typedef std::vector<TString> vTStr;
 
 std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     // For use with eps and ps save types
-    {"2lss_m","2\\ell\\text{ss}(-)"},
-    {"2lss_p","2\\ell\\text{ss}(+)"},
-    {"2lss_4t_m","2\\ell\\text{ss 4t}(-)"},
-    {"2lss_4t_p","2\\ell\\text{ss 4t}(+)"},
-    {"3l_p_offZ_1b","3\\ell 1\\text{b}(+)"},
-    {"3l_m_offZ_1b","3\\ell 1\\text{b}(-)"},
-    {"3l_p_offZ_2b","3\\ell 2\\text{b}(+)"},
-    {"3l_m_offZ_2b","3\\ell 2\\text{b}(-)"},
-    {"3l_onZ_1b","\\text{SFZ1b}"},
-    {"3l_onZ_2b","\\text{SFZ2b}"},
+    {"2lss_m","2\\ell\\text{ss 2b} (-)"},
+    {"2lss_p","2\\ell\\text{ss 2b} (+)"},
+    {"2lss_4t_m","2\\ell\\text{ss 3b} (-)"},
+    {"2lss_4t_p","2\\ell\\text{ss 3b} (+)"},
+    {"3l_p_offZ_1b","3\\ell \\text{ off-Z 1b}(+)"},
+    {"3l_m_offZ_1b","3\\ell \\text{ off-Z 1b}(-)"},
+    {"3l_p_offZ_2b","3\\ell \\text{ off-Z 2b}(+)"},
+    {"3l_m_offZ_2b","3\\ell \\text{ off-Z 2b}(-)"},
+    {"3l_onZ_1b","3\\ell \\text{ on-Z 1b}"},
+    {"3l_onZ_2b","3\\ell \\text{ on-Z 2b}"},
     {"4l","4\\ell"},
-    {"3l_onZ_2b_2j3j","\\text{SFZ2b} \\text{(2j3j)}"},
-    {"3l_onZ_2b_4j5j","\\text{SFZ2b} \\text{(4j5j)}"},
+    {"3l_onZ_2b_2j3j","3\\ell \\text{ on-Z 2b 2j3j}"},
+    {"3l_onZ_2b_4j5j","3\\ell \\text{ on-Z 2b 4j5j}"},
 
     {"2lss_p_4j"     ,"4"},
     {"2lss_p_5j"     ,"5"},
@@ -90,6 +90,23 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     {"4l_4j"         ,"4"},
 };
 
+std::unordered_map<std::string,std::string> BIN_LABEL_MAP_DIVIDED {
+    // Inserted a line breaker into the 3l onZ 2b categories
+    {"2lss_m","2\\ell\\text{ss 2b} (-)"},
+    {"2lss_p","2\\ell\\text{ss 2b} (+)"},
+    {"2lss_4t_m","2\\ell\\text{ss 3b} (-)"},
+    {"2lss_4t_p","2\\ell\\text{ss 3b} (+)"},
+    {"3l_p_offZ_1b","3\\ell \\text{ off-Z 1b}(+)"},
+    {"3l_m_offZ_1b","3\\ell \\text{ off-Z 1b}(-)"},
+    {"3l_p_offZ_2b","3\\ell \\text{ off-Z 2b}(+)"},
+    {"3l_m_offZ_2b","3\\ell \\text{ off-Z 2b}(-)"},
+    {"3l_onZ_1b","3\\ell \\text{ on-Z 1b}"},
+    {"3l_onZ_2b","3\\ell \\text{ on-Z 2b}"},
+    {"4l","4\\ell"},
+    {"3l_onZ_2b_2j3j","\\splitline{3\\ell \\text{ on-Z}}{\\text{2b 2j3j}}"},
+    {"3l_onZ_2b_4j5j","\\splitline{3\\ell \\text{ on-Z}}{\\text{2b 4j5j}}"},
+};
+
 struct PlotGroup {
     std::vector<std::string> gname;
     std::vector<int> gbins;
@@ -101,7 +118,6 @@ struct PlotGroup {
         gbins  = {};  // num of bins of each division
         gtxt1  = {};  // for the SRs
         gtxt2  = {};  // for the njet cats
-        //glatex = {};
     }
 };
 
@@ -145,7 +161,7 @@ PlotGroup SRRepartition(PlotData pData, PlotGroup pGroup, vTStr refSR = SR_list_
      int offset = 0;
      for (int i=0; i<refSR.size(); i++) {
         pGroup_repart.gname.push_back(refSR[i].Data());
-        pGroup_repart.gtxt1.push_back(BIN_LABEL_MAP[refSR[i].Data()]);
+        pGroup_repart.gtxt1.push_back(BIN_LABEL_MAP_DIVIDED[refSR[i].Data()]);
         
         int nchs = cat_groups[refSR[i].Data()].size();
         int nbs  = 0;

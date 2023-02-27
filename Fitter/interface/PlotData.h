@@ -30,20 +30,25 @@ vTStr YIELD_TABLE_ORDER {
     "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
+vTStr WC_list = {"ctW", "ctZ", "ctp", "cpQM", "ctG", "cbW", "cpQ3", 
+                 "cptb", "cpt", "cQl3i", "cQlMi", "cQei", "ctli", 
+                 "ctei", "ctlSi", "ctlTi", "cQq13", "cQq83", "cQq11", 
+                 "ctq1", "cQq81", "ctq8", "ctt1", "cQQ1", "cQt8", "cQt1"};
+
 vTStr SIG_PROCS {"ttlnu", "ttll", "ttH", "tllq", "tHq", "tttt"};
 
 vTStr BKGD_PROCS {"Diboson", "Triboson", "charge_flips", "fakes", "convs", "tWZ"};
 
 vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
 
-vTStr SR_list_2 = SR_list;
-//vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
+// vTStr SR_list_2 = SR_list; // Comment this line and uncomment the line below to split onZ 2b category.
+vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
 
 vTStr SR_list_3 = {"2lss_p", "2lss_m", "2lss_4t", "3l_offZ", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
 
 vTStr SR_list_2lss = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m"};
 
-std::vector<std::string> kin_list = {"l0eta"};//{"lj0pt", "ptz"};
+std::vector<std::string> kin_list = {"ht"};//{"lj0pt", "ptz"};
 
 std::unordered_map<std::string,std::vector<TString> > cat_groups {
     {"all",
@@ -239,6 +244,7 @@ struct PlotData {
     std::vector<double> sum;
     std::vector<double> err;
     std::unordered_map<std::string, std::vector<double> > procs;
+    std::unordered_map<std::string, std::vector<double> > procs_error;
     PlotData() {
         SR_name = {};
         data = {};
@@ -246,6 +252,9 @@ struct PlotData {
         err = {};
         for (TString proc: ALL_PROCS) {
             procs[proc.Data()] = {};
+        }
+        for (TString proc: ALL_PROCS) {
+            procs_error[proc.Data()] = {};
         }
     }
 };
@@ -286,8 +295,12 @@ void write_PlotData_to_file(PlotData pData, std::string filename) {
         ofs << pData.sum[i] << " ";
         ofs << pData.err[i] << " ";
         for (TString proc: ALL_PROCS) {
+            cout << "write process " << proc.Data() << ", the yield is " << pData.procs[proc.Data()][i] << endl;
             ofs << pData.procs[proc.Data()][i] << " ";
         }
+        // for (TString proc: ALL_PROCS) {
+        //     ofs << pData.procs_error[proc.Data()][i] << " ";
+        // }
         ofs << "\n";
     }
     ofs.close();
@@ -345,7 +358,7 @@ PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::ma
     PlotData pData_arranged;
     int j=0; // index of the arranged PlotData
     if (kin_map.empty()) {
-        for (TString SR: SR_list) {
+        for (TString SR: SR_list_2) {
             for (int i=0; i<pData.SR_name.size(); i++) {
                 bool sflag = false; // mark for finding a channel inside the current signal region being looped.
                 for (TString cat: cat_groups[SR.Data()]) {
@@ -361,7 +374,7 @@ PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::ma
     }
     j=0;
     for (std::string kin: kin_list) {
-        for (TString SR: SR_list) {
+        for (TString SR: SR_list_2) {
             for (int i=0; i<pData.SR_name.size(); i++) {
                 if (kin_list.size() > 1) { // it's redundent to check the kinematic if there is only one kinematic.
                     if (kin_map[pData.SR_name[i].Data()] != kin) continue;

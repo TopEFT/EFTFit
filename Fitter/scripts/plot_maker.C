@@ -58,12 +58,7 @@ TString save_type2 = "eps";
 TString save_type3 = "root";
 TString save_type4 = "pdf";
 
-/*
-vTStr PLOT_PROCS {
-    "fakes"
-};
-*/
-
+// Change to include the processes that you want to plot
 vTStr PLOT_PROCS {
     "charge_flips","fakes",
     "Diboson","Triboson",
@@ -145,10 +140,10 @@ std::unordered_map<std::string,std::string> YIELD_LABEL_MAP {
 };
 
 std::unordered_map<std::string,std::string> KIN_LABEL_MAP {
-    {"lj0pt", "p_{\\text{T}}(\\ell\\text{j0}) \\: \\text{(GeV)}"},
-    {"ptz",   "p_{\\text{T}}(\\text{Z}) \\: \\text{(GeV)}"},
-    {"ptbl",  "p_{\\text{T}}(\\text{b}\\ell) \\: \\text{(GeV)}"},
-    {"ht",    "H_{\\text{T}} \\: \\text{(GeV)}"},
+    {"lj0pt", "p_{\\text{T}}(\\ell\\text{j0}) \\: \\text{[100 GeV]}"},
+    {"ptz",   "p_{\\text{T}}(\\text{Z}) \\: \\text{[100 GeV]}"},
+    {"ptbl",  "p_{\\text{T}}(\\text{b}\\ell) \\: \\text{[GeV]}"},
+    {"ht",    "H_{\\text{T}} \\: \\text{[100 GeV]}"},
     {"l0eta", "\\eta(\\ell\\text{0})"},
 };
 
@@ -189,7 +184,7 @@ struct CMSTextStyle {
         cms_rel_posY = 0.100;
 
         lumi_text_2017 = "41.5 fb^{-1} (13 TeV)";
-        lumi_text_all = "137.4 fb^{-1} (13 TeV)";
+        lumi_text_all = "138 fb^{-1} (13 TeV)";
         lumi_align = 31;
         lumi_size = 0.60;
         lumi_font = 42;
@@ -230,7 +225,7 @@ TGraphErrors* get_error_differential_graph(TH1D* base_hist, PlotData pData) {
     }
 
     gr_err->SetLineColor(kWhite);
-    gr_err->SetFillStyle(3254);
+    gr_err->SetFillStyle(3154);
     gr_err->SetFillColor(kBlack);
     return gr_err;
 }
@@ -308,10 +303,9 @@ TGraphAsymmErrors* make_ratio_error_band(TH1D* h_data, TH1D* h_mc, TGraphErrors*
         gr_err->SetPointEYlow(i,err_lo);
         gr_err->SetPointEYhigh(i,err_up);
     }
-
     gr_err->SetLineColor(kWhite);
-    gr_err->SetFillStyle(1001);
-    gr_err->SetFillColor(kGray+1);
+    gr_err->SetFillStyle(3154);
+    gr_err->SetFillColor(kBlack);
 
     return gr_err;
 }
@@ -568,8 +562,8 @@ void make_external_legend(TLegend* leg, TString title) {
     save_name = TString::Format("%s%s.%s","plots/",title.Data(),save_type2.Data());
     ext_canv->Print(save_name,save_type2);
 
-    save_name = TString::Format("%s%s.%s","plots/",title.Data(),save_type4.Data());
-    ext_canv->Print(save_name,save_type4);
+    // save_name = TString::Format("%s%s.%s","plots/",title.Data(),save_type4.Data());
+    // ext_canv->Print(save_name,save_type4);
 
     delete ext_canv;
 }
@@ -605,23 +599,28 @@ void draw_lines(
         }
 
         x1 = (L_margin + bin_width*bin_idx) - bin_width*pGroup.gbins[idx]/2.0;
-        y1 = 0.055;
+        y1 = 0.050;
         TLatex* axis_latex;
                 
         UInt_t w,h;
-        
+
         if(pGroup.gtxt1.size()) {
             TLatex *TL1 = new TLatex(0,0,pGroup.gtxt1[idx].c_str());
             TL1->GetTextExtent(w,h,pGroup.gtxt1[idx].c_str());
-            axis_latex = new TLatex(x1 + w/10000., y1, pGroup.gtxt1[idx].c_str());
+            axis_latex = new TLatex(x1, y1, pGroup.gtxt1[idx].c_str());
         }
         if(pGroup.gtxt2.size()) {
             TLatex *TL2 = new TLatex(0,0,pGroup.gtxt2[idx].c_str());
             TL2->GetTextExtent(w,h,pGroup.gtxt2[idx].c_str());
-            axis_latex = new TLatex(x1 + w/10000., y1, pGroup.gtxt2[idx].c_str());
+            axis_latex = new TLatex(x1, y1, pGroup.gtxt2[idx].c_str());
         }
-        axis_latex->SetTextAlign(33); // right+top adjusted
         axis_latex->SetTextSize(text_size);
+        if(pGroup.gtxt1.size()) {
+            if(pGroup.gtxt1[idx].find("2j3j")!=-1 | pGroup.gtxt1[idx].find("4j5j")!=-1) {
+                axis_latex->SetTextSize(text_size*1.35); // Apply a 1.35 multiplier on the size for two-line categories 3l onZ 1b 2j3j and 4j5j
+            }
+        }
+        axis_latex->SetTextAlign(22); // center+center aligned
         axis_latex->SetTextFont(62);
         axis_latex->Draw();
     }
@@ -632,7 +631,7 @@ void draw_labels (
     PlotData pData,
     double L_margin,
     double R_margin,
-    double text_size = 0.04
+    double text_size = 0.05
 ) {
 
     if ((pData.SR_name.size()%labels.size()) != 0) {
@@ -646,20 +645,16 @@ void draw_labels (
         double x = L_margin + bin_width*idx;
         double y = 0.09;
         TString label = labels[idx%(labels.size())];
-        double x2 = x + (double(label.Length())/200) * 4./labels.size() * text_size/0.03; //shift the label by half of the length of the label text
 
-        //cout << idx%(labels.size()) << endl;
-        //cout << labels[idx%(labels.size())] << endl;
-        //cout << x2 << endl;
-
-        TLatex *label_latex = new TLatex(x2, y, label);
-        label_latex->SetTextAlign(33); // right+top adjusted
-        label_latex->SetTextSize(text_size * 4./labels.size());
-        label_latex->SetTextFont(42);
-        label_latex->Draw();
+        if (label.Index("-1") == TString::kNPOS) {
+            TLatex *label_latex = new TLatex(x, y, label);
+            label_latex->SetTextAlign(23); // middle+top adjusted
+            label_latex->SetTextSize(text_size);
+            label_latex->SetTextFont(42);
+            label_latex->Draw();
+        }
 
         if (idx && (idx%(labels.size()) == 0) ) {
-            //cout << "Drawing vertical line for " << idx << endl;
             double y1 = 0.35;
             double y2 = 0.93;
             TLine* line1 = new TLine(x,y1,x,y2);
@@ -710,9 +705,6 @@ void make_overlay_njet_plot(
     std::vector<TH1D*> proc_hists;
     TH1D* h_data = builder.buildDataDifferentialHistogram(title,pData,BIN_LABEL_MAP);
     h_data->SetLineWidth(1); // Try a thiner line for the full njet histogram PDFs
-    
-    //PLOT_PROCS = {"charge_flips","fakes","Diboson","Triboson","convs","ttH","ttll","ttlnu","tllq","tHq","tttt"}; // This is odd, why this vector imported from PlotData.h is empty?
-    //cout << "Adding processes....... " << PLOT_PROCS.size() << endl;
 
     for (TString proc_name: PLOT_PROCS) {
         if (debug) std::cout << "DEBUG: Getting process histogram for " << proc_name << std::endl;
@@ -770,8 +762,9 @@ void make_overlay_njet_plot(
         h_ratio->GetYaxis()->SetTitleSize(0.1);
         h_ratio->GetYaxis()->SetTitleOffset(0.25);
 
-        h_ratio_base->SetLineColor(kRed);
-        h_ratio_base->SetLineWidth(2);
+        h_ratio_base->SetLineColor(kBlack);
+        h_ratio_base->SetLineWidth(1);
+        h_ratio_base->SetLineStyle(3);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
         h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
@@ -869,18 +862,22 @@ void make_overlay_njet_plot(
     max_val = hs->GetMaximum();
     hmax = TMath::Max(max_val,hmax);
 
-    // for (TH1D* h: overlay_hists) {
-    //     max_bin = h->GetMaximumBin();
-    //     max_val = h->GetBinContent(max_bin);
-    //     hmax = TMath::Max(max_val,hmax);
-    // }
+    for (TH1D* h: overlay_hists) {
+        max_bin = h->GetMaximumBin();
+        max_val = h->GetBinContent(max_bin);
+        hmax = TMath::Max(max_val,hmax);
+    }
 
     if (incl_leg) {
         h_data->SetMaximum(hmax*1.5);
         hs->SetMaximum(hmax*1.5);
+
     } else {
         h_data->SetMaximum(hmax*1.01);
         hs->SetMaximum(hmax*1.01);
+        // Uncomment below to fix y-axis scale
+        // h_data->SetMaximum(600);
+        // hs->SetMaximum(600);
     }
 
     if (incl_ratio) {
@@ -896,7 +893,7 @@ void make_overlay_njet_plot(
     hs->Draw("hist");   // draws the stacked histogram
     // h_exp_sum->Draw("hist"); // draws the summed histogram (no process samples shown)
 
-    //h_exp_sum->Draw("same,e");
+    // h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
     extra_text.at(0)->Draw();
 
@@ -961,8 +958,8 @@ void make_overlay_njet_plot(
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type2.Data());
     c->Print(save_name,save_type2);
 
-    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
-    c->Print(save_name,save_type4);
+    // save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    // c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1087,8 +1084,9 @@ void make_overlay_sum_plot(
         h_ratio->GetYaxis()->SetTitleSize(0.1);
         h_ratio->GetYaxis()->SetTitleOffset(0.25);
 
-        h_ratio_base->SetLineColor(kRed);
-        h_ratio_base->SetLineWidth(2);
+        h_ratio_base->SetLineColor(kBlack);
+        h_ratio_base->SetLineWidth(1);
+        h_ratio_base->SetLineStyle(3);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
         h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
@@ -1258,7 +1256,7 @@ void make_overlay_sum_plot(
     }
 
     c->cd();
-    draw_lines(pData, pGroup, L_margin, R_margin, false, 0.025);
+    draw_lines(pData, pGroup, L_margin, R_margin, false, 0.015);
 
     TString save_format, save_name;
 
@@ -1277,8 +1275,8 @@ void make_overlay_sum_plot(
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type2.Data());
     c->Print(save_name,save_type2);
 
-    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
-    c->Print(save_name,save_type4);
+    // save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    // c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1405,8 +1403,9 @@ void make_overlay_mega_plot(
         h_ratio->GetYaxis()->SetTitleSize(0.1);
         h_ratio->GetYaxis()->SetTitleOffset(0.25);
 
-        h_ratio_base->SetLineColor(kRed);
-        h_ratio_base->SetLineWidth(2);
+        h_ratio_base->SetLineColor(kBlack);
+        h_ratio_base->SetLineWidth(1);
+        h_ratio_base->SetLineStyle(3);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
         h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
@@ -1581,7 +1580,7 @@ void make_overlay_mega_plot(
     }
 
     c->cd();
-    draw_lines(pData, pGroup, L_margin, R_margin);
+    draw_lines(pData, pGroup, L_margin, R_margin, true, 0.035);
 
     TString save_format, save_name;
 
@@ -1602,9 +1601,19 @@ void make_overlay_mega_plot(
 
     save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type3.Data());
     c->Print(save_name,save_type3);
+    TFile f(save_name, "recreate");
+    h_data->SetDirectory(&f);
+    h_data->Write();
+    for (TH1D* h: proc_hists) {
+        h->SetDirectory(&f);
+        h->Write();
+    }
+    h_exp_sum->SetDirectory(&f);
+    h_exp_sum->Write();
+    gr_err->Write();
 
-    save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
-    c->Print(save_name,save_type4);
+    // save_name = TString::Format("plots/overlayed_%s.%s",title.Data(),save_type4.Data());
+    // c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -1650,12 +1659,12 @@ void make_overlay_sub_plots(
     bool debug = false;
 
     std::unordered_map<std::string,std::vector<TString> > BINNING {
-        {"lj0pt", {"0","150","250","500"}},
-        {"ptz"  , {"0","200","300","400","500"}},
+        {"lj0pt", {"0","1.5","2.5","5"}},
+        {"ptz"  , {"0","2","3","4","5"}},
         {"ptbl" , {"0","100","200","400"}},
         {"bl0pt", {"0","100","200","400"}},
         //{"ht"   , {"0","300","500","800"}},
-        {"ht"   , {"0","100","200","300","400","600","800"}},
+        {"ht"   , {"0","1","2","3","4","6","8"}},
     };
 
     bool do_binning = true;
@@ -1687,6 +1696,8 @@ void make_overlay_sub_plots(
     PlotGroup repartGroup = SRRepartition(pData_arranged, megaGroup, refSR);
     std::vector<int> divider = repartGroup.gbins;
     std::vector<PlotData> pList = divide(pData_arranged, divider);
+
+    TLatex* latex_holder = new TLatex(*extra_text.at(0));
 
     for (PlotData pData: pList) {
 
@@ -1786,8 +1797,9 @@ void make_overlay_sub_plots(
         h_ratio->GetYaxis()->SetTitleSize(0.1);
         h_ratio->GetYaxis()->SetTitleOffset(0.25);
 
-        h_ratio_base->SetLineColor(kRed);
-        h_ratio_base->SetLineWidth(2);
+        h_ratio_base->SetLineColor(kBlack);
+        h_ratio_base->SetLineWidth(1);
+        h_ratio_base->SetLineStyle(3);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.2,1.8);
         // h_ratio_base->GetYaxis()->SetRangeUser(0.4,1.6);    // Range for nuisfit ratio as per ARC request
         h_ratio_base->GetYaxis()->SetRangeUser(0.0,2.0);    // Range for 35 bin njets histogram as per ARC request
@@ -1914,6 +1926,10 @@ void make_overlay_sub_plots(
     //h_exp_sum->Draw("same,e");
     if (incl_leg) leg->Draw();
 
+    extra_text.at(0)->SetX(0.5);
+    // cout << extra_text.at(0)->GetX() << endl;
+    // cout << extra_text.at(0)->GetY() << endl;
+    // latex_holder->Draw();
     extra_text.at(0)->Draw();
 
     h_data->Draw("same,e,p");
@@ -1937,6 +1953,7 @@ void make_overlay_sub_plots(
 
         h_ratio_base->Draw();
         h_ratio_band->Draw("same,2");
+        h_ratio_base->Draw("same");
         h_ratio->Draw("same,e,p");
 
         // The x-axis labeling is determined by the ratio plot
@@ -1961,6 +1978,25 @@ void make_overlay_sub_plots(
     if (incl_ratio) extra_text.at(1)->Draw();
     if (do_binning) draw_labels(BINNING[kin], pData, L_margin, R_margin);
 
+    TLatex testsign(0.99, 0.09, "\\times100");
+    testsign.SetTextSize(0.035);
+    if (kin == "ht") testsign.SetTextSize(0.0275);
+    testsign.SetTextAlign(33); // right+top
+    testsign.SetTextFont(42);
+    // if (kin == "lj0pt" | kin == "ptz" | kin == "ht") testsign.Draw();
+
+    // Drawing the channel label
+    std::string ch_label = BIN_LABEL_MAP[refSR[idx].Data()];
+    double ch_size = 0.045;
+    TLatex clabel(0.97, 0.92, ch_label.c_str());
+    clabel.SetTextSize(ch_size);
+    // if(ch_label.find("2j3j")!=-1 | ch_label.find("4j5j")!=-1) {
+    //     clabel.SetTextSize(ch_size*1.4);
+    // }
+    clabel.SetTextAlign(33); // right+top
+    clabel.SetTextFont(42);
+    clabel.Draw();
+
     TString save_format, save_name;
 
     // save_format = "png";
@@ -1978,8 +2014,8 @@ void make_overlay_sub_plots(
     save_name = TString::Format("plots/%s_%s.%s",title.Data(),refSR[idx].Data(),save_type2.Data());
     c->Print(save_name,save_type2);
 
-    save_name = TString::Format("plots/%s_%s.%s",title.Data(),refSR[idx].Data(),save_type4.Data());
-    c->Print(save_name,save_type4);
+    // save_name = TString::Format("plots/%s_%s.%s",title.Data(),refSR[idx].Data(),save_type4.Data());
+    // c->Print(save_name,save_type4);
 
     // Print an external legend
     if (ext_leg) {
@@ -2011,12 +2047,13 @@ void make_overlay_sub_plots(
     return;
 }
 
-void plot_maker() {
+// When calling this function, passing postfix as the arg. The postfix is used in the folder name like "SR_xxx" 
+void plot_maker(std::string postfix = "") {
     std::string in_dir  = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ht_7bins/combinedcard.txt";
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
     std::map<std::string,std::string> kin_map = {}; // map the name of channel to the name of kinamtic it uses
@@ -2036,9 +2073,9 @@ void plot_maker() {
     }
     
     // Plot options
-    bool incl_mega_plots = false;
-    bool incl_njet_plots = false;
-    bool incl_sub_plots  = true;
+    bool incl_mega_plots = true;
+    bool incl_njet_plots = true;
+    bool incl_sub_plots  = false;
     bool incl_sum_plots  = false;
     
     // Plot layout options
@@ -2050,14 +2087,20 @@ void plot_maker() {
     std::string year = "all";
     
     // Fit types
-    bool do_postfit = false;
+    bool do_postfit = true; // true: do postfit, false: do prefit
     std::string fit_type;
-    if (do_postfit) fit_type = "postfit_ht_7bins";
-    else fit_type = "prefit_ht_7bins";
+    if (do_postfit) fit_type = "postfit";
+    else fit_type = "prefit";
+    fit_type = fit_type + postfix;
 
     std::string fit_type2 = fit_type.substr(0, fit_type.find("_"));
     std::string kin_type = fit_type.substr(fit_type.find("_")+1, fit_type.find("_", fit_type.find("_")+1)-fit_type.find("_")-1);
+    // fit_type2 = "NP only fit";
 
+    if (postfix.find("step") != -1) {
+        int step = int(postfix.back())-48;
+        fit_type2 = TString::Format("%d%s", step-2, "\\sigma").Data();
+    }
     cout << fit_type2 << endl;
     cout << kin_type << endl;
     
@@ -2095,10 +2138,10 @@ void plot_maker() {
 
     double cms_txt_xpos = 0.12;
     double cms_txt_ypos = 0.94;
-    double extra_txt_xoffset  = 0.10;
+    double extra_txt_xoffset  = 0.13;
     double extra_txt_xoffset2 = 0.86;
     double extra_txt_yoffset  =-0.02;
-    double extra_txt_yoffset2 =-0.88;
+    double extra_txt_yoffset2 =-0.89;
     int extra_txt_align = 11;
 
     // specify prefit or postfit
@@ -2127,8 +2170,8 @@ void plot_maker() {
     CMSTextStyle cms_style;
     cms_style.cms_size  = 0.90;//0.85;
     cms_style.lumi_size = 0.80;
-    cms_style.extra_text = "";
-    cms_style.extra_text = "";//"Preliminary";
+    // cms_style.extra_text = "";
+    cms_style.extra_text = "Supplementary";//"Preliminary";
     cms_style.cms_frame_loc = 0;
     cms_style.extra_over_cms_text_size = 0.80;//0.76
 
@@ -2136,7 +2179,7 @@ void plot_maker() {
     supp_style.extra_text = "";//"Supplementary";
     
     if (incl_mega_plots) {
-        make_overlay_mega_plot(TString::Format("mega_%s_layout1", fit_type.c_str()), extra_text, pData_arranged, megaGroup,   incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
+        // make_overlay_mega_plot(TString::Format("mega_%s_layout1", fit_type.c_str()), extra_text, pData_arranged, megaGroup,   incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
         make_overlay_mega_plot(TString::Format("mega_%s_layout2", fit_type.c_str()), extra_text, pData_arranged, repartGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
     }
     
@@ -2144,6 +2187,7 @@ void plot_maker() {
         make_overlay_njet_plot(TString::Format("njet_%s", fit_type.c_str()), extra_text, pData_aggregated, njetGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style);
     }
     if (incl_sub_plots) {
+        // Change SR_list to SR_list_2 to split up 3l onZ 2b category.
         make_overlay_sub_plots(TString::Format("sub_%s", fit_type.c_str()), extra_text, pData_arranged, megaGroup, SR_list_2, incl_ratio, incl_leg, incl_ext_leg, cms_style, year); // Names of the files are hard-coded in the function.
     }
     if (incl_sum_plots) {
