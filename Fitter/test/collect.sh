@@ -12,14 +12,22 @@ echo -e "\n"
 
 eos="/eos/user/${USER:0:1}/${USER}/EFT/Combine"
 dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
+files=`find ${eos}/ -maxdepth 1 -name "*DNN*.root" -type f`
 message="This script will create:\n"
 count=0
+tmp_dirs=()
 for dir in $dirs
 do
+  # Skip any dirs with existing root file (already collected)
+  if [[ "${files[*]}" =~ "${dir}" ]]; then
+    continue
+  fi
+  tmp_dirs+=($dir)
   message+="$count: ${dir}.root\n"
   count=$(($count + 1))
 done
 echo -e $message
+dir=$tmp_dir
 
 if [[ -z $1 ]]; then
   echo "universe              = vanilla" > collect.sub
