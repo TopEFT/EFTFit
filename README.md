@@ -91,6 +91,15 @@ To make comparison plots (e.g. `njets` vs. `njets+ptbl`):
 python -i ../scripts/EFTPlotter.py
 plotter.BestScanPlot(basename_float='.081721.njet.Float', basename_freeze='.081821.njet.ptbl.Float', filename='_float_njet_ptbl', titles=['N_{jet} prof.', 'N_{jet}+p_{T}(b+l) prof.'], printFOM=True)
 ```
+## Steps for reproducing the "official" TOP-22-006 workspace:
+1. Combine the cards: Inside of the EFTFit repo, copy all of the cards and templates you want to make a worksapce for into the same directory (e.g. anything between just one category the full 43 categories) Then run `combineCards.py ttx_multileptons-*.txt > combinedcard.txt` to make a combined card. 
+1. Check whether or not your selected WC file that was made with your cards (called `selectedWCs.txt`) matches the one that is committed in the EFTFit repo. If it does not, replace the committed one with the one generated in your datacard maker run. Note, if you are using the "official" cards/templates, the selectedWC file matches committed version by construction. 
+1. Make the workspace: Run the following command. Note that this command can take up to about 8 hours (depending on where it is run). 
+
+    ```
+    text2workspace.py combinedcard.txt -o yourworkspacename.root -P EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative --X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms"
+    ```
+
 
 # Making impact plots
 Impact plots must be done in three stages:
