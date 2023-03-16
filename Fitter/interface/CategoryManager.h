@@ -10,7 +10,7 @@
 #include "RooWorkspace.h"
 #include "RooCatType.h"
 
-  #include "AnalysisCategory.h"
+#include "AnalysisCategory.h"
 #include "WSHelper.h"
 
 // Wrapper class to manage a collection of AnalysisCategory objects
