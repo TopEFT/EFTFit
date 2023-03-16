@@ -862,11 +862,11 @@ void make_overlay_njet_plot(
     max_val = hs->GetMaximum();
     hmax = TMath::Max(max_val,hmax);
 
-    for (TH1D* h: overlay_hists) {
-        max_bin = h->GetMaximumBin();
-        max_val = h->GetBinContent(max_bin);
-        hmax = TMath::Max(max_val,hmax);
-    }
+    // for (TH1D* h: overlay_hists) {
+    //     max_bin = h->GetMaximumBin();
+    //     max_val = h->GetBinContent(max_bin);
+    //     hmax = TMath::Max(max_val,hmax);
+    // }
 
     if (incl_leg) {
         h_data->SetMaximum(hmax*1.5);
@@ -2073,7 +2073,7 @@ void plot_maker(std::string postfix = "") {
     }
     
     // Plot options
-    bool incl_mega_plots = true;
+    bool incl_mega_plots = false;
     bool incl_njet_plots = true;
     bool incl_sub_plots  = false;
     bool incl_sum_plots  = false;
@@ -2087,7 +2087,7 @@ void plot_maker(std::string postfix = "") {
     std::string year = "all";
     
     // Fit types
-    bool do_postfit = true; // true: do postfit, false: do prefit
+    bool do_postfit = false; // true: do postfit, false: do prefit
     std::string fit_type;
     if (do_postfit) fit_type = "postfit";
     else fit_type = "prefit";
@@ -2114,7 +2114,7 @@ void plot_maker(std::string postfix = "") {
     
     
     PlotData pData_arranged = rearrange(pData, ch_map, kin_map);
-    PlotData pData_arranged2 = rearrange(pData, ch_map);
+    PlotData pData_arranged2 = rearrange(pData, ch_map, {}, SR_list);
     PlotData pData_aggregated = aggregateDifferential(pData_arranged2);
     
     cout << pData.SR_name.size() << endl;

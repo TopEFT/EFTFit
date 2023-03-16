@@ -354,11 +354,11 @@ void print_PlotData(PlotData pData) {
     cout << "\n" << endl;
 }
 
-PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::map<std::string,std::string> kin_map = {}) {
+PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::map<std::string,std::string> kin_map = {}, vTStr sr_list = SR_list_2) {
     PlotData pData_arranged;
     int j=0; // index of the arranged PlotData
     if (kin_map.empty()) {
-        for (TString SR: SR_list_2) {
+        for (TString SR: sr_list) {
             for (int i=0; i<pData.SR_name.size(); i++) {
                 bool sflag = false; // mark for finding a channel inside the current signal region being looped.
                 for (TString cat: cat_groups[SR.Data()]) {
@@ -374,7 +374,7 @@ PlotData rearrange(PlotData pData, std::map<std::string,TString> ch_map, std::ma
     }
     j=0;
     for (std::string kin: kin_list) {
-        for (TString SR: SR_list_2) {
+        for (TString SR: sr_list) {
             for (int i=0; i<pData.SR_name.size(); i++) {
                 if (kin_list.size() > 1) { // it's redundent to check the kinematic if there is only one kinematic.
                     if (kin_map[pData.SR_name[i].Data()] != kin) continue;

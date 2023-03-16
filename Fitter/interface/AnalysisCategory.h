@@ -422,7 +422,8 @@ double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
         RooAddition* Proc = this->getRooAdd(proc);
         double err(0.0);
         for (int idx=0; idx < this->index_mapping.size(); idx++) {
-        err += this->getExpProcErrorBin(proc, idx, fr);
+            err += this->getExpProcErrorBin(proc, idx, fr);
+        }
     }
     return 0.0;
 }
@@ -494,6 +495,9 @@ double AnalysisCategory::getDataBin(int bin) {
 
 // Return the expected bin yield for a specific process
 double AnalysisCategory::getExpProcBin(TString proc, int bin) {
+
+    time_point<Clock> procYieldBin_s0 = Clock::now();
+    
     if (this->hasProc(proc) && this->th1x) {
         double old_bin = this->th1x->getVal();
         this->th1x->setVal(this->index_mapping[bin]);
