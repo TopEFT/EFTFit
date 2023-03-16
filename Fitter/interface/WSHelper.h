@@ -5,15 +5,30 @@
 #include <set>
 #include <stdio.h>
 
+#include <vector>
+#include <set>
+#include <stdio.h>
+#include <utility>
+
+#include "TRegexp.h"
 #include "TString.h"
 #include "TIterator.h"
+#include "TObject.h"
+#include "TIterator.h"
+#include "TList.h"
 
 #include "RooWorkspace.h"
 #include "RooCategory.h"
+#include "RooDataSet.h"
 #include "RooFitResult.h"
 #include "RooProdPdf.h"
 #include "RooAddition.h"
 #include "RooRealVar.h"
+#include "RooArgSet.h"
+#include "RooAbsData.h"
+#include "RooAbsReal.h"
+#include "RooCatType.h"
+#include "RooStats/ModelConfig.h"
 
 // Helper class for working with and manipulating RooWorkspace objects
 class WSHelper {
@@ -21,6 +36,7 @@ class WSHelper {
         typedef std::vector<TString> vTStr;
         typedef std::pair<TString,double> pTStrDbl;
         TString n_exp_search_str = "n_exp_bin";
+        TString n_exp_search_str_pdf = "shape";        
     public:
         WSHelper();
         ~WSHelper();
@@ -57,6 +73,7 @@ class WSHelper {
         void printSnapshot(RooWorkspace* ws,TString name);
         std::vector<RooAddition*> toRooAdd(std::vector<RooAbsReal*> funcs);
         std::vector<TString> toCatStr(std::vector<RooCatType*> cats);
+        TString searchPdf(RooWorkspace* ws, TString name);
 
         // Define the templated member functions inline
 
@@ -136,6 +153,9 @@ class WSHelper {
             RooArgSet args;
             for (auto f: funcs) {
                 TString str = f->GetName();
+                
+                //std::cout << TString::Format("Merging process %s into %s...", str.Data(), merged_name.Data()) << std::endl;
+                
                 if (pats.size() != 0) {
                     bool add_it = mode;
                     for (auto pat: pats) {
@@ -238,7 +258,7 @@ std::vector<TString> WSHelper::getProcesses(RooWorkspace* ws) {
 }
 
 // Returns all type states for the specified category in the workspace
-std::vector<RooCatType*> WSHelper::getTypes(RooWorkspace* ws,TString name="CMS_channel") {
+std::vector<RooCatType*> WSHelper::getTypes(RooWorkspace* ws,TString name) {
     std::vector<RooCatType*> r;
     RooCategory* c = ws->cat(name);
     RooCatType* next = 0;
@@ -297,12 +317,7 @@ std::vector<RooAbsReal*> WSHelper::getExpCatFuncs(RooWorkspace* ws,std::vector<R
 }
 
 // Return specified ws pdf objects in a std::vector container
-std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws,
-    bool bkg_pdfs=0,
-    bool nuis_pdfs=0,
-    bool other_pdfs=0,//others
-    bool all_pdfs=0
-) {
+std::vector<RooAbsPdf*> WSHelper::getPdfs(RooWorkspace* ws, bool bkg_pdfs, bool nuis_pdfs, bool other_pdfs, bool all_pdfs) {
     // Note: All filter options result in mutually exlusive sets (only exception being the 'all' option)
     // 0 0 0 1 --> all pdfs
     // 0 0 1 0 --> other pdfs
@@ -396,8 +411,8 @@ double WSHelper::sumObsDataByCats(
 std::vector<RooAddition*> WSHelper::getSummedCats(
     std::vector<RooAbsReal*> funcs,
     std::vector<RooCatType*> cat_types,
-    vTStr procs={},
-    TString override=""
+    vTStr procs,
+    TString override
 ) {
     std::vector<RooAddition*> r;
     for (auto c: cat_types) {
@@ -500,6 +515,23 @@ std::vector<TString> WSHelper::toCatStr(std::vector<RooCatType*> cats) {
     std::vector<TString> r;
     for (auto c: cats) r.push_back(c->GetName());
     return r;
+}
+
+TString WSHelper::searchPdf(RooWorkspace* ws, TString name) {
+    RooArgSet Pdfs = ws->allPdfs();
+    RooFIter it = Pdfs.fwdIterator();
+    RooAbsArg* next = 0;
+    while ((next=it.next())) {
+        TString str = next->GetName();
+        if (!str.BeginsWith(this->n_exp_search_str_pdf)) {
+            continue;
+        }
+        if (str.Contains(name)) {
+            return ws->function(str)->GetName();
+        }
+    }
+    std::cout << TString::Format("[WARNING] Unable to find PDF %s",name.Data()) << std::endl;
+    throw;
 }
 
 void WSHelper::printSnapshot(RooWorkspace* ws, TString name) {

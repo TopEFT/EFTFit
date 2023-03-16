@@ -1,9 +1,12 @@
 #ifndef PLOTMAKER_H_
 #define PLOTMAKER_H_
 
+#include <iomanip>
+
 #include "TString.h"
 #include "TList.h"
 #include "THStack.h"
+#include "TH2D.h"
 
 #include "RooWorkspace.h"
 #include "RooCategory.h"
@@ -151,7 +154,7 @@ PlotMaker::PlotMaker(RooWorkspace* ws,TString out_dir,TString ftype) {
 
 PlotMaker::~PlotMaker() {}
 
-void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr procs,TString fname,TString plt_title="") {
+void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr procs,TString fname,TString plt_title) {
     gStyle->SetOptStat(0);
     gStyle->SetPalette(1,0);
 
@@ -229,7 +232,7 @@ void PlotMaker::makeYieldsPlot(std::vector<pTStrDbl> data,vRooAdd yields,vTStr p
     }
 }
 
-void PlotMaker::makeStackPlot(TString fname,TH1D* h_data,TH1* ratio,TH1* r_1sig,TH1* r_2sig, TH1* h_err, TH1* h_stats,std::vector<TH1*> hists,std::vector<PInfo> partitions={}) {
+void PlotMaker::makeStackPlot(TString fname,TH1D* h_data,TH1* ratio,TH1* r_1sig,TH1* r_2sig, TH1* h_err, TH1* h_stats,std::vector<TH1*> hists,std::vector<PInfo> partitions) {
     bool include_ratio = true;
     if (!ratio || this->noratio || this->nodata) {
         include_ratio = false;
@@ -662,7 +665,7 @@ void PlotMaker::labelAxis(TAxis* axis, vTStr cats, vTStr reps) {
 }
 
 // Basic settings for a canvas to display a histogram with a ratio plot
-void PlotMaker::setupCanvas(TCanvas* canv,bool inc_ratio=true) {
+void PlotMaker::setupCanvas(TCanvas* canv,bool inc_ratio) {
     gStyle->SetPadBorderMode(0);
     gStyle->SetFrameBorderMode(0);
     Float_t small = 1.e-5;

@@ -19,9 +19,6 @@
 using Clock = std::chrono::steady_clock;
 using std::chrono::time_point;
 
-std::vector<TString> AUTOSTATS_PROCS {"fakes"};
-//std::vector<TString> AUTOSTATS_PROCS {"Diboson", "Triboson", "charge_flips", "fakes", "convs"};
-
 // >VERY< useful convenience class for extracting expected and observed yields of some category from
 // a given RooWorkspace.
 //  * Has methods for creating new categories that are the merger of other categories from the RooWorkspace
@@ -79,7 +76,6 @@ class AnalysisCategory {
         
         void setProcOrder(std::vector<TString> order);
         void mergeProcesses(TRegexp rgx,TString new_name);
-        void mergeProcessesByWC(TRegexp rgx,TString new_name);
         void mergeAllProcesses();  // Set allProcs to the merged object 
         void mergeAllUnusedProcesses();
         void Print(RooFitResult* fr=0);
@@ -122,8 +118,6 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
     TString search_proc("_proc_");
     TString search_channel("n_exp_bin");
     this->proc_width = 0;
-    int idx_wrapper = 0; // index of a process used in constructing the CMSHistFuncWrapper objects for auto MC stats
-
     for (RooAddition* ra: this->helper.toRooAdd(exp_cat)) {
     
         time_point<Clock> s0_proc = Clock::now();
@@ -131,11 +125,13 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         RooAddition* proc_yield = nullptr;
         TString name(ra->GetName());
         
+        
         TString match = TString::Format("charge_flip");
-        // if (name.Contains(match)) {
-        //     cout << "Skip process: " << name << endl;
-        //     continue;
-        // }
+        if (name.Contains(match)) {
+            cout << "Skip process: " << name << endl;
+            continue;
+        }
+        
         
         // Starting index for the process name, e.g. "ttll_quad_mixed_ctp_cpt"
         Ssiz_t idx_proc(name.Index(search_proc));
@@ -157,29 +153,25 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
         TString name_pdfbkg  = TString::Format("shapeBkg_%s_%s_morph",name_ch.Data(),name_proc.Data());
         TString name_pdfbkg2 = TString::Format("shapeBkg_%s_%s_rebinPdf",name_proc.Data(),name_ch.Data());
 
-        TString name_pdf_found = "";
-        std::vector <TString> lst_name_pdf = {name_pdf, name_pdf2, name_pdfbkg, name_pdfbkg2};
-
-        for (TString n: lst_name_pdf) {
-            if (ws->function(n)) {
-                name_pdf_found = n;
-            }
+        RooAbsReal* roo_pdf = ws->function(name_pdf);
+        if (roo_pdf == nullptr) {
+            // Let's try again looking for a matching background shape
+            //std::cout << TString::Format("[WARNING] Unable to find PDF %s for process %s, looking for %s instead", name_pdf.Data(), name.Data(), name_pdf2.Data()) << std::endl;
+            roo_pdf = ws->function(name_pdfbkg);
         }
-
-        bool do_wrapper = false;
-        for (TString auto_procs: AUTOSTATS_PROCS) {
-            if (name.Contains(auto_procs)) {
-                do_wrapper = true;
-            }
+        if (roo_pdf == nullptr) {
+            // Let's try again looking for a matching background shape
+            roo_pdf = ws->function(name_pdf2);
         }
-
-        if (name_pdf_found.Length() == 0) {
+        if (roo_pdf == nullptr) {
+            roo_pdf = ws->function(name_pdfbkg2);
+        }
+        if (roo_pdf == nullptr) {
             // Now we really couldn't find the shape PDF
             std::cout << TString::Format("[WARNING] Unable to find PDF for process %s, ignoring this process", name.Data()) << std::endl;
             continue;
             proc_yield = ra;    // Won't have any shape information, i.e. won't depend on th1x
-        }
-
+        } 
         else {
             RooArgSet set_proc;
             RooArgSet set_pdf;
@@ -190,33 +182,10 @@ AnalysisCategory::AnalysisCategory(TString category, RooWorkspace* ws) {
                 set_proc.add(*ra_flips);
             }
             */
-
-            RooAbsReal* roo_pdf;
-            TString name_wrapper = TString::Format("%s_%s", name_pdf_found.Data(), "wrapper");
-            if (ws->function(name_wrapper)) {
-                roo_pdf = ws->function(name_wrapper);
-            }
-            else if (do_wrapper) {
-                std::cout << "constructing wrapper " << name_wrapper << " for the process " << name << std::endl;
-                RooRealVar* x = (RooRealVar*)ws->var("CMS_th1x");
-                CMSHistFunc* pdf = (CMSHistFunc*)ws->function(name_pdf_found);
-                TString name_prop = TString::Format("%s%s", "prop_bin", name_ch.Data()); //construct the name of the CMSErrorPropagator object
-                CMSHistErrorPropagator* prop = (CMSHistErrorPropagator*) ws->function(name_prop);
-                if (prop == nullptr) {
-                    std::cout << "[ERROR]Propagator " << name_prop << " not found for " << name_ch << std::endl;
-                    throw;
-                }
-                roo_pdf = new CMSHistFuncWrapper(name_wrapper, name_wrapper, *x, *pdf, *prop, idx_wrapper);
-            }
-            else {
-                roo_pdf = ws->function(name_pdf_found);
-            }
-            
             set_proc.add(*ra);
             set_pdf.add(*roo_pdf);
             proc_yield = new RooAddition(name_ch + name_proc, name, set_proc, set_pdf);
             this->roo_counter++;
-            idx_wrapper++;
         }
 
         this->exp_proc[name_proc.Data()] = proc_yield;
@@ -254,6 +223,13 @@ AnalysisCategory::AnalysisCategory(TString category, std::vector<AnalysisCategor
 //  of the fact that if we tried to flip the order of the ctor delegation by using a
 //  'mergeInit()' method that takes a vector of ptrs instead, it all fails horribly!
 AnalysisCategory::AnalysisCategory(TString category, std::vector<AnalysisCategory*> others) {
+    /*
+    std::vector<AnalysisCategory> vec;
+    for (AnalysisCategory* a: others) {
+        vec.push_back(*a);
+        cout << "pushing back "<< a->getName() << "..." << endl;
+    }
+    */
     this->mergeInit(category, others);
 }
 
@@ -271,6 +247,7 @@ AnalysisCategory::~AnalysisCategory() {
         this->roo_counter--;
     }
     
+
     if (this->allProcs) {
         delete this->allProcs;
         this->roo_counter--;
@@ -402,11 +379,6 @@ double AnalysisCategory::getExpProc(TString proc) {
         if (Proc->dependsOn(*(this->th1x))) {
             double sum(0.0);
             for (int idx=0; idx < this->index_mapping.size(); idx++) {
-                if (idx) {
-                    if (!bool(this->getExpProcBin(proc, idx) - this->getExpProcBin(proc, idx-1))) {
-                        continue;
-                    }
-                }
                 sum += this->getExpProcBin(proc, idx);
             }
         return sum;
@@ -420,10 +392,23 @@ double AnalysisCategory::getExpProc(TString proc) {
 double AnalysisCategory::getExpProcError(TString proc, RooFitResult* fr) {
     if (this->hasProc(proc) && fr) {
         RooAddition* Proc = this->getRooAdd(proc);
-        double err(0.0);
-        for (int idx=0; idx < this->index_mapping.size(); idx++) {
-            err += this->getExpProcErrorBin(proc, idx, fr);
+        /*
+        if (this->th1x) {
+            if (Proc->dependsOn(*(this->th1x))) {
+        */
+                double err(0.0);
+                for (int idx=0; idx < this->index_mapping.size(); idx++) {
+                    err += this->getExpProcErrorBin(proc, idx, fr);
+
+                    //cout << proc.Data() << " accumulated error: " << err << " at bin " << idx << endl;
+
+                }
+                return err;
+        /*
+            }
         }
+        return Proc->getPropagatedError(*fr);
+        */
     }
     return 0.0;
 }
@@ -453,6 +438,10 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
             double duration = findDuration(sumError_s0);
             //cout << "Find expected sum error of " << this->getName().Data() << " takes " << duration << "s (inclusive)" << endl;
         }
+
+
+        std::cout << err << std::endl;
+
         return err;
     }
     err = getExpSumErrorBin(0, fr);
@@ -461,6 +450,9 @@ double AnalysisCategory::getExpSumError(RooFitResult* fr) {
 
 // Get bin content for data
 double AnalysisCategory::getDataBin(int bin) {
+
+    time_point<Clock> dataBin_s0 = Clock::now();
+
     RooDataSet* obj_data;
     if (this->use_asimov) {
         obj_data = this->asimov_data;
@@ -490,6 +482,14 @@ double AnalysisCategory::getDataBin(int bin) {
             throw;
         }
     }
+    
+    /*
+    if (this->DEBUG) {
+        double duration = findDuration(dataBin_s0);
+        cout << "Find data at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+    }
+    */
+    
     return data_bin;
 }
 
@@ -497,17 +497,19 @@ double AnalysisCategory::getDataBin(int bin) {
 double AnalysisCategory::getExpProcBin(TString proc, int bin) {
 
     time_point<Clock> procYieldBin_s0 = Clock::now();
-    
+
     if (this->hasProc(proc) && this->th1x) {
         double old_bin = this->th1x->getVal();
         this->th1x->setVal(this->index_mapping[bin]);
         double exp_yield = this->getRooAdd(proc)->getVal();
         this->th1x->setVal(old_bin);
         
+        /*
         if (this->DEBUG) {
             double duration = findDuration(procYieldBin_s0);
             cout << "Find expected yield for " << proc.Data() << " at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
         }
+        */
         return exp_yield;
     }
     return 0.0;
@@ -527,7 +529,11 @@ double AnalysisCategory::getExpProcErrorBin(TString proc, int bin, RooFitResult*
         
         if (this->DEBUG) {
             double duration = findDuration(procErrorBin_s0);
+            //cout << "Find expected error for " << proc.Data() << " at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
         }
+
+        //cout << proc.Data() << " error: " << exp_error << " at bin " << bin << endl;
+        
         return exp_error;
     }
     return 0.0;
@@ -543,11 +549,19 @@ double AnalysisCategory::getExpSumBin(int bin) {
     this->th1x->setVal(this->index_mapping[bin]);
     double sum = this->allProcs->getVal();
     this->th1x->setVal(old_bin);
-
+    /*
+    double sum(0.0);
+    for (TString p: this->getProcs()) {
+        sum += this->getExpProcBin(p, bin);
+    }
+    return sum;
+    */
+    /*
     if (this->DEBUG) {
         double duration = findDuration(sumYieldBin_s0);
         cout << "Find expected sum yield at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
     }
+    */
     
     return sum;
 }
@@ -562,12 +576,15 @@ double AnalysisCategory::getExpSumErrorBin(int bin, RooFitResult* fr) {
     this->mergeAllUnusedProcesses();
     double old_bin = this->th1x->getVal();
     this->th1x->setVal(this->index_mapping[bin]);
-    double err = this->allUnusedProcs->getPropagatedError(*fr);
+    /*
+    double duration0 = findDuration(sumErrorBin_s0);
+    cout << "Right before find expected sum error at bin " << bin << " of " << this->getName().Data() << ", it takes " << duration0 << "s" << endl;
+    */
+    double err = this->allProcs->getPropagatedError(*fr);
     this->th1x->setVal(old_bin);
-
     if (this->DEBUG) {
         double duration = findDuration(sumErrorBin_s0);
-        cout << "Find expected sum error at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
+        //cout << "Find expected sum error at bin " << bin << " of " << this->getName().Data() << " takes " << duration << "s" << endl;
     }
     
     return err;
@@ -620,44 +637,7 @@ void AnalysisCategory::mergeProcesses(TRegexp rgx, TString new_name) {
     this->roo_counter++;
     this->exp_proc[new_name.Data()] = merged_process;
     this->proc_order = new_order;
-}
-
-void AnalysisCategory::mergeProcessesByWC(TRegexp rgx, TString new_name) {
-    std::vector<TString> wc_lst {
-        "ctW", "ctZ", "cQQ1", "cQt8", "cQt1",
-        "ctp", "cpQM", "ctG", "cbW", "cpQ3", "cptb", "cpt", 
-        "cQl3i", "cQlMi", "cQei", "ctli", "ctei", "ctlSi", "ctlTi", 
-        "cQq13", "cQq83", "cQq11", "ctq1", "cQq81", "ctq8", "ctt1", 
-    };
-
-    std::vector<RooAddition*> procs_to_merge;
-    std::vector<TString> new_order; // We need to overwrite proc_order with only the objects that we are going to keep
-    this->proc_width = 0;   // Reset the width measure
-    for (TString name: this->getProcs()) {
-        RooAddition* ra = this->getRooAdd(name);
-        Ssiz_t len = name.Length();
-        bool chk;
-        if (new_name == "sm" | new_name == "mixed") chk = (rgx.Index(name,&len) > -1);
-        else {
-            TRegexp rgx_mixed = "mixed";
-            chk = (rgx_mixed.Index(name,&len) == -1) & (rgx.Index(name,&len) > -1); // When search for a WC term, make sure it's not a mixed term AND it contains the name of that WC.
-        }
-        if (chk) {
-            procs_to_merge.push_back(ra);
-            
-        } else {
-            new_order.push_back(name);
-            this->proc_width = std::max(this->proc_width,name.Length());
-        }
-    }
-    new_order.push_back(new_name);
-    this->proc_width = std::max(this->proc_width,new_name.Length());
-
-    RooAddition* merged_process = this->helper.merge(procs_to_merge,new_name);
-    this->roo_counter++;
-    this->exp_proc[new_name.Data()] = merged_process;
-    this->proc_order = new_order;
-}
+} 
 
 void AnalysisCategory::mergeAllProcesses() {
     if (this->allProcs) return;
@@ -690,11 +670,17 @@ void AnalysisCategory::Print(RooFitResult* fr) {
 
     std::cout << "Category: " << this->getName() << std::endl;
     std::cout << TString::Format("%*s: %*.1f",pwidth,"data",dwidth,this->getData()) << std::endl;
-    for (TString p: this->proc_unused) {
+    for (TString p: this->proc_order) {
     
         TString sm = TString::Format("sm");
-        TString cf = TString::Format("cQQ1");
-        if (!p.Contains(cf)) continue;
+        TString cf = TString::Format("charge_flip");
+        //if (!p.Contains(sm)) continue;
+        /*
+        if (p.Contains(cf)) {
+            cout << "Skip process: " << p << endl;
+            continue;
+        }
+        */
         val = this->getExpProc(p);
         //if (val < 0.1) continue;
         if (fr) {
@@ -702,7 +688,7 @@ void AnalysisCategory::Print(RooFitResult* fr) {
         } else {
             err = 0.0;
         }
-        //if ((val < 0.1) | (err < 0.1)) continue;
+        if ((val < 0.1) & (err < 0.1)) continue;
         frmt = TString::Format("%*.1f +/- %.1f",dwidth,val,err);
         std::cout << TString::Format("%*s: %s",pwidth,p.Data(),frmt.Data()) << std::endl;
     }
