@@ -42,6 +42,7 @@ This package is designed to be used with the CombineHarvester fork. This might c
 
 ```
 git clone git@github.com:cms-analysis/CombineHarvester.git
+cd CombineHarvester
 git checkout 128e41eb
 scram b -j8
 ```
