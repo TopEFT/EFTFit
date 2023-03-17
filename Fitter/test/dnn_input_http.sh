@@ -54,6 +54,7 @@ if [[ ! -d $CMSSW_BASE/src/CombineHarvester ]]; then
   echo "Installing CombineHarvester"
   git clone https://github.com/cms-analysis/CombineHarvester.git
   cd CombineHarvester
+  git checkout 128e41eb
   scram b -j8
   cd -
 fi
