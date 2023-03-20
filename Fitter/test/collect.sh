@@ -49,6 +49,7 @@ if [[ -z $1 ]]; then
   rm collect.sub
   echo -e $message | mail -s "${USER} has started a DNN collection run" brent.yates@cern.ch,$USER@mail.cern.ch
   return 0
+  exit
 fi
 
 dirs=`find ${eos}/ -maxdepth 1 -name "*DNN*" -type d`
