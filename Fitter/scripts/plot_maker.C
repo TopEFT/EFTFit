@@ -2053,7 +2053,7 @@ void plot_maker(std::string postfix = "") {
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest24/combinedcard.txt";
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
     std::map<std::string,std::string> kin_map = {}; // map the name of channel to the name of kinamtic it uses
