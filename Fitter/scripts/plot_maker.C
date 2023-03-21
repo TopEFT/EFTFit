@@ -2053,7 +2053,7 @@ void plot_maker(std::string postfix = "") {
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/combinedcard.txt";
+    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest24/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
     std::map<std::string,std::string> kin_map = {}; // map the name of channel to the name of kinamtic it uses
@@ -2073,10 +2073,10 @@ void plot_maker(std::string postfix = "") {
     }
     
     // Plot options
-    bool incl_mega_plots = false;
+    bool incl_mega_plots = true;
     bool incl_njet_plots = true;
-    bool incl_sub_plots  = false;
-    bool incl_sum_plots  = false;
+    bool incl_sub_plots  = true;
+    bool incl_sum_plots  = true;
     
     // Plot layout options
     bool incl_ratio = true;
@@ -2087,7 +2087,7 @@ void plot_maker(std::string postfix = "") {
     std::string year = "all";
     
     // Fit types
-    bool do_postfit = false; // true: do postfit, false: do prefit
+    bool do_postfit = true; // true: do postfit, false: do prefit
     std::string fit_type;
     if (do_postfit) fit_type = "postfit";
     else fit_type = "prefit";
@@ -2167,31 +2167,31 @@ void plot_maker(std::string postfix = "") {
     extra_text.push_back(latex);
     extra_text.push_back(latex2);
 
-    CMSTextStyle cms_style;
-    cms_style.cms_size  = 0.90;//0.85;
-    cms_style.lumi_size = 0.80;
+    CMSTextStyle cms_style_pre;
+    cms_style_pre.cms_size  = 0.90;//0.85;
+    cms_style_pre.lumi_size = 0.80;
     // cms_style.extra_text = "";
-    cms_style.extra_text = "Supplementary";//"Preliminary";
-    cms_style.cms_frame_loc = 0;
-    cms_style.extra_over_cms_text_size = 0.80;//0.76
+    cms_style_pre.extra_text = "Preliminary";
+    cms_style_pre.cms_frame_loc = 0;
+    cms_style_pre.extra_over_cms_text_size = 0.80;//0.76
 
-    CMSTextStyle supp_style(cms_style);
-    supp_style.extra_text = "";//"Supplementary";
+    CMSTextStyle cms_style_supp(cms_style_pre);
+    cms_style_supp.extra_text = "Supplementary";
     
     if (incl_mega_plots) {
         // make_overlay_mega_plot(TString::Format("mega_%s_layout1", fit_type.c_str()), extra_text, pData_arranged, megaGroup,   incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
-        make_overlay_mega_plot(TString::Format("mega_%s_layout2", fit_type.c_str()), extra_text, pData_arranged, repartGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style, "", true);
+        make_overlay_mega_plot(TString::Format("mega_%s_layout2", fit_type.c_str()), extra_text, pData_arranged, repartGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style_pre, "", true);
     }
     
     if (incl_njet_plots) {
-        make_overlay_njet_plot(TString::Format("njet_%s", fit_type.c_str()), extra_text, pData_aggregated, njetGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style);
+        make_overlay_njet_plot(TString::Format("njet_%s", fit_type.c_str()), extra_text, pData_aggregated, njetGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style_supp);
     }
     if (incl_sub_plots) {
         // Change SR_list to SR_list_2 to split up 3l onZ 2b category.
-        make_overlay_sub_plots(TString::Format("sub_%s", fit_type.c_str()), extra_text, pData_arranged, megaGroup, SR_list_2, incl_ratio, incl_leg, incl_ext_leg, cms_style, year); // Names of the files are hard-coded in the function.
+        make_overlay_sub_plots(TString::Format("sub_%s", fit_type.c_str()), extra_text, pData_arranged, megaGroup, SR_list_2, incl_ratio, incl_leg, incl_ext_leg, cms_style_pre, year); // Names of the files are hard-coded in the function.
     }
     if (incl_sum_plots) {
-        make_overlay_sum_plot(TString::Format("sum_%s", fit_type.c_str()), extra_text, pSum_aggregated, sumGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style);
+        make_overlay_sum_plot(TString::Format("sum_%s", fit_type.c_str()), extra_text, pSum_aggregated, sumGroup, incl_ratio, incl_leg, incl_ext_leg, cms_style_pre);
     }
     return;
 }
