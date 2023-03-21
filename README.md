@@ -99,7 +99,7 @@ plotter.BestScanPlot(basename_float='.081721.njet.Float', basename_freeze='.0818
 1. Make the workspace: Run the following command. Note that this command can take up to about 8 hours (depending on where it is run). 
 
     ```
-    text2workspace.py combinedcard.txt -o yourworkspacename.root -P EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative --X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms"
+    text2workspace.py combinedcard.txt -o yourworkspacename.root -P EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative --X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms
     ```
 
 
