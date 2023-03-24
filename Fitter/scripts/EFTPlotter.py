@@ -1024,7 +1024,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
