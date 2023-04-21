@@ -1363,6 +1363,7 @@ class EFTFit(object):
             job_dir = 'unblind'
         os.system(job_dir)
         if not wcs: wcs = self.wcs
+        user = os.getlogin()
         for wc in wcs:
             print 'Submitting', wc
             target = 'condor_%s.sh' % wc
@@ -1370,10 +1371,10 @@ class EFTFit(object):
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
             condorFile.write('  combine -M MultiDimFit -n _initialFit_%s%s --algo singles --redefineSignalPOIs %s --robustFit 1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wc, wc, wc, workspace))
@@ -1410,29 +1411,20 @@ class EFTFit(object):
             job_dir = 'unblind'
         os.system('cd {}'.format(job_dir))
         if not wcs: wcs = self.wcs
-        redo = ['ctq1_FF', 'ctq1_FFcloseEl_2017', 'ctq1_FFcloseEl_2018', 'ctq1_FFcloseMu_2017', 'ctq1_FFeta', 'ctq1_FFpt', 'ctq1_ISR_qg', 'cQq11_prop_binch35_bin3_fakes_sm', 'cQq11_prop_binch36_bin2_fakes_sm', 'cQq11_prop_binch3_bin2_fakes_sm', 'cQq11_prop_binch40_bin3_fakes_sm', 'cQq11_prop_binch4_bin2_fakes_sm', 'cQq11_prop_binch6_bin2_fakes_sm', 'cQq11_prop_binch7_bin2_fakes_sm', 'cQq11_prop_binch7_bin3_fakes_sm', 'cQq11_qcd_scale_tWZ', 'cQq11_qcd_scale_ttll', 'cQq11_qcd_scale_tttt', 'cQq11_renorm_Diboson', 'cQq11_renorm_Triboson', 'cQq11_renorm_tllq', 'cQq11_renorm_ttll', 'cQq11_triggerSF_2018']
+        user = os.getlogin()
         for wc in wcs:
-            if not any(wc in w for w in redo): continue
-            print('redoing {}'.format(wc))
             print 'Submitting', wc
             target = 'condor_%s_fit.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
-            bredo = False
-            nredo = 0
             for i,np in enumerate(self.systematics):
-                if '{}_{}'.format(wc,np) not in redo: continue
-                bredo = True
-                print('redoing {}_{}'.format(wc,np))
-                condorFile.write('if [ $1 -eq %d ]; then\n' % nredo)
-                nredo += 1
                 condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
                 if unblind:
                     print('Running over ACTUAL DATA!'); condorFile.write('\n')
@@ -1457,12 +1449,11 @@ class EFTFit(object):
             condorFile.write('\n')
             condorFile.write('requestMemory=8192\n')
             condorFile.write('\n')
-            condorFile.write('queue %d\n' % nredo)
-            #condorFile.write('queue %d\n' % len(self.systematics))
+            condorFile.write('queue %d\n' % len(self.systematics))
             condorFile.close()
 
             os.system('chmod 777 condor_%s_fit.sh' % wc)
-            if bredo: os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('condor_submit %s -batch-name %s' % (target, wc))
             os.system('cd ../')
 
     def ImpactCollect(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
@@ -1471,18 +1462,17 @@ class EFTFit(object):
             job_dir = 'unblind'
         os.system(job_dir)
         if not wcs: wcs = self.wcs
-        redo  = ['cQq11', 'ctq1']
+        user = os.getlogin()
         for wc in wcs:
-            if wc not in redo: continue
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src\n')
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
