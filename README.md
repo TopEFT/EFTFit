@@ -86,12 +86,12 @@ Now we can actually run combine to perform the fits.
 To make simple 1D plots, use:
 ```
 python -i ../scripts/EFTPlotter.py
-plotter.BatchLLPlot1DEFT(basename='.081121.njet.16wc.Float')
+plotter.BatchLLPlot1DEFT(basename_lst=['.081121.njet.16wc.Float'])
 ```
 To make comparison plots (e.g. `njets` vs. `njets+ptbl`):
 ```
 python -i ../scripts/EFTPlotter.py
-plotter.BestScanPlot(basename_float='.081721.njet.Float', basename_freeze='.081821.njet.ptbl.Float', filename='_float_njet_ptbl', titles=['N_{jet} prof.', 'N_{jet}+p_{T}(b+l) prof.'], printFOM=True)
+plotter.BestScanPlot(basename_float_lst='.081721.njet.Float', basename_freeze_lst='.081821.njet.ptbl.Float', filename='_float_njet_ptbl', titles=['N_{jet} prof.', 'N_{jet}+p_{T}(b+l) prof.'], printFOM=True)
 ```
 ## Steps for reproducing the "official" TOP-22-006 workspace:
 1. Combine the cards: Inside of the EFTFit repo, copy all of the cards and templates (i.e. the `ttx_multileptons-*.txt` and `ttx_multileptons-*.root` files) for the categories that you want to make a worksapce for into the same directory (e.g. anything between just one category the full 43 categories) Then run `combineCards.py ttx_multileptons-*.txt > combinedcard.txt` to make a combined card. 
