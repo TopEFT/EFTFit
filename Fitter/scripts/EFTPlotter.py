@@ -122,7 +122,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         #self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "")#"Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(33)
@@ -256,7 +256,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.19, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
@@ -450,7 +450,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
         #self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
@@ -597,7 +597,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -725,7 +725,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
@@ -750,6 +750,8 @@ class EFTPlot(object):
             outfile = ROOT.TFile(self.histosFileName,'UPDATE')
             hist.Write()
             outfile.Close()
+        hist.SetDirectory(0)
+        #return hist
 
     '''
     Example:
@@ -922,6 +924,9 @@ class EFTPlot(object):
         os.system('rm ../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
 
     def ContourPlotEFT(self, name='.test', wcs=[], final=False):
+        #hist2d = self.LLPlot2DEFT(name,wcs,9,False)
+        #hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
         if len(wcs)!=2:
             logging.error("Function 'ContourPlot' requires exactly two wcs!")
             return
@@ -939,6 +944,10 @@ class EFTPlot(object):
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
         points = 100
+        #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,9))
+        #hist2d = ROOT.TH3F('hist', 'hist2d', points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, 9)
+        #hist2d = canvas.GetPrimitive("hist")
+        #hist2d = hist2d.Project3DProfile()
         nLL997 = 11.83
         #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '2*(deltaNLL-{})<{}'.format(minZ, nLL997*2), 'prof colz')
         # Double the 99.7% CI for better plotting
@@ -1031,6 +1040,15 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
+        scan_name = 'Profiled'
+        if 'Froz' in name or 'Freeze' in name:
+            scan_name = 'Frozen'
+        self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
+        self.scan_type.SetNDC(1)
+        self.scan_type.SetTextSize(0.04)
+        self.scan_type.SetTextAlign(13)
+        self.scan_type.SetTextFont(42)
+        self.scan_type.Draw('same')
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
@@ -1046,6 +1064,8 @@ class EFTPlot(object):
         h_contour.GetYaxis().SetTitleSize(0.04)
         h_contour.GetXaxis().SetLabelSize(0.04)
         #h_contour.GetYaxis().SetNdivisions(7)
+        #hist2d.Draw('colz')
+        #h_contour.Draw('same')
         h_contour.Draw('AXIS')
         #canvas.Print('contour.png','png')
         c68.Draw('L SAME')
@@ -1069,6 +1089,7 @@ class EFTPlot(object):
 
         self.CMS_text.Draw('same')
         if not final: self.CMS_extra.Draw('same')
+        self.scan_type.Draw('same')
         self.Lumi_text.Draw('same')
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
@@ -1219,7 +1240,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -1305,7 +1326,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -1423,7 +1444,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -2379,7 +2400,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
@@ -2543,7 +2564,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.03)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.91, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(30)
