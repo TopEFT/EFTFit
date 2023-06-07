@@ -94,12 +94,12 @@ python -i ../scripts/EFTPlotter.py
 plotter.BestScanPlot(basename_float='.081721.njet.Float', basename_freeze='.081821.njet.ptbl.Float', filename='_float_njet_ptbl', titles=['N_{jet} prof.', 'N_{jet}+p_{T}(b+l) prof.'], printFOM=True)
 ```
 ## Steps for reproducing the "official" TOP-22-006 workspace:
-1. Combine the cards: Inside of the EFTFit repo, copy all of the cards and templates (i.e. the `ttx_multileptons-*.txt` and `ttx_multileptons-*.root` files) for the categories that you want to make a worksapce for into the same directory (e.g. anything between just one category the full 43 categories) Then run `combineCards.py ttx_multileptons-*.txt > combinedcard.txt` to make a combined card. 
-1. Check whether or not your selected WC file that was made with your cards (called `selectedWCs.txt`) matches the one that is committed in the EFTFit repo. If it does not, replace the committed one with the one generated in your datacard maker run. Note, if you are using the "official" cards/templates, the selectedWC file matches committed version by construction. 
-1. Make the workspace: Run the following command. Note that this command can take up to about 8 hours (depending on where it is run). 
+1. Combine the cards: Inside of the EFTFit repo, copy the relevant cards (`.txt` files) and templates (`.root` files) for the categories that you want to make a worksapce for into the same directory. For the TOP-22-006 results, this should correspond to the appropriate mix-and-match combination of `ptz` and `lj0pt` that can be obtained with the `datacards_post_processing.py` script (as explained in the "To reproduce the TOP-22-006 histograms and datacards" section of the `topcoffea` readme). Then from within this directory (that contains only the relevant cards/templates _and no extraneous cards/templates_), run `combineCards.py ttx_multileptons-*.txt > combinedcard.txt` to make a combined card. 
+1. Copy your selected WC file that was made with your cards (called `selectedWCs.txt`) to somewhere that is accessible from where you will be running the `text2workspace` step.  
+1. Make the workspace by running the following command. Note that this command can take ~2 hours up to about ~8 hours or more (depending on where it is run). 
 
     ```
-    text2workspace.py combinedcard.txt -o yourworkspacename.root -P EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative --X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms
+    text2workspace.py combinedcard.txt -o yourworkspacename.root -P EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative --X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms --PO selectedWCs=/path/to/your/selectedWCs.txt
     ```
 
 
