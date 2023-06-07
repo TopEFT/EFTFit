@@ -43,15 +43,19 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
     def setPhysicsOptions(self,physOptions):
         """ Handle any physics options specified by the user."""
-        selected_wcs_fpath = os.path.join(os.environ['CMSSW_BASE'],'src/EFTFit/Fitter/hist_files/selectedWCs.txt')  # Default
+        wcs_list_exists = False
         for po in physOptions:
             if po.startswith("eftAlternative"):
                 self.alternative = True
                 raise RuntimeError("Alternative not yet implemented")
             if po.startswith("selectedWCs="):
                 selected_wcs_fpath = po.replace("selectedWCs=","").strip()
+                wcs_list_exists = True
             if po.startswith("verbose"):
                 self.verbose = True
+        
+        assert wcs_list_exists, "selectedWCs.txt not provided. Provide the full path using the command line option `--PO selectedWCs=PATH_TO_DIR`."
+
         self.loadOperators(selected_wcs_fpath) 
 
 
