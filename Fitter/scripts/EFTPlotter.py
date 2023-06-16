@@ -76,15 +76,16 @@ class EFTPlot(object):
             'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
-            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
-            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]'
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
         }
         self.texdicfrac = {
             'ctW': '\it{c}_{\mathrm{tW}}}', 
