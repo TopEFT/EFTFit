@@ -76,15 +76,16 @@ class EFTPlot(object):
             'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 
-            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
-            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2}} [TeV^{-2}]',
-            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]'
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
         }
         self.texdicfrac = {
             'ctW': '\it{c}_{\mathrm{tW}}}', 
@@ -1986,10 +1987,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -2011,10 +2012,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -2028,10 +2029,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -2053,10 +2054,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -2070,10 +2071,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_float1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -2095,10 +2096,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -2112,10 +2113,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -2137,10 +2138,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -2162,9 +2163,9 @@ class EFTPlot(object):
         if asimov_plotstyle_flag:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
         if not asimov_plotstyle_flag:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -2360,7 +2361,7 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
                 lines_freeze_1sigma[-1].SetLineColor(clr_freeze)
-                lines_freeze_1sigma[-1].SetLineWidth(3)
+                lines_freeze_1sigma[-1].SetLineWidth(4)
                 lines_freeze_1sigma[-1].SetLineStyle(3)
 
         # Add legend
