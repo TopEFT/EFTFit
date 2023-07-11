@@ -1147,9 +1147,9 @@ class EFTPlot(object):
         legend = ROOT.TLegend(0.01,0.01,0.90,0.90)
         # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
         # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
-        legend.AddEntry(hc68,"68.3%",'l')
-        legend.AddEntry(hc95,"95.5%",'l')
-        legend.AddEntry(hc997,"99.7%",'l')
+        legend.AddEntry(hc68,"68.3% CI",'l')
+        legend.AddEntry(hc95,"95.5% CI",'l')
+        legend.AddEntry(hc997,"99.7% CI",'l')
         legend.AddEntry(hSM,"SM value",'p')
         legend.SetTextSize(0.3)
         #legend.SetTextSize(0.025)
@@ -1160,7 +1160,7 @@ class EFTPlot(object):
         self.ci_text.SetTextSize(0.3)
         self.ci_text.SetTextAlign(30)
         self.ci_text.SetTextFont(42)
-        self.ci_text.Draw('same')
+        #self.ci_text.Draw('same')
         canvas.Print('contour_leg.png')
         canvas.Print('contour_leg.eps')
         canvas.Print('contour_leg.pdf')
