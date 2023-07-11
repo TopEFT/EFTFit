@@ -1042,7 +1042,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
         scan_name = 'Other WCs Profiled'
-        if 'Froz' in name or 'Freeze' in name:
+        if 'Froz' in name or 'Freeze' in name or 'frozen' in name:
             scan_name = 'Other WCs fixed to SM'
         self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
         self.scan_type.SetNDC(1)
@@ -1155,12 +1155,6 @@ class EFTPlot(object):
         #legend.SetTextSize(0.025)
         legend.SetNColumns(4)
         legend.Draw()
-        self.ci_text = ROOT.TLatex(0.45, 0.65, "Confidence level")
-        self.ci_text.SetNDC(1)
-        self.ci_text.SetTextSize(0.3)
-        self.ci_text.SetTextAlign(30)
-        self.ci_text.SetTextFont(42)
-        #self.ci_text.Draw('same')
         canvas.Print('contour_leg.png')
         canvas.Print('contour_leg.eps')
         canvas.Print('contour_leg.pdf')
@@ -1458,7 +1452,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.01, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
