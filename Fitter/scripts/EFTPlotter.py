@@ -35,7 +35,7 @@ class EFTPlot(object):
             'cQq81': (-1.7,1.5),
             'cQq83': (-0.6,0.6),
             'cQt1' : (-6.0,6.0),
-            'cQt8' : (-8.0,8.0),
+            'cQt8' : (-10.0,10.0),
             'cbW'  : (-3.0,3.0),
             'cpQ3' : (-4.0,4.0),
             'cpQM' : (-15.0,20.0),
@@ -1041,16 +1041,16 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
-        scan_name = 'Profiled'
+        scan_name = 'Other WCs Profiled'
         if 'Froz' in name or 'Freeze' in name:
-            scan_name = 'Frozen'
+            scan_name = 'Other WCs fixed to SM'
         self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
         self.scan_type.SetNDC(1)
         self.scan_type.SetTextSize(0.04)
         self.scan_type.SetTextAlign(13)
         self.scan_type.SetTextFont(42)
         self.scan_type.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.01, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -1144,6 +1144,7 @@ class EFTPlot(object):
         canvas.cd()
         legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
         legend = ROOT.TLegend(0.01,0.01,0.99,0.99)
+        legend = ROOT.TLegend(0.01,0.01,0.90,0.90)
         # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
         # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
         legend.AddEntry(hc68,"68.3%",'l')
@@ -1154,6 +1155,12 @@ class EFTPlot(object):
         #legend.SetTextSize(0.025)
         legend.SetNColumns(4)
         legend.Draw()
+        self.ci_text = ROOT.TLatex(0.45, 0.65, "Confidence level")
+        self.ci_text.SetNDC(1)
+        self.ci_text.SetTextSize(0.3)
+        self.ci_text.SetTextAlign(30)
+        self.ci_text.SetTextFont(42)
+        self.ci_text.Draw('same')
         canvas.Print('contour_leg.png')
         canvas.Print('contour_leg.eps')
         canvas.Print('contour_leg.pdf')
@@ -1708,6 +1715,8 @@ class EFTPlot(object):
             wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
             # All diagrams in TOP-22-006 or in AN
             wcs_pairs = [('cQQ1', 'cQt1'), ('cQQ1', 'cQt8'), ('cQlMi', 'cQei'), ('cQt1', 'cQt8'), ('cQt1', 'ctt1'), ('cpQ3', 'cbW'), ('cpQM', 'cpt'), ('cptb', 'cQl3i'), ('ctG', 'cpQM'), ('ctG', 'ctp'), ('ctW', 'ctZ'), ('ctp', 'cpt')]
+            # All diagrams in TOP-22-006 paper
+            wcs_pairs = [('ctW', 'ctZ') ,('cpQM', 'cpt') ,('ctG', 'ctp') ,('cQt1', 'cQt8') ,('cQQ1', 'cQt8') ,('cQt1', 'ctt1') ,('cQQ1', 'cQt1')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1782,7 +1791,7 @@ class EFTPlot(object):
                 if filename.endswith('contour_1d.eps') or filename.endswith('contour_final_1d.eps') or ('less' in filename and filename.endswith('_1d.eps')) or filename.endswith('contour_prelim_1d.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
             htmlFile.write('<div class=\'pic\'><h3><a href="{}less10.pdf"</h><img src ="{}less10.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
-            htmlFile.write('<div class=\'pic\'><h3><a href="{}contour.pdf"></h><img src ="{}contour.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
+            htmlFile.write('<div class=\'pic\'><h3><a href="{}contour_final.pdf"></h><img src ="{}contour_final.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
         htmlFile.close()
         sp.call(['mv', 'index.html', 'Histos{}/'.format(basenamegrid)])
 
