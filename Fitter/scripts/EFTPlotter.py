@@ -1041,7 +1041,7 @@ class EFTPlot(object):
         self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
-        scan_name = 'Other WCs Profiled'
+        scan_name = 'Other WCs profiled'
         if 'Froz' in name or 'Freeze' in name or 'frozen' in name:
             scan_name = 'Other WCs fixed to SM'
         self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
@@ -1050,7 +1050,7 @@ class EFTPlot(object):
         self.scan_type.SetTextAlign(13)
         self.scan_type.SetTextFont(42)
         self.scan_type.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.01, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
