@@ -72,7 +72,7 @@ RooFitResult* load_fitresult(TString fpath, TString fr_key, TFile* f) {
 
 void struct_maker(int SR_selector) {
     //TFile* ws_file = TFile::Open("/scratch365/kmohrman/forFurong/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys.root");
-    std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ht_anatest25/";
+    std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/";
     std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
 
     TString fpath_workspace = TString::Format("%s%s", in_dir.c_str(), "wps.root");
@@ -134,12 +134,12 @@ void struct_maker(int SR_selector) {
     if (do_postfit) {
         ws->loadSnapshot("postfit_f");
         fr = postfit;
-        folder_suffix = "postfit_ht_7bins";
+        folder_suffix = "postfit";
     }
     else {
         ws->loadSnapshot("prefit_i");
         fr = prefit;
-        folder_suffix = "prefit_ht_7bins";
+        folder_suffix = "prefit";
     }
     std::string file_path = TString::Format("%sSR_%s/", out_dir.c_str(), folder_suffix.c_str()).Data();
     std::string file_path_sum = TString::Format("%sSR_sum_%s/", out_dir.c_str(), folder_suffix.c_str()).Data();
