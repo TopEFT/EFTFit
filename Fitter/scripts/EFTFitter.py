@@ -791,7 +791,8 @@ class EFTFit(object):
 
         # Set the WC ranges if not specified
         if wc_ranges is None: wc_ranges = self.wc_ranges_njets
-
+        if wc_ranges is True: wc_ranges = self.wc_ranges_differential
+        
         zero_ignore = []
         freeze_ignore = []
         if len(ignore)>0:
@@ -1296,6 +1297,7 @@ class EFTFit(object):
 
         # Set the WC ranges if none are specified
         if wc_ranges is None: wc_ranges = self.wc_ranges_njets
+        if wc_ranges is True: wc_ranges = self.wc_ranges_differential
 
         ROOT.gROOT.SetBatch(True)
 
@@ -1371,10 +1373,12 @@ class EFTFit(object):
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            #condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src\n')
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            #condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
             condorFile.write('  combine -M MultiDimFit -n _initialFit_%s%s --algo singles --redefineSignalPOIs %s --robustFit 1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wc, wc, wc, workspace))
@@ -1419,10 +1423,10 @@ class EFTFit(object):
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src\n')#.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
@@ -1469,10 +1473,10 @@ class EFTFit(object):
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src\n')#.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/a/apiccine/AnFrame/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
