@@ -379,7 +379,7 @@ class EFTFit(object):
             index = other.index('--trackParameters')
             other.pop(index)
             track.append(other.pop(index))
-        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track)])
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track), '--trackErrors rgx{.*}'])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
             other.append('--setParameters')
