@@ -322,7 +322,7 @@ class EFTPlot(object):
         log = kwargs.pop('log',False)
         ceiling = kwargs.pop('ceiling',10)
         final = kwargs.pop('final',False)
-        titles = kwargs.pop('titles',['Others profiled', 'Others fixed to SM'])
+        titles = kwargs.pop('titles',['Other WCs profiled', 'Others WCs fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
             return
@@ -450,8 +450,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.37, 0.952, " Supplementary")# Simulation")
+        #if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
@@ -1956,7 +1956,8 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;profiled}', '\mathrm{Others\;fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['Others profiled', 'Others fixed to SM'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+    #def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;profiled}', '\mathrm{Others\;fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
 
         # Colors to use for the plots
         clr_float = 1 # Black
@@ -1970,6 +1971,8 @@ class EFTPlot(object):
         if type(basename_freeze_lst) == str: basename_freeze_lst = [basename_freeze_lst]
         if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
         if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
+
+        titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
@@ -1987,6 +1990,10 @@ class EFTPlot(object):
         fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
         print 'freeze'
         fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
+        if printFOM:
+            print('\n\nFoM (<1 is better)\nWC\tFoM')
+            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
@@ -2216,6 +2223,44 @@ class EFTPlot(object):
         # Add lines for the errors, but print the value if line would go off the pad
         lines_labels = []
 
+        def makeLines(fits, y_float, clr):
+            lines = []
+            for idx,fittuple in enumerate(fits):
+                for imin,imax in zip(fittuple[2],fittuple[3]):
+                    xmin = imin
+                    xmax = imax
+                    # If a segment ends below the left edge
+                    if xmax < h_fit.GetXaxis().GetXmin():
+                        outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
+                        outside_label.SetMarkerColor(clr)
+                        outside_label.SetMarkerSize(2)
+                        lines_labels.append(outside_label)
+                        continue # Don't attempt to draw the line!
+                    # If a segment begins above the right edge
+                    if xmin > h_fit.GetXaxis().GetXmax():
+                        outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
+                        outside_label.SetMarkerColor(clr)
+                        outside_label.SetMarkerSize(2)
+                        lines_labels.append(outside_label)
+                        continue # Don't attempt to draw the line!
+                    # If a segment begins below the left edge
+                    if xmin < h_fit.GetXaxis().GetXmin():
+                        min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
+                        min_label.SetTextSize(0.03)
+                        min_label.SetTextColor(clr)
+                        lines_labels.append(min_label)
+                        xmin = h_fit.GetXaxis().GetXmin()
+                    # If a segment ends above the right edge
+                    if xmax > h_fit.GetXaxis().GetXmax():
+                        max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
+                        max_label.SetTextSize(0.03)
+                        max_label.SetTextColor(clr)
+                        max_label.SetTextAlign(30)
+                        lines_labels.append(max_label)
+                        xmax = h_fit.GetXaxis().GetXmax()
+                    lines.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
+                    lines[-1].SetLineColor(clr)
+            return lines
         lines_float = []
         for idx,fittuple in enumerate(fits_float):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -2252,6 +2297,7 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
                 lines_float[-1].SetLineColor(clr_float)
+        lines_float = makeLines(fits_float, y_float, clr_float)
         lines_float_1sigma = []
         for idx,fittuple in enumerate(fits_float1sigma):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -2382,58 +2428,74 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # Draw everything
-        h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
-        h_fit.Draw()
-        #graph_float.Draw('P same')
-        #graph_freeze.Draw('P same')
-        for line in lines_float:
-            line.Draw('same')
-        for line in lines_freeze:
-            line.Draw('same')
-        for line in lines_float_1sigma:
-            line.Draw('same')
-        for line in lines_freeze_1sigma:
-            line.Draw('same')
-        for label in lines_labels:
-            label.Draw('same')
-        for label in y_labels:
-            label.Draw('same')
-        legend.Draw('same')
-        self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
-        self.CMS_text.SetNDC(1)
-        self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(33)
-        self.CMS_text.Draw('same')
-        if not final: self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
-        #self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
-        self.CMS_extra.SetNDC(1)
-        self.CMS_extra.SetTextSize(0.03)
-        self.CMS_extra.SetTextAlign(33)
-        self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
-        self.arXiv_extra.SetNDC(1)
-        self.arXiv_extra.SetTextSize(0.03)
-        self.arXiv_extra.SetTextAlign(30)
-        self.arXiv_extra.SetTextFont(42)
-        if not final: self.CMS_extra.Draw('same')
-        #if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
-        self.Lumi_text.SetNDC(1)
-        self.Lumi_text.SetTextSize(0.04)
-        self.Lumi_text.SetTextAlign(30)
-        self.Lumi_text.SetTextFont(42)
-        self.Lumi_text.Draw('same')
+        def draw(lines_float=[], lines_freeze=[], lines_float_1sigma=[], lines_freeze_1sigma=[], name='BestScanPlot'):
+            h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
+            if 'FoM' in name:
+                h_fit.GetXaxis().SetRangeUser(0, 1.1)
+            h_fit.Draw()
+            #graph_float.Draw('P same')
+            #graph_freeze.Draw('P same')
+            if lines_float is not None:
+                for line in lines_float:
+                    line.Draw('same')
+            if lines_freeze is not None:
+                for line in lines_freeze:
+                    line.Draw('same')
+            if lines_float_1sigma is not None:
+                for line in lines_float_1sigma:
+                    line.Draw('same')
+            if lines_freeze_1sigma is not None:
+                for line in lines_freeze_1sigma:
+                    line.Draw('same')
+            for label in lines_labels:
+                label.Draw('same')
+            for label in y_labels:
+                label.Draw('same')
+            legend.Draw('same')
+            self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
+            self.CMS_text.SetNDC(1)
+            self.CMS_text.SetTextSize(0.04)
+            self.CMS_text.SetTextAlign(33)
+            self.CMS_text.Draw('same')
+            if not final: self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
+            #self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
+            self.CMS_extra.SetNDC(1)
+            self.CMS_extra.SetTextSize(0.03)
+            self.CMS_extra.SetTextAlign(33)
+            self.CMS_extra.SetTextFont(52)
+            self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
+            self.arXiv_extra.SetNDC(1)
+            self.arXiv_extra.SetTextSize(0.03)
+            self.arXiv_extra.SetTextAlign(30)
+            self.arXiv_extra.SetTextFont(42)
+            if not final: self.CMS_extra.Draw('same')
+            #if not final: self.arXiv_extra.Draw('same')
+            self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
+            self.Lumi_text.SetNDC(1)
+            self.Lumi_text.SetTextSize(0.04)
+            self.Lumi_text.SetTextAlign(30)
+            self.Lumi_text.SetTextFont(42)
+            self.Lumi_text.Draw('same')
 
-        if final:
-            canvas.Print('BestScanPlot_final.png','png')
-            canvas.Print('BestScanPlot_final.eps','eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot_final.eps')
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot_final.eps BestScanPlot_final.pdf')
-        else:
-            canvas.Print('BestScanPlot{}.png'.format(filename),'png')
-            canvas.Print('BestScanPlot{}.eps'.format(filename),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot{}.eps'.format(filename))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot{}.eps BestScanPlot{}.pdf'.format(filename,filename))
+            if final:
+                canvas.Print('{}_final.png'.format(name),'png')
+                canvas.Print('{}_final.eps'.format(name),'eps')
+                os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}_final.eps'.format(name))
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}_final.eps {}_final.pdf'.format(name, name))
+            else:
+                canvas.Print('{}{}.png'.format(name, filename),'png')
+                canvas.Print('{}{}.eps'.format(name, filename),'eps')
+                os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}.eps'.format(name, filename))
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}.eps {}{}.pdf'.format(name, filename, name, filename))
+        draw(lines_float, lines_freeze, lines_float_1sigma, lines_freeze_1sigma, name='BestScanPlot')
+        if printFOM:
+            lines_1 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
+            lines_2 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
+            lines_1 = [[wc, 0, [0], [l]] for wc,l in lines_1]
+            lines_2 = [[wc, 0, [0], [l]] for wc,l in lines_2]
+            lines_1=makeLines(lines_1, y_float, clr_float)
+            lines_2=makeLines(lines_2, y_freeze, clr_freeze)
+            draw(lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
