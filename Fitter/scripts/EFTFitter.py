@@ -368,9 +368,17 @@ class EFTFit(object):
     def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
-
+        
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        if not ("scratch365" in workspace or "afs" in workspace):
+            ws_path = os.getcwd() + "/" + workspace
+        else:
+            ws_path = workspace
+        print(ws_path)
+        if not os.path.exists(ws_path):
+            raise RuntimeError("Workspace not found in current folder, please copy it there before running")
+        #args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        args = ['combineTool.py','-d',ws_path,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
@@ -540,6 +548,7 @@ class EFTFit(object):
                         print tarfiles[0]+'/'+tarfile
                         sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
             haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
+            print("haddargs:", haddargs)
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
