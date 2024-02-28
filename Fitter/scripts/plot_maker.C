@@ -1333,7 +1333,7 @@ void make_overlay_mega_plot(
     HistogramBuilder builder = HistogramBuilder();
 
     int c_hh = 640;
-    int c_ww = 1920;
+    int c_ww = 3840;
 
     TCanvas* c = new TCanvas("canv","canv",150,10,c_ww,c_hh);
     // TCanvas* c = new TCanvas("canv","canv",150,10,960*4,640);
