@@ -152,9 +152,9 @@ class EFTPlot(object):
 
 
     # Takes as input the name of a root file (assumed to be in ../fit_files)
-    # Retruns [wc vals in the scan, delta nll vals at each point]
+    # Returns [wc vals in the scan, delta nll vals at each point]
     # Optionally removes duplicate wc points (choosing min nll)
-    def GetWCsNLLFromRoot(self,base_name_lst,wc,unique=False):
+    def GetWCsNLLFromRoot(self,base_name_lst,wc_lst,unique=False):
 
         graphwcs = []
         graphnlls = []
@@ -170,7 +170,13 @@ class EFTPlot(object):
             # Get coordinates for TGraph
             for entry in range(limitTree.GetEntries()):
                 limitTree.GetEntry(entry)
-                graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
+                if len(wc_lst) == 1:
+                    graphwcs.append(limitTree.GetLeaf(wc_lst[0]).GetValue(0))
+                elif len(wc_lst) == 2:
+                    graphwcs.append([limitTree.GetLeaf(wc_lst[0]).GetValue(0),limitTree.GetLeaf(wc_lst[1]).GetValue(0)])
+                else:
+		    logging.error("Cannot handle the case with more than 2 WCs!")
+
                 graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
             rootFile.Close()
@@ -183,6 +189,28 @@ class EFTPlot(object):
             graphnlls = unique_points_dict["nllvals"]
 
         return [graphwcs,graphnlls]
+
+
+    def CreateNewLimitTreefor2DScan(self,name_lst,wc_lst):
+        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc_lst,unique=True)
+        newRootFile = ROOT.TFile("tmp.root","RECREATE")          #temporary root file with new limit tree
+        limit = ROOT.TTree("limit","limit")
+        wc0 = numpy.array([0],dtype='f')
+        wc1 = numpy.array([0],dtype='f')
+        deltanll = numpy.array([0],dtype='f')
+        #Create new branches with two WCs being scanned and deltaNLL
+        limit.Branch("{}".format(wc_lst[0]),wc0,"{}".format(wc_lst[0]))
+        limit.Branch("{}".format(wc_lst[1]),wc1,"{}".format(wc_lst[1]))
+        limit.Branch("deltaNLL",deltanll,"deltaNLL")
+
+        for idx in range(len(graphnlls)):
+            wc0[0] = graphwcs[idx][0]
+            wc1[0] = graphwcs[idx][1]
+            deltanll[0] = graphnlls[idx]
+            limit.Fill()
+        limit.Write()
+
+        return newRootFile
 
 
 
@@ -200,7 +228,7 @@ class EFTPlot(object):
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
 
-        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc,unique=True)
+        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,[wc],unique=True)
         if graphwcs == [] or graphnlls == []:
             # Something went wrong
             print("Error, probably could not find root file")
@@ -677,12 +705,9 @@ class EFTPlot(object):
         for wc in wcs:
             self.OverlayZoomLLPlot1DEFT(basename1+'.'+wc, basename2+'.'+wc, wc, log)
 
-    def LLPlot2DEFT(self, name='.test', wcs=[], ceiling=1, log=False, final=False):
+    def LLPlot2DEFT(self, name_lst=['.test'], wcs=[], ceiling=1, log=False, final=False):
         if len(wcs)!=2:
             logging.error("Function 'LLPlot2D' requires exactly two wcs!")
-            return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
 
         ROOT.gROOT.SetBatch(True)
@@ -691,8 +716,8 @@ class EFTPlot(object):
 
         # Open file and draw 2D histogram
         # wcs[0] is y-axis variable, wcs[1] is x-axis variable
-        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-        limitTree = rootFile.Get('limit')
+        rootFile = self.CreateNewLimitTreefor2DScan(name_lst,wcs)
+        limitTree = rootFile.limit
         hname = '{}{}less{}'.format(wcs[0],wcs[1],ceiling)
         if log:
             hname += "_log"
@@ -752,7 +777,10 @@ class EFTPlot(object):
             hist.Write()
             outfile.Close()
         hist.SetDirectory(0)
-        #return hist
+
+        #close the tmp root file
+        rootFile.Close()
+        os.remove("tmp.root")
 
     '''
     Example:
@@ -924,15 +952,12 @@ class EFTPlot(object):
         rootFile.Close()
         os.system('rm ../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
 
-    def ContourPlotEFT(self, name='.test', wcs=[], final=False):
+    def ContourPlotEFT(self, name_lst=['.test'], wcs=[], final=False):
         #hist2d = self.LLPlot2DEFT(name,wcs,9,False)
         #hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
         #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
         if len(wcs)!=2:
             logging.error("Function 'ContourPlot' requires exactly two wcs!")
-            return
-        if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
-            logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
 
         best2DeltaNLL = 1000000
@@ -941,8 +966,8 @@ class EFTPlot(object):
 
         # Get Grid scan and copy to h_contour
         # wcs[0] is y-axis variable, wcs[1] is x-axis variable
-        gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
-        gridTree = gridFile.Get('limit')
+        gridFile = self.CreateNewLimitTreefor2DScan(name_lst,wcs)
+        gridTree = gridFile.limit
         minZ = gridTree.GetMinimum('deltaNLL')
         points = 100
         #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,9))
@@ -1042,7 +1067,8 @@ class EFTPlot(object):
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
         scan_name = 'Other WCs profiled'
-        if 'Froz' in name or 'Freeze' in name or 'frozen' in name:
+	
+        if 'Froz' in [name for name in name_lst] or 'Freeze' in [name for name in name_lst] or 'frozen' in [name for name in name_lst]:
             scan_name = 'Other WCs fixed to SM'
         self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
         self.scan_type.SetNDC(1)
@@ -1168,6 +1194,10 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
         
+        #close the tmp root file
+        gridFile.Close()
+        os.remove("tmp.root")
+ 
     def LLPlot1DSM(self, name='.test', param='', log=False):
         if not param:
             logging.error("No parameter specified!")
