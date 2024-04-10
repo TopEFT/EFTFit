@@ -97,7 +97,7 @@ class EFTPlot(object):
 
 
     # Takes as input the name of a root file (assumed to be in ../fit_files)
-    # Retruns [wc vals in the scan, delta nll vals at each point]
+    # Returns [wc vals in the scan, delta nll vals at each point]
     # Optionally removes duplicate wc points (choosing min nll)
     def GetWCsNLLFromRoot(self,base_name_lst,wc_lst,unique=False):
 
@@ -117,8 +117,11 @@ class EFTPlot(object):
                 limitTree.GetEntry(entry)
                 if len(wc_lst) == 1:
                     graphwcs.append(limitTree.GetLeaf(wc_lst[0]).GetValue(0))
-                else:
+                elif len(wc_lst) == 2:
                     graphwcs.append([limitTree.GetLeaf(wc_lst[0]).GetValue(0),limitTree.GetLeaf(wc_lst[1]).GetValue(0)])
+                else:
+		    logging.error("Cannot handle the case with more than 2 WCs!")
+
                 graphnlls.append(2*limitTree.GetLeaf('deltaNLL').GetValue(0))
 
             rootFile.Close()
