@@ -9,6 +9,7 @@ import os
 from operator import itemgetter
 from EFTFit.Fitter.ContourHelper import ContourHelper
 from scipy.signal import argrelextrema
+import numpy as np
 
 import parse_nll as nlltools
 
@@ -25,7 +26,7 @@ class EFTPlot(object):
 
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-4.0,4.0),
+            'cQQ1' : (-6.0,6.0),
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
@@ -33,11 +34,11 @@ class EFTPlot(object):
             'cQq13': (-0.35,0.35),
             'cQq81': (-1.7,1.5),
             'cQq83': (-0.6,0.6),
-            'cQt1' : (-4.0,4.0),
-            'cQt8' : (-8.0,8.0),
+            'cQt1' : (-6.0,6.0),
+            'cQt8' : (-10.0,10.0),
             'cbW'  : (-3.0,3.0),
             'cpQ3' : (-4.0,4.0),
-            'cpQM' : (-10.0,17.0),
+            'cpQM' : (-15.0,20.0),
             'cpt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
@@ -47,10 +48,10 @@ class EFTPlot(object):
             'ctlSi': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
             'ctli' : (-4.0,4.0),
-            'ctp'  : (-11.0,35.0),
+            'ctp'  : (-15.0,40.0),
             'ctq1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
-            'ctt1' : (-2.1,2.1),
+            'ctt1' : (-2.6,2.6),
         }
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
@@ -58,8 +59,62 @@ class EFTPlot(object):
         self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
                          }
         self.histosFileName = 'Histos.root'
-        self.texdic = {'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}/\mathrm{\Lambda^{2}} [TeV^{-2}]', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]','cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2}} [TeV^{-2}]'}
-        self.texdicfrac = {'ctW': '\it{c}_{\mathrm{tW}}}', 'ctZ': '\it{c}_{\mathrm{tZ}}}', 'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 'ctG': '\it{c}_{\mathrm{tG}}}', 'cbW': '\it{c}_{\mathrm{bW}}}', 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 'cQq81': '\it{c}^{81}_{\mathrm{Qq}}', 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 'cQq13': '\it{c}^{13}_{\mathrm{Qq}}', 'cQq83': '\it{c}^{83}_{\mathrm{Qq}}', 'ctt1': '\it{c}^{1}_{\mathrm{tt}}','cQQ1': '\it{c}^{1}_{\mathrm{QQ}}','cQt8': '\it{c}^{8}_{\mathrm{Qt}}','cQt1': '\it{c}^{1}_{\mathrm{Qt}}'}
+        self.texdic = {
+            'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
+        }
+        self.texdicfrac = {
+            'ctW': '\it{c}_{\mathrm{tW}}}', 
+            'ctZ': '\it{c}_{\mathrm{tZ}}}', 
+            'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 
+            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 
+            'ctG': '\it{c}_{\mathrm{tG}}}', 
+            'cbW': '\it{c}_{\mathrm{bW}}}', 
+            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 
+            'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 
+            'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 
+            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 
+            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 
+            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 
+            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 
+            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 
+            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 
+            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}', 
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}', 
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}', 
+            'ctt1': '\it{c}^{1}_{\mathrm{tt}}',
+            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}',
+            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
+            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}'
+        }
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
@@ -68,13 +123,13 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         #self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.88, 0.865, "")#"Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(33)
         self.CMS_extra.SetTextFont(52)
         #self.CMS_extra.Draw('same')
-        self.lumi = 137
+        self.lumi = 138
         self.arXiv = "arXiv:2012.04120"
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
@@ -230,7 +285,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(33)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.19, 0.92, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
@@ -293,9 +348,9 @@ class EFTPlot(object):
         pf1 = kwargs.pop('pf1','')
         pf2 = kwargs.pop('pf2','')
         log = kwargs.pop('log',False)
-        ceiling = kwargs.pop('log',10)
+        ceiling = kwargs.pop('ceiling',10)
         final = kwargs.pop('final',False)
-        titles = kwargs.pop('titles',['Others Profiled', 'Others Fixed to SM'])
+        titles = kwargs.pop('titles',['Other WCs profiled', 'Others WCs fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
             return
@@ -326,9 +381,15 @@ class EFTPlot(object):
             if abs(z) < abs(graph1nlls[zero]): zero = n
         #zero = graph1nlls.index(min(graph1nlls))
         print graph1nlls[zero], graph1wcs[zero]
+        print graph2nlls[zero], graph2wcs[zero]
+        print graph2nlls
+        min_2 = min([g for g in graph2nlls if g > 0.1])
         #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
+        #graph2nlls = [val-min_2 for val in graph2nlls]
+        print graph2nlls
+        print 'Min is', min_2
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
         graph2 = ROOT.TGraph(len(graph2wcs),numpy.asarray(graph2wcs),numpy.asarray(graph2nlls))
         del graph1nlls,graph2nlls,graph1wcs,graph2wcs
@@ -417,8 +478,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.37, 0.952, "Supplementary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        self.CMS_extra = ROOT.TLatex(0.37, 0.952, " Supplementary")# Simulation")
+        #if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
@@ -565,7 +626,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -609,7 +670,20 @@ class EFTPlot(object):
         for pair in zip(wcs[::2], wcs[1::2]):
             self.LLPlot2DEFT(basename, wcs=pair, log=log, ceiling=300)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others Profiled', 'Others Fixed to SM']):
+    def BatchOverlayLLPlot1DDNN(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
+        if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
+        if not wcs:
+            wcs = self.wcs
+
+        ROOT.gROOT.SetBatch(True)
+
+        for wc in wcs:
+            print(wc)
+            self.OverlayLLPlot1DEFT(name1_lst=basename1_lst, name2_lst=basename2_lst, wc=wc, log=log, final=final, titles=titles)
+
+    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
+        if type(basename1_lst) == str: basename1_lst = [basename1_lst]
+        if type(basename2_lst) == str: basename2_lst = [basename2_lst]
         if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
@@ -650,9 +724,14 @@ class EFTPlot(object):
         minZ = limitTree.GetMinimum('deltaNLL')
 
         points = 100
-        hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
-        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
+        hist = ROOT.TH3F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, ceiling)
+        #hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
         hist = canvas.GetPrimitive("hist")
+        hist = hist.Project3DProfile()
+        hist.SetContour(points)
+        ROOT.gStyle.SetOptStat(0)
         hist.Draw('colz')
         hist.SetTitle(';{};{}'.format(wcs[0],wcs[1]))
 
@@ -672,7 +751,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
@@ -697,12 +776,186 @@ class EFTPlot(object):
             outfile = ROOT.TFile(self.histosFileName,'UPDATE')
             hist.Write()
             outfile.Close()
+        hist.SetDirectory(0)
 
         #close the tmp root file
         rootFile.Close()
         os.remove("tmp.root")
 
+    '''
+    Example:
+    plotter.LLPlot2DVarEFT(['.100322.EFT.Frozen.top19001.100.10.n10p0.ctp.cpt', '.100322.EFT.Frozen.top19001.100.n10p0.ctp.cpt', '.100322.EFT.Frozen.top19001.10.ctp.cpt', '.100322.EFT.Frozen.top19001.100.ctp.cpt'], wcs=['ctp','cpt'], edge_x=[-11, -10, 0, 35], edge_y=[-5, 5], ceiling=10)
+    '''
+    def LLPlot2DVarEFT(self, names=['.test'], wcs=[], ceiling=1, log=False, final=False, edge_x = [-11,10,0,35], edge_y = [-5,5], bins_x=[10, 100], bins_y=[10]):
+        if type(names) == str: names = [names]
+        if len(wcs)!=2:
+            logging.error("Function 'LLPlot2DVar' requires exactly two wcs!")
+            return
+        for name in names:
+            if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+                logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+                return
+
+        # Setup ROOT stuff
+        ROOT.gROOT.SetBatch(True)
+        canvas = ROOT.TCanvas('c','c',800,800)
+ 
+        # Error checking
+        if len(edge_x) % 2 > 0: raise Exception('Please specify an even number of x bin edges!')
+        if len(edge_y) % 2 > 0: raise Exception('Please specify an even number of y bin edges!')
+        if len(edge_x) % len(bins_x) > 0 or (len(bins_x) == 1 and len(edge_x) != 2): raise Exception('Please specify ' + str(len(edge_x)/2) + ' bins for x (' + ','.join([str(e) for e in edge_x]) + ')!')
+        if len(edge_y) % len(bins_y) > 0 or (len(bins_y) == 1 and len(edge_y) != 2): raise Exception('Please specify ' + str(len(edge_y)/2) + ' bins for y (' + ','.join([str(e) for e in edge_y]) + ')!')
+
+        # Build arrays for bins
+        nedge = len(edge_x)/2
+        full_edge_x = edge_x
+        full_edge_y = edge_y
+        edge_x = np.linspace(full_edge_x[0], full_edge_x[-1], bins_x[0])
+        for edge in range(1, nedge):
+            edge_x = np.append(edge_x, np.linspace(full_edge_x[edge], full_edge_x[-1 - edge], bins_x[edge]))
+        nedge = len(edge_y)/2
+        edge_y = np.linspace(full_edge_y[0], full_edge_y[-1], bins_y[0])
+        for edge in range(1, nedge):
+            edge_y = np.append(edge_y, np.linspace(full_edge_y[edge], full_edge_y[-1 - edge], bins_y[edge]))
+            
+        edge_x = np.sort(edge_x)
+        edge_y = np.sort(edge_y)
+        #edge_x = np.unique(np.sort(edge_x))
+        #edge_y = np.unique(np.sort(edge_y))
+        z = np.linspace(0, ceiling, ceiling*10)
+
+        # hadd all inputs
+        snames = ' '.join(['../fit_files/higgsCombine{}.MultiDimFit.root'.format(name) for name in names])
+        os.system('hadd -f ../fit_files/higgsCombine.var{}.MultiDimFit.root {}'.format(names[0], snames))
+        rootFile = ROOT.TFile.Open('../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
+
+        # Get limits
+        limitTree = rootFile.Get('limit')
+        minZ = limitTree.GetMinimum('deltaNLL')
+
+        # Create hist
+        hname = '{}{}less{}'.format(wcs[0],wcs[1],ceiling)
+        if log:
+            hname += "_log"
+        hist = ROOT.TH3F('hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z)
+        '''
+        for ibinx in range(1,hist.GetNbinsX()-2):
+            for ibiny in range(1,hist.GetNbinsX()-2):
+                if hist.GetXaxis().GetBinLowEdge(ibinx) - edge_x[ibinx-1] > 0 or hist.GetYaxis().GetBinLowEdge(ibiny) - edge_y[ibiny-1] > 0:
+                    print('low diff', hist.GetXaxis().GetBinLowEdge(ibinx) - edge_x[ibinx-1], hist.GetYaxis().GetBinLowEdge(ibiny) - edge_y[ibiny-1])
+                    print('low vals', hist.GetXaxis().GetBinLowEdge(ibinx), edge_x[ibinx-1], hist.GetYaxis().GetBinLowEdge(ibiny), edge_y[ibiny-1])
+                    print('up diff', hist.GetXaxis().GetBinUpEdge(ibinx) - edge_x[ibinx-1], hist.GetYaxis().GetBinUpEdge(ibiny) - edge_y[ibiny-1])
+                    print('up vals', hist.GetXaxis().GetBinUpEdge(ibinx), edge_x[ibinx-1], hist.GetYaxis().GetBinUpEdge(ibiny), edge_y[ibiny-1])
+        '''
+        # Draw 3D wc[0], wc[1], 2*deltaNLL
+        limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        hist.GetYaxis().SetRangeUser(full_edge_x[0], full_edge_x[-1])
+        hist.GetZaxis().SetRangeUser(full_edge_y[0], full_edge_y[-1])
+        #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
+        print(wcs[0], self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        print(wcs[1], self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
+        hist.GetZaxis().SetRangeUser(0, ceiling)
+        # Profile
+        hist = hist.Project3DProfile()
+        ROOT.gStyle.SetOptStat(0)
+        hist.Draw('colz')
+        hist.SetTitle(';{};{}'.format(self.texdic[wcs[0].rstrip('i')],self.texdic[wcs[1].rstrip('i')]))
+
+        # Save plot
+        canvas.Print(hname+".png",'png')
+        canvas.Print(hname+".eps",'eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(hname,hname))
+
+        # Adjust scale so that the best bin has content 0
+        #'hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z
+        #original = hist.Clone('h_conotour')
+        #h_contour = hist.Clone('h_contour')
+        #h_contour.Clear('ICE')
+        #hist = ROOT.TH3F('hist', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y, len(z)-1, z)
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling))
+        #hist = hist.Project3DProfile()
+        #hist.Draw('colz')
+
+        '''
+        hist.SetMaximum(6.8)
+        hist.SetContour(2,np.array(6.8))
+        hist.GetXaxis().SetRangeUser(edge_x[0], edge_x[-1])
+        hist.GetYaxis().SetRangeUser(edge_y[0], edge_y[-1])
+        hist.Draw('cont z list')
+        canvas.Update()
+        conts = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+        print(conts)
+        l = conts.At(0)
+        c95 = ROOT.TList()
+        if conts.GetSize() > 1:
+            print "Woah, multiple contours!"
+       
+        contLevel = conts.At(0)
+        for idy in range(0,contLevel.GetSize()):
+            gr1=contLevel.At(idy)
+            if(gr1.GetN() > 50):
+                c95.Add(gr1.Clone())
+        #hc95.SetLineColor(ROOT.kCyan-2)
+        #hc95.SetLineStyle(6)
+        #hc95.SetLineWidth(5)
+        hc95 = ROOT.TH2F('hc95', hname, len(edge_x)-1, edge_x, len(edge_y)-1, edge_y)
+        hc95.Draw()
+        #c95.Draw('P')
+        #c68.Draw('L SAME')
+        c95.Draw('L SAME')
+        #c997.Draw('L SAME')
+        '''
+        '''
+        c68 = self.ContourHelper.GetContour(hist,2.30, list(edge_y), list(edge_x))
+        c95 = self.ContourHelper.GetContour(hist,6.18, list(edge_y), list(edge_x))
+        c997 = self.ContourHelper.GetContour(hist,11.83, list(edge_y), list(edge_x))
+        self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,4,1)
+        self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,4,6)
+        self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,4,3)
+        #place holders for the legend, since TLine is weird
+        '''
+        levels = np.array([2.3, 6.18, 11.83])
+        hist.SetContour(1, levels)
+        hist.Draw('cont1 z')
+        hist.GetYaxis().SetRangeUser(full_edge_x[0], full_edge_x[-1])
+        hist.GetXaxis().SetRangeUser(full_edge_y[0], full_edge_y[-1])
+        canvas.Update()
+        '''
+        conts = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
+        c68 = self.ContourHelper.GetContour(hist,2.30, list(edge_y), list(edge_x))
+        hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
+        hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
+        hc997 = ROOT.TH1F('c997', 'c68', 1, 0, 1)
+        hc68.SetLineColor(ROOT.kYellow+1)
+        hc95.SetLineColor(ROOT.kCyan-2)
+        hc997.SetLineColor(ROOT.kBlue)
+        hc68.SetLineStyle(1)
+        hc95.SetLineStyle(6)
+        hc997.SetLineStyle(3)
+        hc68.SetLineWidth(5)
+        hc95.SetLineWidth(5)
+        hc997.SetLineWidth(5)
+        h_contour = ROOT.TH2F('hist', 'h_contour', len(edge_x)-1, edge_x, len(edge_y)-1, edge_y)
+
+        #h_contour.Draw()
+        #c68.Draw('L SAME')
+        #c95.Draw('L SAME')
+        #c997.Draw('L SAME')
+        '''
+        canvas.SetGrid()
+        canvas.Print(hname+"contour.png",'png')
+        canvas.Print(hname+"contour.eps",'eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}contour.eps {}contour.pdf'.format(hname,hname))
+
+        # Close and delete temporary file
+        rootFile.Close()
+        os.system('rm ../fit_files/higgsCombine.var{}.MultiDimFit.root'.format(names[0]))
+
     def ContourPlotEFT(self, name_lst=['.test'], wcs=[], final=False):
+        #hist2d = self.LLPlot2DEFT(name,wcs,9,False)
+        #hist = ROOT.TH2F('hist', hname, points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
+        #limitTree.Draw('2*(deltaNLL-{}):{}:{}>>hist({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '2*(deltaNLL-{})<{}'.format(minZ,ceiling), 'prof colz')
         if len(wcs)!=2:
             logging.error("Function 'ContourPlot' requires exactly two wcs!")
             return
@@ -717,11 +970,18 @@ class EFTPlot(object):
         gridTree = gridFile.limit
         minZ = gridTree.GetMinimum('deltaNLL')
         points = 100
-        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1],self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1]), '', 'prof colz')
-        #canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
+        #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,9))
+        #hist2d = ROOT.TH3F('hist', 'hist2d', points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, 9)
+        #hist2d = canvas.GetPrimitive("hist")
+        #hist2d = hist2d.Project3DProfile()
+        nLL997 = 11.83
+        #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid(points,{},{},points,{},{})'.format(minZ,wcs[1],wcs[0],self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '2*(deltaNLL-{})<{}'.format(minZ, nLL997*2), 'prof colz')
+        # Double the 99.7% CI for better plotting
+        gridTree.Draw('2*(deltaNLL-{}):{}:{}>>grid({},{},{},{},{},{})'.format(minZ,wcs[1],wcs[0],points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1,points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1), '2*(deltaNLL-{})<{}'.format(minZ, nLL997*2), 'prof colz')
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
-        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0],self.wc_ranges[wcs[1]][1],points,self.wc_ranges[wcs[0]][0],self.wc_ranges[wcs[0]][1])
+        h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1,points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
         h_contour = original.Clone('h_conotour')
+        canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         #original.Copy(h_contour)
 
         # Adjust scale so that the best bin has content 0
@@ -742,6 +1002,8 @@ class EFTPlot(object):
         #h_contour.GetZaxis().SetRangeUser(0,21);
         h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
         h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
+        #h_contour.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1)
+        #h_contour.GetYaxis().SetRangeUser(self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
 
         # Set Contours
         c68 = self.ContourHelper.GetContour(h_contour,2.30)
@@ -768,17 +1030,17 @@ class EFTPlot(object):
         hc997.SetLineWidth(5)
         self.ContourHelper.styleMultiGraph(c681D,ROOT.kYellow+1,1,3)
         self.ContourHelper.styleMultiGraph(c951D,ROOT.kCyan-2,1,3)
-        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kGreen-2,1,3)
+        self.ContourHelper.styleMultiGraph(c9971D,ROOT.kBlue,1,3)
 
         # Marker for SM point
         marker_1 = ROOT.TMarker()
         marker_1.SetMarkerSize(3.0)
         marker_1.SetMarkerColor(97)
         marker_1.SetMarkerStyle(33)
-        marker_2 = ROOT.TMarker()
-        marker_2.SetMarkerSize(1.8)
-        marker_2.SetMarkerColor(89)
-        marker_2.SetMarkerStyle(33)
+        #marker_2 = ROOT.TMarker()
+        #marker_2.SetMarkerSize(1.8)
+        #marker_2.SetMarkerColor(89)
+        #marker_2.SetMarkerStyle(33)
         hSM = ROOT.TH1F('SM', 'SM', 1, 0, 1)
         hSM.SetMarkerStyle(33)
         hSM.SetMarkerColor(97)
@@ -797,13 +1059,23 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(13)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Preliminary")# Simulation")
         #self.CMS_extra = ROOT.TLatex(0.2, 0.945, "Supplementary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(13)
         self.CMS_extra.SetTextFont(52)
         if not final: self.CMS_extra.Draw('same')
+        scan_name = 'Other WCs profiled'
+	
+        if 'Froz' in [name for name in name_lst] or 'Freeze' in [name for name in name_lst] or 'frozen' in [name for name in name_lst]:
+            scan_name = 'Other WCs fixed to SM'
+        self.scan_type = ROOT.TLatex(0.15, 0.885, scan_name)
+        self.scan_type.SetNDC(1)
+        self.scan_type.SetTextSize(0.04)
+        self.scan_type.SetTextAlign(13)
+        self.scan_type.SetTextFont(42)
+        self.scan_type.Draw('same')
         self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
@@ -819,16 +1091,15 @@ class EFTPlot(object):
         h_contour.GetYaxis().SetTitleSize(0.04)
         h_contour.GetXaxis().SetLabelSize(0.04)
         #h_contour.GetYaxis().SetNdivisions(7)
+        #hist2d.Draw('colz')
+        #h_contour.Draw('same')
         h_contour.Draw('AXIS')
         #canvas.Print('contour.png','png')
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
-        #C681D.Draw('L SAME')
-        #C951D.Draw('L SAME')
-        #C9971D.Draw('L SAME')
         marker_1.DrawMarker(0,0)
-        marker_2.DrawMarker(0,0)
+        #marker_2.DrawMarker(0,0)
 
         #c = [2.3, 6.18, 11.83]
         #original.SetContourLevel(0, c[0])
@@ -843,19 +1114,9 @@ class EFTPlot(object):
         #marker_2.DrawMarker(0,0)
 
 
-        legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
-        # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
-        # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
-        legend.AddEntry(hc68,"68.27%",'l')
-        legend.AddEntry(hc95,"95.45%",'l')
-        legend.AddEntry(hc997,"99.73%",'l')
-        legend.AddEntry(hSM,"SM value",'p')
-        legend.SetTextSize(0.035)
-        #legend.SetTextSize(0.025)
-        #legend.SetNColumns(4)
-        legend.Draw('same')
         self.CMS_text.Draw('same')
         if not final: self.CMS_extra.Draw('same')
+        self.scan_type.Draw('same')
         self.Lumi_text.Draw('same')
         canvas.SetGrid()
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
@@ -877,6 +1138,54 @@ class EFTPlot(object):
             canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
             os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim.eps {}{}contour_prelim.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+
+        # Versions with 1D lines included
+        c681D.Draw('L SAME')
+        c951D.Draw('L SAME')
+        c9971D.Draw('L SAME')
+        if final: canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
+        else:
+            canvas.Print('{}{}contour_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_1d.eps {}{}contour_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        if final: 
+            #canvas.Print('{}{}contour_final_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_final_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            #convert EPS to PDF to preserve \ell
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final_1d.eps {}{}contour_final_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        else: 
+            #canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_prelim_1d.png'.format(wcs[0],wcs[1]),'png')
+            canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim_1d.eps {}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+        canvas = ROOT.TCanvas('cleg', 'cleg', 600, 100)
+        hSM.SetMarkerSize(2)
+        hc68.SetMarkerSize(2)
+        hc95.SetMarkerSize(2)
+        hc997.SetMarkerSize(2)
+        canvas.cd()
+        legend = ROOT.TLegend(0.12,0.7,0.3,0.895)
+        legend = ROOT.TLegend(0.01,0.01,0.99,0.99)
+        legend = ROOT.TLegend(0.01,0.01,0.90,0.90)
+        # Bob Cousins stated 2+D should always be percentages, since e.g. "1 sigma" is not actually 68 for a 2D contour
+        # https://hypernews.cern.ch/HyperNews/CMS/get/statistics/764/1.html
+        legend.AddEntry(hc68,"68.3% CI",'l')
+        legend.AddEntry(hc95,"95.5% CI",'l')
+        legend.AddEntry(hc997,"99.7% CI",'l')
+        legend.AddEntry(hSM,"SM value",'p')
+        legend.SetTextSize(0.3)
+        #legend.SetTextSize(0.025)
+        legend.SetNColumns(4)
+        legend.Draw()
+        canvas.Print('contour_leg.png')
+        canvas.Print('contour_leg.eps')
+        canvas.Print('contour_leg.pdf')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" contour_leg.eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop contour_leg.eps contour_leg.pdf')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -963,7 +1272,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -1049,7 +1358,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
@@ -1167,13 +1476,13 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.02)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.90, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.02)
         self.CMS_extra.SetTextAlign(30)
         self.CMS_extra.SetTextFont(52)
         self.CMS_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.01, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.02)
         self.Lumi_text.SetTextAlign(30)
@@ -1204,7 +1513,7 @@ class EFTPlot(object):
 
         ROOT.gStyle.SetPalette(57)
 
-    def CorrelationMatrix(self, name='', nuisances=False, SMfit=True, freeze=False):
+    def CorrelationMatrix(self, name='', nuisances=False, SMfit=True, freeze=False, abs_min=0.):
 
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
@@ -1216,6 +1525,47 @@ class EFTPlot(object):
         # Get correlation matrix
         rooFit.correlationHist().Draw('colz')
         matrix = canvas.GetPrimitive('correlation_matrix')
+
+        # Find pairs above abs_min
+        corr = []
+        cov = []
+        m = []
+        wcs = []
+        mwcs = []
+        for ibinx in range(1, matrix.GetXaxis().GetNbins()):
+            for ibiny in range(1, matrix.GetYaxis().GetNbins()):
+                val = matrix.GetBinContent(ibinx, ibiny)
+                cx = matrix.GetXaxis().GetBinLabel(ibinx)
+                cy = matrix.GetYaxis().GetBinLabel(ibiny)
+                if cx[0] is not 'c' or cy[0] is not 'c': continue
+                if 'charge' in cx or 'charge' in cy: continue
+                if cx not in wcs: wcs.append(cx)
+                ex = rooFit.floatParsFinal().find(cx).getError()
+                ey = rooFit.floatParsFinal().find(cy).getError()
+                m.append(val/(ex*ey))
+                print 'x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey)
+                if abs(val) > abs_min:
+                    # skip e.g. (ctG, cpQM) <-> (cpQM, ctG)
+                    if any(cx in c and cy in c for c in corr): continue
+                    # skip e.g. (ctG, ctG)
+                    if cx == cy: continue
+                    corr.append((cx, cy))#, val))
+
+        # Eigenvalue/eigenvector stuff
+        nwcs = len(wcs)
+        m = np.array(m).reshape(nwcs,nwcs)
+        print(m)
+        eigenval, eigenvec = np.linalg.eig(m)
+        print 'Eigenvalues=', eigenval
+        for n,eig in enumerate(eigenvec.T):
+            mask = np.abs(eig)>abs_min
+            if not any(mask): continue
+            print 'Eigenvector for', eigenval[n]
+            print '    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]]
+            print '    |basis| >', abs_min, eig[mask]
+
+
+        print 'Interesting pairs: ', corr
 
         # Decide whether or not to keep the nuisance parameters in
         # If not, the number of bins (parameters) varies on whether the scan froze the others
@@ -1259,27 +1609,39 @@ class EFTPlot(object):
                 outfile.Close()
                     
             else:
-                matrix.SetName("corrMatrix_noNuisances")
-                nbins = matrix.GetNbinsX()
-                if freeze:
-                    matrix.GetYaxis().SetRange(1,2)
-                    matrix.GetXaxis().SetRange(nbins-1,nbins)
-                else:
-                    nwcs = len(self.wcs)
-                    matrix.GetYaxis().SetRange(1,nwcs)
-                    matrix.GetXaxis().SetRange(nbins-(nwcs-1),nbins)
-                    matrix.GetXaxis().LabelsOption("v")
-                    #matrix.GetYaxis().SetRangeUser(12,12+nwcs)
-                    #matrix.GetXaxis().SetRangeUser(52,52+nwcs)
+                nbinsx = matrix.GetNbinsX()
+                nbinsy = matrix.GetNbinsY()
+                orig = matrix.Clone('orig')
+                matrix = ROOT.TH2F("corrMatrix_noNuisances", "corrMatrix_noNuisances", nwcs, 0, nwcs, nwcs, 0, nwcs)
+                for ibinx in range(1, nbinsx+1):
+                    for ibiny in range(1, nbinsy+1):
+                        val = orig.GetBinContent(ibinx, ibiny)
+                        cx = orig.GetXaxis().GetBinLabel(ibinx)
+                        cy = orig.GetYaxis().GetBinLabel(ibiny)
+                        if cx[0] is not 'c' or cy[0] is not 'c': continue
+                        if 'charge' in cx or 'charge' in cy: continue
+                        matrix.SetBinContent(matrix.FindBin(wcs.index(cx)+0, wcs.index(cy)+0), val)
+                        matrix.GetXaxis().SetBinLabel(wcs.index(cx)+1, cx)
+                        matrix.GetYaxis().SetBinLabel(wcs.index(cy)+1, cy)
+                matrix.GetXaxis().LabelsOption('v')
 
                 # Change format of plot
                 matrix.SetStats(0)
                 matrix.SetTitle("Correlation Matrix")
 
                 # Save the plot
+                canvas.Clear()
+                matrix.Draw('colz')
+                ROOT.gStyle.SetPaintTextFormat('.2f')
+
+                # Save the plot
                 canvas.Print(matrix.GetName()+'.png','png')
                 canvas.Print(matrix.GetName()+'.eps','eps')
                 os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(matrix.GetName(), matrix.GetName()))
+                matrix.Draw('same text')
+                canvas.Print(matrix.GetName()+'text.png','png')
+                canvas.Print(matrix.GetName()+'text.eps','eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}text.eps {}text.pdf'.format(matrix.GetName(), matrix.GetName()))
 
                 # Save the plot to the histogram file
                 outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1359,7 +1721,8 @@ class EFTPlot(object):
         
         wcs_pairs = self.wcs_pairs
         if allpairs:
-            wcs_pairs = itertools.combinations(self.wcs,2)
+            wcs_pairs = itertools.combinations(wcs,2)
+            #wcs_pairs = itertools.combinations(self.wcs,2)
         else:
             wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
             #pairs from AN
@@ -1372,6 +1735,12 @@ class EFTPlot(object):
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
+            wcs_pairs = [('ctZ', 'ctW'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW')]
+            wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
+            # All diagrams in TOP-22-006 or in AN
+            wcs_pairs = [('cQQ1', 'cQt1'), ('cQQ1', 'cQt8'), ('cQlMi', 'cQei'), ('cQt1', 'cQt8'), ('cQt1', 'ctt1'), ('cpQ3', 'cbW'), ('cpQM', 'cpt'), ('cptb', 'cQl3i'), ('ctG', 'cpQM'), ('ctG', 'ctp'), ('ctW', 'ctZ'), ('ctp', 'cpt')]
+            # All diagrams in TOP-22-006 paper
+            wcs_pairs = [('ctW', 'ctZ') ,('cpQM', 'cpt') ,('ctG', 'ctp') ,('cQt1', 'cQt8') ,('cQQ1', 'cQt8') ,('cQt1', 'ctt1') ,('cQQ1', 'cQt1')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
@@ -1379,6 +1748,48 @@ class EFTPlot(object):
                     if isinstance(wc, tuple): continue
                     wcs_pairs = wcs_pairs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
 
+        html = 'index.html'
+        htmlFile = open(html,'w')
+        htmlFile.write('<html>\n')
+        htmlFile.write('<head>\n')
+        htmlFile.write('    <title>Float</title>\n')
+        htmlFile.write('    <style type=\'text/css\'>\n')
+        htmlFile.write('        body {\n')
+        htmlFile.write('            font-family: "Candara", sans-serif;\n')
+        htmlFile.write('            font-size: 9pt;\n')
+        htmlFile.write('            line-height: 10.5pt;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic h3 {\n')
+        htmlFile.write('            font-size: 11pt;\n')
+        htmlFile.write('            margin: 0.5em 1em 0.2em 1em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic p {\n')
+        htmlFile.write('            font-size: 11pt;\n')
+        htmlFile.write('            margin: 0.2em 1em 0.1em 1em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        div.pic {\n')
+        htmlFile.write('            display: block;\n')
+        htmlFile.write('            float: left;\n')
+        htmlFile.write('            background-color: white;\n')
+        htmlFile.write('            border: 1px solid #ccc;\n')
+        htmlFile.write('            padding: 2px;\n')
+        htmlFile.write('            text-align: center;\n')
+        htmlFile.write('            margin: 2px 10px 10px 2px;\n')
+        htmlFile.write('            -moz-box-shadow: 7px 5px 5px rgb(80,80,80);    /* Firefox 3.5 */\n')
+        htmlFile.write('            -webkit-box-shadow: 7px 5px 5px rgb(80,80,80); /* Chrome, Safari */\n')
+        htmlFile.write('            box-shadow: 7px 5px 5px rgb(80,80,80);         /* New browsers */\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('        a { text-decoration: none; color: rgb(80,0,0); }\n')
+        htmlFile.write('        a:hover { text-decoration: underline; color: rgb(255,80,80); }\n')
+        htmlFile.write('        div.dirlinks h2 {  margin-bottom: 4pt; margin-left: -24pt; color: rgb(80,0,0);  }\n')
+        htmlFile.write('        div.dirlinks {  margin: 0 24pt; }\n')
+        htmlFile.write('        div.dirlinks a {\n')
+        htmlFile.write('            font-size: 11pt; font-weight: bold;\n')
+        htmlFile.write('            padding: 0 0.5em;\n')
+        htmlFile.write('        }\n')
+        htmlFile.write('    </style>\n')
+        htmlFile.write('</head>\n')
+        htmlFile.write('<div class=\'pic\'><h3><a href="contour_leg.pdf"></h><img src ="contour_leg.png" style="width: 40px;"></a></p></div><br/>\n')
         for pair in wcs_pairs:
             # pair[0] is y-axis variable, pair[1] is x-axis variable
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
@@ -1390,12 +1801,23 @@ class EFTPlot(object):
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
-                if filename.endswith('contour.png') or filename.endswith('contour_final.png') or ('less' in filename and filename.endswith('.png')):            
+                if filename.endswith('contour.png') or filename.endswith('contour_prelim.png') or filename.endswith('contour_final.png') or '_leg.' in filename or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
-                if filename.endswith('contour.pdf') or filename.endswith('contour_final.pdf') or ('less' in filename and filename.endswith('.pdf')):            
+                if filename.endswith('contour.pdf') or filename.endswith('contour_prelim.pdf') or filename.endswith('contour_final.pdf') or '_leg.' in filename or ('less' in filename and filename.endswith('.pdf')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                # 1D lines
+                if filename.endswith('contour_1d.png') or filename.endswith('contour_final_1d.png') or ('less' in filename and filename.endswith('_1d.png')):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour_1d.pdf') or filename.endswith('contour_final_1d.pdf') or ('less' in filename and filename.endswith('_1d.pdf')):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+                if filename.endswith('contour_1d.eps') or filename.endswith('contour_final_1d.eps') or ('less' in filename and filename.endswith('_1d.eps')) or filename.endswith('contour_prelim_1d.eps'):            
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
+            htmlFile.write('<div class=\'pic\'><h3><a href="{}less10.pdf"</h><img src ="{}less10.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
+            htmlFile.write('<div class=\'pic\'><h3><a href="{}contour_final.pdf"></h><img src ="{}contour_final.png" style="width: 400px;"></a></p></div>\n'.format(''.join(pair),''.join(pair)))
+        htmlFile.close()
+        sp.call(['mv', 'index.html', 'Histos{}/'.format(basenamegrid)])
 
     def getIntervalFits(self,**kwargs):
         basename_lst= kwargs.pop('basename_lst',['.EFT.SM.Float'])
@@ -1528,7 +1950,7 @@ class EFTPlot(object):
             elif siginterval==1: fit_array.append([param,true_minimum,l1sigma,h1sigma])
             else: fit_array.append([param,true_minimum,lowedges,highedges])
 
-        for line in fit_array:
+        for line in fit_array[::-1]: # Flip order to match plot
             pline = line[:]
             if pline[0][-1] == 'i': pline[0] = pline[0][:-1] 
             pline[0] = '\\' + pline[0] + '$/\\Lambda^{2}$'
@@ -1564,7 +1986,8 @@ class EFTPlot(object):
 
         return fit_array
 
-    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;Profiled}', '\mathrm{Others\;Fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+    def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['Others profiled', 'Others fixed to SM'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
+    #def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;profiled}', '\mathrm{Others\;fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
 
         # Colors to use for the plots
         clr_float = 1 # Black
@@ -1574,8 +1997,12 @@ class EFTPlot(object):
         ### Plot the best fit points/intervals for 1D scans others frozen and 1D scan others floating ###
         ROOT.gROOT.SetBatch(True)
 
+        if type(basename_float_lst) == str: basename_float_lst = [basename_float_lst]
+        if type(basename_freeze_lst) == str: basename_freeze_lst = [basename_freeze_lst]
         if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
         if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
+
+        titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print 'two sigma'
@@ -1593,13 +2020,17 @@ class EFTPlot(object):
         fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
         print 'freeze'
         fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
+        if printFOM:
+            print('\n\nFoM (<1 is better)\nWC\tFoM')
+            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -1621,10 +2052,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -1638,10 +2069,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -1663,10 +2094,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -1680,10 +2111,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_float1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -1705,10 +2136,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -1722,10 +2153,10 @@ class EFTPlot(object):
 
         for idx,line in enumerate(fits_freeze1sigma):
             if line[0]=='ctG':
-                line[0] = 'ctG#times2'
-                line[1] = line[1]*2
-                line[2] = [val*2 for val in line[2]]
-                line[3] = [val*2 for val in line[3]]
+                line[0] = 'ctG#times5'
+                line[1] = line[1]*5
+                line[2] = [val*5 for val in line[2]]
+                line[3] = [val*5 for val in line[3]]
             if line[0]=='cQq13':
                 line[0] = 'cQq13#times5'
                 line[1] = line[1]*5
@@ -1747,10 +2178,10 @@ class EFTPlot(object):
                 line[2] = [val*5 for val in line[2]]
                 line[3] = [val*5 for val in line[3]]
             if line[0]=='ctp':
-                line[0] = 'ctp#divide5'
-                line[1] = line[1]/5
-                line[2] = [val/5 for val in line[2]]
-                line[3] = [val/5 for val in line[3]]
+                line[0] = 'ctp#divide2'
+                line[1] = line[1]/2
+                line[2] = [val/2 for val in line[2]]
+                line[3] = [val/2 for val in line[3]]
             if line[0]=='cpt':
                 line[0] = 'cpt#divide2'
                 line[1] = line[1]/2
@@ -1772,9 +2203,9 @@ class EFTPlot(object):
         if asimov_plotstyle_flag:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
         if not asimov_plotstyle_flag:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -10, 10, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -1822,6 +2253,44 @@ class EFTPlot(object):
         # Add lines for the errors, but print the value if line would go off the pad
         lines_labels = []
 
+        def makeLines(fits, y_float, clr):
+            lines = []
+            for idx,fittuple in enumerate(fits):
+                for imin,imax in zip(fittuple[2],fittuple[3]):
+                    xmin = imin
+                    xmax = imax
+                    # If a segment ends below the left edge
+                    if xmax < h_fit.GetXaxis().GetXmin():
+                        outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmin(),y_float[idx],3)
+                        outside_label.SetMarkerColor(clr)
+                        outside_label.SetMarkerSize(2)
+                        lines_labels.append(outside_label)
+                        continue # Don't attempt to draw the line!
+                    # If a segment begins above the right edge
+                    if xmin > h_fit.GetXaxis().GetXmax():
+                        outside_label = ROOT.TMarker(h_fit.GetXaxis().GetXmax(),y_float[idx],3)
+                        outside_label.SetMarkerColor(clr)
+                        outside_label.SetMarkerSize(2)
+                        lines_labels.append(outside_label)
+                        continue # Don't attempt to draw the line!
+                    # If a segment begins below the left edge
+                    if xmin < h_fit.GetXaxis().GetXmin():
+                        min_label = ROOT.TLatex(h_fit.GetXaxis().GetXmin(),y_float[idx],str(round(xmin,1)))
+                        min_label.SetTextSize(0.03)
+                        min_label.SetTextColor(clr)
+                        lines_labels.append(min_label)
+                        xmin = h_fit.GetXaxis().GetXmin()
+                    # If a segment ends above the right edge
+                    if xmax > h_fit.GetXaxis().GetXmax():
+                        max_label = ROOT.TLatex(h_fit.GetXaxis().GetXmax(),y_float[idx],str(round(xmax,1)))
+                        max_label.SetTextSize(0.03)
+                        max_label.SetTextColor(clr)
+                        max_label.SetTextAlign(30)
+                        lines_labels.append(max_label)
+                        xmax = h_fit.GetXaxis().GetXmax()
+                    lines.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
+                    lines[-1].SetLineColor(clr)
+            return lines
         lines_float = []
         for idx,fittuple in enumerate(fits_float):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -1858,6 +2327,7 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_float.append(ROOT.TLine(xmin,y_float[idx],xmax,y_float[idx]))
                 lines_float[-1].SetLineColor(clr_float)
+        lines_float = makeLines(fits_float, y_float, clr_float)
         lines_float_1sigma = []
         for idx,fittuple in enumerate(fits_float1sigma):
             for imin,imax in zip(fittuple[2],fittuple[3]):
@@ -1970,7 +2440,7 @@ class EFTPlot(object):
                     xmax = h_fit.GetXaxis().GetXmax()
                 lines_freeze_1sigma.append(ROOT.TLine(xmin,y_freeze[idx],xmax,y_freeze[idx]))
                 lines_freeze_1sigma[-1].SetLineColor(clr_freeze)
-                lines_freeze_1sigma[-1].SetLineWidth(3)
+                lines_freeze_1sigma[-1].SetLineWidth(4)
                 lines_freeze_1sigma[-1].SetLineStyle(3)
 
         # Add legend
@@ -1988,58 +2458,74 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # Draw everything
-        h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
-        h_fit.Draw()
-        #graph_float.Draw('P same')
-        #graph_freeze.Draw('P same')
-        for line in lines_float:
-            line.Draw('same')
-        for line in lines_freeze:
-            line.Draw('same')
-        for line in lines_float_1sigma:
-            line.Draw('same')
-        for line in lines_freeze_1sigma:
-            line.Draw('same')
-        for label in lines_labels:
-            label.Draw('same')
-        for label in y_labels:
-            label.Draw('same')
-        legend.Draw('same')
-        self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
-        self.CMS_text.SetNDC(1)
-        self.CMS_text.SetTextSize(0.04)
-        self.CMS_text.SetTextAlign(33)
-        self.CMS_text.Draw('same')
-        #self.CMS_extra = ROOT.TLatex(0.9, 0.865, "Preliminary")# Simulation")
-        self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
-        self.CMS_extra.SetNDC(1)
-        self.CMS_extra.SetTextSize(0.03)
-        self.CMS_extra.SetTextAlign(33)
-        self.CMS_extra.SetTextFont(52)
-        self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
-        self.arXiv_extra.SetNDC(1)
-        self.arXiv_extra.SetTextSize(0.03)
-        self.arXiv_extra.SetTextAlign(30)
-        self.arXiv_extra.SetTextFont(42)
-        if not final: self.CMS_extra.Draw('same')
-        #if not final: self.arXiv_extra.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
-        self.Lumi_text.SetNDC(1)
-        self.Lumi_text.SetTextSize(0.04)
-        self.Lumi_text.SetTextAlign(30)
-        self.Lumi_text.SetTextFont(42)
-        self.Lumi_text.Draw('same')
+        def draw(lines_float=[], lines_freeze=[], lines_float_1sigma=[], lines_freeze_1sigma=[], name='BestScanPlot'):
+            h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
+            if 'FoM' in name:
+                h_fit.GetXaxis().SetRangeUser(0, 1.1)
+            h_fit.Draw()
+            #graph_float.Draw('P same')
+            #graph_freeze.Draw('P same')
+            if lines_float is not None:
+                for line in lines_float:
+                    line.Draw('same')
+            if lines_freeze is not None:
+                for line in lines_freeze:
+                    line.Draw('same')
+            if lines_float_1sigma is not None:
+                for line in lines_float_1sigma:
+                    line.Draw('same')
+            if lines_freeze_1sigma is not None:
+                for line in lines_freeze_1sigma:
+                    line.Draw('same')
+            for label in lines_labels:
+                label.Draw('same')
+            for label in y_labels:
+                label.Draw('same')
+            legend.Draw('same')
+            self.CMS_text = ROOT.TLatex(0.88, 0.94, "CMS")# Simulation")
+            self.CMS_text.SetNDC(1)
+            self.CMS_text.SetTextSize(0.04)
+            self.CMS_text.SetTextAlign(33)
+            self.CMS_text.Draw('same')
+            if not final: self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Preliminary")# Simulation")
+            #self.CMS_extra = ROOT.TLatex(0.885, 0.92, "Supplementary")# Simulation")
+            self.CMS_extra.SetNDC(1)
+            self.CMS_extra.SetTextSize(0.03)
+            self.CMS_extra.SetTextAlign(33)
+            self.CMS_extra.SetTextFont(52)
+            self.arXiv_extra = ROOT.TLatex(0.885, 0.90, self.arXiv)# Simulation")
+            self.arXiv_extra.SetNDC(1)
+            self.arXiv_extra.SetTextSize(0.03)
+            self.arXiv_extra.SetTextAlign(30)
+            self.arXiv_extra.SetTextFont(42)
+            if not final: self.CMS_extra.Draw('same')
+            #if not final: self.arXiv_extra.Draw('same')
+            self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
+            self.Lumi_text.SetNDC(1)
+            self.Lumi_text.SetTextSize(0.04)
+            self.Lumi_text.SetTextAlign(30)
+            self.Lumi_text.SetTextFont(42)
+            self.Lumi_text.Draw('same')
 
-        if final:
-            canvas.Print('BestScanPlot_final.png','png')
-            canvas.Print('BestScanPlot_final.eps','eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot_final.eps')
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot_final.eps BestScanPlot_final.pdf')
-        else:
-            canvas.Print('BestScanPlot{}.png'.format(filename),'png')
-            canvas.Print('BestScanPlot{}.eps'.format(filename),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" BestScanPlot{}.eps'.format(filename))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop BestScanPlot{}.eps BestScanPlot{}.pdf'.format(filename,filename))
+            if final:
+                canvas.Print('{}_final.png'.format(name),'png')
+                canvas.Print('{}_final.eps'.format(name),'eps')
+                os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}_final.eps'.format(name))
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}_final.eps {}_final.pdf'.format(name, name))
+            else:
+                canvas.Print('{}{}.png'.format(name, filename),'png')
+                canvas.Print('{}{}.eps'.format(name, filename),'eps')
+                os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}.eps'.format(name, filename))
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}.eps {}{}.pdf'.format(name, filename, name, filename))
+        draw(lines_float, lines_freeze, lines_float_1sigma, lines_freeze_1sigma, name='BestScanPlot')
+        if printFOM:
+            lines_1 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
+            lines_2 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
+            lines_1 = [[wc, 0, [0], [l]] for wc,l in lines_1]
+            lines_2 = [[wc, 0, [0], [l]] for wc,l in lines_2]
+            lines_1=makeLines(lines_1, y_float, clr_float)
+            lines_2=makeLines(lines_2, y_freeze, clr_freeze)
+            draw(lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
@@ -2174,7 +2660,7 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.03)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.9, 0.91, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.9, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.03)
         self.CMS_extra.SetTextAlign(30)

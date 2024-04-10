@@ -63,7 +63,7 @@ else:
             
 macro_dir = os.path.join(CONST.EFTFIT_TEST_DIR,'../scripts/')
 root_args = "\"{indir}\",\"{outdir}\"".format(indir=in_dir,outdir=out_dir)
-subprocess.check_call(['root','-b','-l','-q', macro_dir + 'overlay_operator_variations.C({args})'.format(args=root_args)])
+subprocess.check_call(['root','-b','-l','-q', macro_dir + 'overlay_operator_variations.C+({args})'.format(args=root_args)])
     
 to_convert = get_files('.',targets=['.eps','.ps'])
 for fn in to_convert:
