@@ -88,28 +88,28 @@ class EFTPlot(object):
             'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
         }
         self.texdicfrac = {
-            'ctW': '\it{c}_{\mathrm{tW}}}', 
-            'ctZ': '\it{c}_{\mathrm{tZ}}}', 
-            'ctp': '\it{c}_{\mathrm{t} \\varphi}}', 
-            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}}', 
-            'ctG': '\it{c}_{\mathrm{tG}}}', 
-            'cbW': '\it{c}_{\mathrm{bW}}}', 
-            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}}', 
-            'cptb': '\it{c}_{\\varphi \mathrm{tb}}}', 
-            'cpt': '\it{c}_{\\varphi \mathrm{t}}}', 
-            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}}', 
-            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}}', 
-            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}}', 
-            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}}', 
-            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}}', 
-            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}}', 
-            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}}', 
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}', 
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}', 
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}', 
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}', 
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}', 
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}', 
+            'ctW': '\it{c}_{\mathrm{tW}}',
+            'ctZ': '\it{c}_{\mathrm{tZ}}',
+            'ctp': '\it{c}_{\mathrm{t} \\varphi}',
+            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}',
+            'ctG': '\it{c}_{\mathrm{tG}}',
+            'cbW': '\it{c}_{\mathrm{bW}}',
+            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}',
+            'cptb': '\it{c}_{\\varphi \mathrm{tb}}',
+            'cpt': '\it{c}_{\\varphi \mathrm{t}}',
+            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}',
+            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}',
+            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}',
+            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}',
+            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}',
+            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}',
+            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}',
+            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}',
+            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}',
+            'ctq8': '\it{c}^{8}_{\mathrm{tq}}',
+            'ctq1': '\it{c}^{1}_{\mathrm{tq}}',
+            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}',
+            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}',
             'ctt1': '\it{c}^{1}_{\mathrm{tt}}',
             'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}',
             'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
@@ -154,17 +154,18 @@ class EFTPlot(object):
     # Takes as input the name of a root file (assumed to be in ../fit_files)
     # Retruns [wc vals in the scan, delta nll vals at each point]
     # Optionally removes duplicate wc points (choosing min nll)
-    def GetWCsNLLFromRoot(self,base_name_lst,wc,unique=False):
+    def GetWCsNLLFromRoot(self,base_name_lst,wc,unique=False,**kwargs):
+        dir_path    = kwargs.pop('dir_path','../fit_files')
 
         graphwcs = []
         graphnlls = []
         for name in base_name_lst:
-            if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
-                logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit.root'.format(dir_path,name)):
+                logging.error("File {}/higgsCombine{}.MultiDimFit.root does not exist!".format(dir_path,name))
                 return [graphwcs,graphnlls]
 
             # Get scan tree
-            rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+            rootFile = ROOT.TFile.Open('{}/higgsCombine{}.MultiDimFit.root'.format(dir_path,name))
             limitTree = rootFile.Get('limit')
 
             # Get coordinates for TGraph
@@ -320,8 +321,13 @@ class EFTPlot(object):
         pf1 = kwargs.pop('pf1','')
         pf2 = kwargs.pop('pf2','')
         log = kwargs.pop('log',False)
+        nll_1sigma = kwargs.pop('nll_1sigma',1)
+        nll_2sigma = kwargs.pop('nll_2sigma',4)
+        nll_3sigma = kwargs.pop('nll_3sigma',9)
         ceiling = kwargs.pop('ceiling',10)
+        #ceiling = kwargs.pop('ceiling',max(10, nll_3sigma+1))
         final = kwargs.pop('final',False)
+        filename = kwargs.pop('filename','')
         titles = kwargs.pop('titles',['Other WCs profiled', 'Others WCs fixed to SM'])
         if not wc:
             logging.error("No wc specified!")
@@ -343,8 +349,8 @@ class EFTPlot(object):
         p1.cd()
 
         # Get coordinates for TGraphs
-        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True)
-        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True)
+        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True,dir_path=d1)
+        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True,dir_path=d2)
 
         # Rezero the y axis and make the tgraphs
         #zero = graph1nlls.index(0)
@@ -352,16 +358,16 @@ class EFTPlot(object):
         for n,z in enumerate(graph1nlls):
             if abs(z) < abs(graph1nlls[zero]): zero = n
         #zero = graph1nlls.index(min(graph1nlls))
-        print graph1nlls[zero], graph1wcs[zero]
-        print graph2nlls[zero], graph2wcs[zero]
-        print graph2nlls
+        #print graph1nlls[zero], graph1wcs[zero]
+        #print graph2nlls[zero], graph2wcs[zero]
+        #print graph2nlls
         min_2 = min([g for g in graph2nlls if g > 0.1])
         #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
         #graph2nlls = [val-min_2 for val in graph2nlls]
-        print graph2nlls
-        print 'Min is', min_2
+        #print graph2nlls
+        #print 'Min is', min_2
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
         graph2 = ROOT.TGraph(len(graph2wcs),numpy.asarray(graph2wcs),numpy.asarray(graph2nlls))
         del graph1nlls,graph2nlls,graph1wcs,graph2wcs
@@ -411,17 +417,23 @@ class EFTPlot(object):
         canvas.SetGrid(1)
         p1.SetGrid(1)
 
-        line68 = ROOT.TLine(xmin,1,xmax,1)
+        line68 = ROOT.TLine(xmin,nll_1sigma,xmax,nll_1sigma)
         line68.Draw('same')
         line68.SetLineColor(ROOT.kYellow+1)
         line68.SetLineWidth(3)
         line68.SetLineStyle(7)
 
-        line95 = ROOT.TLine(xmin,4,xmax,4)
+        line95 = ROOT.TLine(xmin,nll_2sigma,xmax,nll_2sigma)
         line95.Draw('same')
         line95.SetLineColor(ROOT.kCyan-2)
         line95.SetLineWidth(3)
         line95.SetLineStyle(7)
+
+        line997 = ROOT.TLine(xmin,nll_3sigma,xmax,nll_3sigma)
+        line997.Draw('same')
+        line997.SetLineColor(ROOT.kMagenta-2)
+        line997.SetLineWidth(3)
+        line997.SetLineStyle(7)
 
         # Labels
         Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
@@ -450,8 +462,8 @@ class EFTPlot(object):
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
-        self.CMS_extra = ROOT.TLatex(0.37, 0.952, " Supplementary")# Simulation")
-        #if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        #self.CMS_extra = ROOT.TLatex(0.37, 0.952, " Supplementary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
@@ -480,28 +492,41 @@ class EFTPlot(object):
         #legend.SetTextSize(0.035)
         #legend.SetNColumns(1)
         #legend.Draw('same')
+        # Lgend2
+        legend2 = ROOT.TLegend(0.,0.,1,1)
+        legend2.AddEntry(line68, '68.3% CL','l')
+        legend2.AddEntry(line95, '95.5% CL','l')
+        legend2.AddEntry(line997,'99.7% CL','l')
+        legend2.SetTextSize(0.35)
+        legend2.SetBorderSize(0)
 
         #Check log option, then save as image
         if log:
             multigraph.SetMinimum(0.1)
             multigraph.SetLogz()
-            canvas.Print('Overlay{}1DNLL_log.png'.format(wc),'png')
+            canvas.Print('Overlay{}1DNLL{}_log.png'.format(wc, filename),'png')
         else:
             if final: 
-                canvas.Print('Overlay{}1DNLL_final.png'.format(wc),'png')
-                canvas.Print('Overlay{}1DNLL_final.eps'.format(wc),'eps')
-                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL_final.eps'.format(wc))
+                canvas.Print('Overlay{}1DNLL{}_final.png'.format(wc, filename),'png')
+                canvas.Print('Overlay{}1DNLL{}_final.eps'.format(wc, filename),'eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_final.eps'.format(wc, filename))
             else: 
-                canvas.Print('Overlay{}1DNLL_prelim.png'.format(wc),'png')
-                canvas.Print('Overlay{}1DNLL_prelim.eps'.format(wc),'eps')
-                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL_prelim.eps'.format(wc))
+                canvas.Print('Overlay{}1DNLL{}_prelim.png'.format(wc, filename),'png')
+                canvas.Print('Overlay{}1DNLL{}_prelim.eps'.format(wc, filename),'eps')
+                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_prelim.eps'.format(wc, filename))
         canvas = ROOT.TCanvas('canvas', 'canvas', 400, 100)
         canvas.cd()
         legend.Draw()
-        canvas.Print('ext_leg_Overlay1DNLL.png'.format(wc),'png')
-        canvas.Print('ext_leg_Overlay1DNLL.eps'.format(wc),'eps')
-        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
-        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_Overlay1DNLL.eps')
+        canvas.Print('ext{}_leg_Overlay1DNLL.png'.format(wc),'png')
+        canvas.Print('ext{}_leg_Overlay1DNLL.eps'.format(wc),'eps')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext{}_leg_Overlay1DNLL.eps'.format(wc))
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext{}_leg_Overlay1DNLL.eps'.format(wc))
+
+        legend2.Draw()
+        canvas.Print('ext_leg_CL.png','png')
+        canvas.Print('ext_leg_CL.eps','eps')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_CL.eps')
+        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_CL.eps')
 
     def OverlayZoomLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
         if not wc:
@@ -1795,6 +1820,7 @@ class EFTPlot(object):
         siginterval = kwargs.pop('siginterval',2)
         dir_path    = kwargs.pop('dir_path','../fit_files')
         postfix     = kwargs.pop('postfix','')
+        nll_max     = kwargs.pop('nll_max',4)
         ### Return a table of parameters, their best fits, and their uncertainties ###
         ### Use 1D scans instead of regular MultiDimFit ###
         if not params:
@@ -1822,7 +1848,7 @@ class EFTPlot(object):
             if missing_wc: continue
 
             basename_lst_with_wcs_appended = self.AppendStrToItemsInLst(basename_lst,"."+param)
-            wc_values, nll_values = self.GetWCsNLLFromRoot(basename_lst_with_wcs_appended,param,unique=True)
+            wc_values, nll_values = self.GetWCsNLLFromRoot(basename_lst_with_wcs_appended,param,unique=True,dir_path=dir_path)
 
             # Rezero deltanll values
             bestNLL = min(nll_values)
@@ -1858,10 +1884,10 @@ class EFTPlot(object):
             for idx,coord in enumerate(coords):
                 wc,nll = coord[0],coord[1]
                 # Did we cross a low edge?
-                if prevnll>4 and 4>nll:
+                if prevnll>nll_max and nll_max>nll:
                     #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = prevnll-nll
-                    linPctInterp = (prevnll-4)/interval
+                    linPctInterp = (prevnll-nll_max)/interval
                     if idx == 0:
                         print 'Range not found, setting to infinity'
                         lowedges.append(-999)
@@ -1870,10 +1896,10 @@ class EFTPlot(object):
                         cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                         lowedges.append(cross)
                 # Did we cross a high edge?
-                if prevnll<4 and 4<nll:
+                if prevnll<nll_max and nll_max<nll:
                     #cross = fitfunc.GetX(4, graph.GetX()[idx-1], graph.GetX()[idx])
                     interval = nll-prevnll
-                    linPctInterp = (4-prevnll)/interval
+                    linPctInterp = (nll_max-prevnll)/interval
                     cross = graph.GetX()[idx-1]+(graph.GetX()[idx]-graph.GetX()[idx-1])*linPctInterp
                     highedges.append(cross)
                 # Is this the best fit?
@@ -1939,7 +1965,7 @@ class EFTPlot(object):
                 one[1] = two[0]
                 two[0] = tmp
                 ''' Find all local minima '''
-                minima = numpy.where(nll_values<4)
+                minima = numpy.where(nll_values<nll_max)
                 dx = numpy.diff(nll_values[minima])
                 idx = dx[1:] * dx[:-1] < 0
                 minima = wc_values[minima][numpy.append(numpy.logical_and(numpy.append(idx, [False]), dx<0), [False])]
@@ -2175,7 +2201,7 @@ class EFTPlot(object):
         canvas.SetGrid(1)
         h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
         if not asimov_plotstyle_flag:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 6, -6, 6, 4*numWC+1, 0, 4*numWC)
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
@@ -2428,10 +2454,12 @@ class EFTPlot(object):
         legend.SetTextSize(0.025)
 
         # Draw everything
-        def draw(lines_float=[], lines_freeze=[], lines_float_1sigma=[], lines_freeze_1sigma=[], name='BestScanPlot'):
+        def draw(h_fit, lines_float=[], lines_freeze=[], lines_float_1sigma=[], lines_freeze_1sigma=[], name='BestScanPlot'):
             h_fit.GetXaxis().SetTitle("Wilson coefficient CI / #Lambda^{2} [TeV^{-2}]");
             if 'FoM' in name:
+                #h_fit = ROOT.TH2F('h_fit','Summary Plot', 1, 0, 1.1, 4*numWC+1, 0, 4*numWC)
                 h_fit.GetXaxis().SetRangeUser(0, 1.1)
+                h_fit.GetXaxis().SetTitle("Wilson coefficient FoM / #Lambda^{2} [TeV^{-2}]");
             h_fit.Draw()
             #graph_float.Draw('P same')
             #graph_freeze.Draw('P same')
@@ -2449,6 +2477,27 @@ class EFTPlot(object):
                     line.Draw('same')
             for label in lines_labels:
                 label.Draw('same')
+            y_labels = []
+            for idy,yval in enumerate(y_float):
+                tex = fits_float[idy][0].rstrip('i')
+                scale = ''
+                if 'divide' in tex:
+                    scale = tex[tex.find('#divide'):]
+                    tex = tex[0:tex.find('#divide')]
+                    scale = scale.replace('#divide', '\\div')
+                if 'times' in tex:
+                    scale = tex[tex.find('#times'):]
+                    scale = scale.replace('#times', '\\times')
+                    tex = tex[0:tex.find('#times')]
+                tex = self.texdicfrac[tex]
+                if 'FoM' in name:
+                    y_labels.append(ROOT.TLatex(-0.15*1.16,yval-1,tex+scale))
+                else:
+                    y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.16,yval-1,tex+scale))
+                #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
+                y_labels[idy].SetTextAlign(22)
+                y_labels[idy].SetTextSize(0.03)
+                #if fits_float[idy][0]=='cpQM\\div2': y_labels[idy].SetTextSize(0.025)
             for label in y_labels:
                 label.Draw('same')
             legend.Draw('same')
@@ -2487,7 +2536,7 @@ class EFTPlot(object):
                 canvas.Print('{}{}.eps'.format(name, filename),'eps')
                 os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}.eps'.format(name, filename))
                 os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}.eps {}{}.pdf'.format(name, filename, name, filename))
-        draw(lines_float, lines_freeze, lines_float_1sigma, lines_freeze_1sigma, name='BestScanPlot')
+        draw(h_fit, lines_float, lines_freeze, lines_float_1sigma, lines_freeze_1sigma, name='BestScanPlot')
         if printFOM:
             lines_1 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
             lines_2 = [[lim[0][0], round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3)] for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]
@@ -2495,7 +2544,7 @@ class EFTPlot(object):
             lines_2 = [[wc, 0, [0], [l]] for wc,l in lines_2]
             lines_1=makeLines(lines_1, y_float, clr_float)
             lines_2=makeLines(lines_2, y_freeze, clr_freeze)
-            draw(lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
+            draw(h_fit, lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
