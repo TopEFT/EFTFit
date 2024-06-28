@@ -19,7 +19,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         self.verbose = False
         self.numOperators = {}
         self.Operators = {}
-        self.sgnl_known = ['ttH','tllq','ttll','ttlnu','tHq','tttt']
+        self.sgnl_known = ['ttH','tllq','ttll','ttlnu','tHq','tttt','ttA']
 
         # regular expressions for process names:
         self.sm_re    = re.compile('(?P<proc>.*)_sm')
