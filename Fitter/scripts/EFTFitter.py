@@ -101,8 +101,8 @@ class EFTFit(object):
                             'hf','hfstats1','hfstats2','lf','lfstats1','lfstats2','lumi_13TeV_2017','pdf_gg','pdf_ggttH','pdf_qgtHq','pdf_qq',
                            ]
         #TOP-22-006
-        self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'ISR_gg', 'ISR_qg', 'ISR_qq', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'fact_Diboson', 'fact_Triboson', 'fact_convs', 'fact_tHq', 'fact_tWZ', 'fact_tllq', 'fact_ttH', 'fact_ttll', 'fact_ttlnu', 'fact_tttt', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch11_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin1', 'prop_binch12_bin2', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin0', 'prop_binch13_bin1',
-         'prop_binch13_bin2', 'prop_binch13_bin3', 'prop_binch14_bin0', 'prop_binch14_bin1', 'prop_binch14_bin2', 'prop_binch14_bin3', 'prop_binch15_bin0', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin1', 'prop_binch16_bin2', 'prop_binch16_bin3_fakes_sm', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch17_bin2', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch18_bin2', 'prop_binch18_bin3', 'prop_binch19_bin0', 'prop_binch19_bin1', 'prop_binch19_bin2', 'prop_binch19_bin3', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin0_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch20_bin3_fakes_sm', 'prop_binch21_bin0', 'prop_binch21_bin1', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin0', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin1', 'prop_binch23_bin2_fakes_sm', 'prop_binch23_bin3', 'prop_binch24_bin0_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch25_bin0', 'prop_binch25_bin1', 'prop_binch25_bin2', 'prop_binch25_bin3', 'prop_binch26_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch26_bin3', 'prop_binch26_bin4', 'prop_binch27_bin0', 'prop_binch27_bin1', 'prop_binch28_bin0', 'prop_binch28_bin1', 'prop_binch28_bin3', 'prop_binch29_bin0', 'prop_binch29_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch2_bin0_fakes_sm', 'prop_binch2_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch30_bin0', 'prop_binch30_bin1', 'prop_binch31_bin0', 'prop_binch32_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch32_bin3_fakes_sm', 'prop_binch33_bin0', 'prop_binch33_bin1', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin0', 'prop_binch34_bin1', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin0_fakes_sm', 'prop_binch36_bin1', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch39_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch3_bin0_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin2_fakes_sm', 'prop_binch6_bin3_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin1', 'prop_binch9_bin2', 'prop_binch9_bin3', 
+        self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'ISR_gg', 'ISR_qg', 'ISR_qq', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'fact_Diboson', 'fact_Triboson', 'fact_convs', 'fact_tHq', 'fact_tWZ', 'fact_tllq', 'fact_ttH', 'fact_ttll', 'fact_ttlnu', 'fact_tttt', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq',
+        'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch11_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin2', 'prop_binch13_bin0', 'prop_binch13_bin1', 'prop_binch12_bin1', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin3', 'prop_binch13_bin2', 'prop_binch14_bin1', 'prop_binch14_bin3_fakes_sm', 'prop_binch14_bin0', 'prop_binch14_bin2', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin0', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin2', 'prop_binch17_bin2', 'prop_binch16_bin1', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch16_bin3_fakes_sm', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch19_bin1', 'prop_binch18_bin2', 'prop_binch19_bin0', 'prop_binch19_bin2', 'prop_binch18_bin3_fakes_sm', 'prop_binch19_bin3_fakes_sm', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch20_bin0_fakes_sm', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch21_bin1', 'prop_binch20_bin3_fakes_sm', 'prop_binch22_bin0', 'prop_binch21_bin0', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin1_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin2_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch24_bin0_fakes_sm', 'prop_binch25_bin3', 'prop_binch25_bin2', 'prop_binch26_bin0', 'prop_binch25_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch25_bin1', 'prop_binch26_bin4', 'prop_binch29_bin1', 'prop_binch26_bin3', 'prop_binch28_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch28_bin3', 'prop_binch27_bin1', 'prop_binch29_bin0', 'prop_binch27_bin0', 'prop_binch28_bin0', 'prop_binch2_bin0_fakes_sm', 'prop_binch33_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch30_bin0', 'prop_binch31_bin0', 'prop_binch33_bin1', 'prop_binch32_bin3_fakes_sm', 'prop_binch2_bin1', 'prop_binch32_bin0', 'prop_binch30_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch34_bin0', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch34_bin1', 'prop_binch36_bin0_fakes_sm', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin1_fakes_sm', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2_fakes_sm', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch3_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch39_bin0_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch6_bin3_fakes_sm', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin2_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin3', 'prop_binch9_bin1', 'prop_binch9_bin2',
         'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_tWZ', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renorm_Diboson', 'renorm_Triboson', 'renorm_convs', 'renorm_tHq', 'renorm_tWZ', 'renorm_tllq', 'renorm_ttH', 'renorm_ttll', 'renorm_ttlnu', 'renorm_tttt', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018']
 
     def log_subprocess_output(self,pipe,level):
@@ -425,7 +425,7 @@ class EFTFit(object):
                 #return
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=7000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
+            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=10000\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
             logging.info('Now submitting condor jobs.')
             condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             with condorsub.stdout,condorsub.stderr:
@@ -554,7 +554,7 @@ class EFTFit(object):
                 logging.info("No files to hadd. Returning.")
                 return
             #haddargs = ['hadd','-f','higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
-            haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
+            haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
             print(['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name))))
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
@@ -1358,9 +1358,12 @@ class EFTFit(object):
         if not os.path.exists('unblind'):
             os.mkdir('unblind')
             os.system('ln -s {} unblind/'.format(workspace))
+            os.mkdir('new')
+            os.system('ln -s {} new/'.format(workspace))
         job_dir = 'asimov'
         if unblind:
             job_dir = 'unblind'
+            job_dir = 'new'
         os.system(job_dir)
         if not wcs: wcs = self.wcs
         user = os.getlogin()
@@ -1377,7 +1380,10 @@ class EFTFit(object):
             condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
-            condorFile.write('  combine -M MultiDimFit -n _initialFit_%s%s --algo singles --redefineSignalPOIs %s --robustFit 1 --setParameters %s=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges %s=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wc, wc, wc, workspace))
+            condorFile.write('  combineTool.py -M Impacts -n %s%s --doInitialFit --redefineSignalPOIs %s --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, workspace))
+            if len(wcs) > 1:
+                exclude = ' --exclude ' + ','.join([w for w in wcs if w != wc])
+                condorFile.write(exclude)
             if unblind: print('Running over ACTUAL DATA!'); condorFile.write('\n')
             else: condorFile.write(' -t -1\n')
             condorFile.write('fi\n')
@@ -1402,18 +1408,21 @@ class EFTFit(object):
             condorFile.close()
 
             os.system('chmod 777 condor_%s.sh' % wc)
-            os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('condor_submit %s -batch-name %s_initial' % (target, wc))
             os.system('cd ../')
 
-    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
+    def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest25v01_withAutostats_withSys.root', wcs=[], unblind=False, version=''):
         job_dir = 'asimov'
         if unblind:
             job_dir = 'unblind'
         os.system('cd {}'.format(job_dir))
         if not wcs: wcs = self.wcs
         user = os.getlogin()
+        ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in self.wc_ranges_differential.items()])
         for wc in wcs:
             print 'Submitting', wc
+            if unblind:
+                print('Running over ACTUAL DATA!');
             target = 'condor_%s_fit.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1425,9 +1434,17 @@ class EFTFit(object):
             condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
-                condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
+                condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
+                freeze = ','.join([w for w in wcs if w != w] + [n for n in self.systematics if n!= np])
+                #condorFile.write('  combineTool.py -M Impacts -n %s --doFits --redefineSignalPOIs %s --floatOtherPOIs 0 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG,=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, wc, freeze, workspace))
+                condorFile.write('combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --freezeParameters %s --setParameterRanges %s -m 1 -d %s --setParameters ctp=0,cpQM=0,cpQ3=0,cpt=0,cptb=0,ctZ=0,ctW=0,cbW=0' % (wc, np, wc, np, freeze, ranges, workspace))
+                #condorFile.write('  combineTool.py -M Impacts -n paramFit_%s_%s --doFits --redefineSignalPOIs %s --floatOtherPOIs 0 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG,=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, freeze, workspace))
+                if len(wcs) > 1:
+                    exclude = ' --exclude ' + ','.join([w for w in wcs if w != wc])
+                    condorFile.write(exclude)
+                #condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
                 if unblind:
-                    print('Running over ACTUAL DATA!'); condorFile.write('\n')
+                    condorFile.write('\n')
                 else:
                     condorFile.write( ' -t -1\n')
                 condorFile.write('fi\n')
@@ -1453,14 +1470,14 @@ class EFTFit(object):
             condorFile.close()
 
             os.system('chmod 777 condor_%s_fit.sh' % wc)
-            os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('condor_submit %s -batch-name %s_nuisance' % (target, wc))
             os.system('cd ../')
 
     def ImpactCollect(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
         job_dir = 'asimov'
         if unblind:
             job_dir = 'unblind'
-        os.system(job_dir)
+        os.system('cd {}'.format(job_dir))
         if not wcs: wcs = self.wcs
         user = os.getlogin()
         for wc in wcs:
@@ -1481,7 +1498,7 @@ class EFTFit(object):
                 exclude = ' --exclude ' + ','.join([w for w in wcs if w != wc])
                 condorFile.write(exclude)
             condorFile.write('\n')
-            condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s\n' % (wc, version, wc))
+            condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s%s\n' % (wc, version, wc, version))
             condorFile.close()
 
             target = 'condor_%s_collect.sub' % wc
@@ -1503,7 +1520,7 @@ class EFTFit(object):
             condorFile.close()
 
             os.system('chmod 777 condor_%s_collect.sh' % wc)
-            os.system('condor_submit %s -batch-name %s' % (target, wc))
+            os.system('condor_submit %s -batch-name %s_collect' % (target, wc))
             os.system('cd ../')
 
 if __name__ == "__main__":
