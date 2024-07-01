@@ -29,11 +29,11 @@ class BaseHTMLTag:
 
     # Check if the tag has the corresponding attribute
     def hasAttribute(self,k):
-        return self.tag_attributes.has_key(k)
+        return k in self.tag_attributes
 
     # Adds new attribute:value pairs to this tag
     def addAttributes(self,**kwargs):
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             # Skip already defined attributes
             if k in self.CLASS_TRANSLATION: k = 'class'
             if self.hasAttribute(k): continue 
@@ -41,7 +41,7 @@ class BaseHTMLTag:
 
     # Modify existing attributes (if found)
     def setAttributes(self,**kwargs):
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             if not self.hasAttribute(k): continue
             self.tag_attributes[k] = v
 
@@ -123,7 +123,7 @@ class BaseHTMLTag:
         indent = INDENT_SIZE*depth*int(self.pretty_print)
         # Empty tags don't get indented, might want to change this at some point
         string = "<%s" % (self.tag_name) if self.isEmptyTag() else "%s<%s" % (indent,self.tag_name)
-        for k,v in self.getAttributes().iteritems():
+        for k,v in self.getAttributes().items():
             string += " %s=%s" % (k,self.attr2Str(k,v))
         if self.isEmptyTag(): return string+"/>"
         string += ">"
@@ -149,7 +149,7 @@ class BaseHTMLTag:
         string = "<" + self.tag_name
         if self.use_dict:
             ### Alternate attribute reading
-            for tag_opt in self.tag_attributes.keys():
+            for tag_opt in list(self.tag_attributes.keys()):
                 string += " "
                 if type(self.tag_attributes[tag_opt]) is int:
                     string += tag_opt + "=%d" % self.tag_attributes[tag_opt]
@@ -249,13 +249,13 @@ class TableTag(BaseHTMLTag):
                 #       children won't inherit the proper pretty_print setting when they are added to
                 #       the parent tag
                 new_col.setPrettyPrint(self.pretty_print)
-                if tag_info.has_key('content'):
+                if 'content' in tag_info:
                     new_col.setContent(tag_info['content'])
-                if tag_info.has_key('attributes'):
+                if 'attributes' in tag_info:
                     new_col.addAttributes(**tag_info['attributes'])
                     #for k,v, in tag_info['attributes'].iteritems():
                     #    new_col.addAttribute(k,v)
-                if tag_info.has_key('tags'):
+                if 'tags' in tag_info:
                     for tag in tag_info['tags']:
                         new_col.addTag(tag)
                 header_row.append(new_col)
@@ -289,7 +289,7 @@ class TableTag(BaseHTMLTag):
     # Returns the n-th <th> tag for this <table> tag
     def getHeaderColumn(self,n):
         if n >= self.nCols or n < 0:
-            print "ERROR: Requested column out of range!"
+            print("ERROR: Requested column out of range!")
             return
         elif self.table_head_index < 0:
             return
@@ -340,13 +340,13 @@ class TableTag(BaseHTMLTag):
             new_cell = DataCellTag()
             row.addTag(new_cell)
             #new_cell.setPrettyPrint(self.pretty_print)  # See comment in init()
-            if tag_info.has_key('content'):
+            if 'content' in tag_info:
                 new_cell.setContent(tag_info['content'])
-            if tag_info.has_key('attributes'):
+            if 'attributes' in tag_info:
                 new_cell.addAttributes(**tag_info['attributes'])
                 #for k,v in tag_info['attributes'].iteritems():
                 #    new_cell.addAttribute(k,v)
-            if tag_info.has_key('tags'):
+            if 'tags' in tag_info:
                 for tag in tag_info['tags']:
                     new_cell.addTag(tag)
             #row.addTag(new_cell)
@@ -355,7 +355,7 @@ class TableTag(BaseHTMLTag):
     # Adds a <tr> tag to the <tbody> (if present) for this <table> tag, otherwise add the row directly to the table
     def addTableRow(self,table_row):
         if not self.nCols() is None and self.nCols() != table_row.nCols():
-            print "ERROR: Column Mismatch!"
+            print("ERROR: Column Mismatch!")
             return
 
         table_body = self.getTableBody()
@@ -370,7 +370,7 @@ class TableTag(BaseHTMLTag):
     # Adds a <tr> tag to the <tbody> for this <table> tag
     def addRow(self,td_list):
         if self.nCols() != len(td_list):
-            print "ERROR: Column Mismatch!"
+            print("ERROR: Column Mismatch!")
             return
         new_row = TableRowTag()
         new_row.setPrettyPrint(self.pretty_print)   # See comment in init()
@@ -424,7 +424,7 @@ class TableHeadTag(BaseHTMLTag):
     # Returns the n-th <th> tag for this <thead> tag
     def getColumn(self,n):
         if n >= self.nCols or n < 0:
-            print "ERROR: Requested column out of range!"
+            print("ERROR: Requested column out of range!")
             return
         head_row = self.getHeaderRow()
         return head_row.nested_tags[n]
@@ -497,7 +497,7 @@ class MetaTag(BaseHTMLTag):
     def dumpTag(self,depth=0):
         indent = INDENT_SIZE*depth*int(self.pretty_print)
         string = "%s<%s" % (indent,self.tag_name)
-        for k,v in self.getAttributes().iteritems():
+        for k,v in self.getAttributes().items():
             string += " %s=%s" % (k,self.attr2Str(k,v))
         string += ">\n"
         return string
@@ -507,7 +507,7 @@ class MetaTag(BaseHTMLTag):
 
         if self.use_dict:
             ### Alternate attribute reading
-            for tag_opt in self.tag_attributes.keys():
+            for tag_opt in list(self.tag_attributes.keys()):
                 string += " "
                 if type(self.tag_attributes[tag_opt]) is int:
                     string += tag_opt + "=%d" % self.tag_attributes[tag_opt]
@@ -602,7 +602,7 @@ class HTMLGenerator:
         output = self.dumpHTML()
         f_path = os.path.join(f_dir,f_name);
         
-        print "Saving HTML output to: %s" % f_path
+        print("Saving HTML output to: %s" % f_path)
         
         #html_file = open(f_path,'wb')
         html_file = open(f_path,'w')

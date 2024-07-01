@@ -90,7 +90,7 @@ def getImages(tar_dir,file_type='png'):
 def make_html(tar_dir):
     home_dir = os.getcwd()
     if not os.path.exists(tar_dir):
-        print "Target directory does not exists: %s" % (tar_dir)
+        print("Target directory does not exists: %s" % (tar_dir))
         return
 
     os.chdir(tar_dir)
@@ -153,7 +153,7 @@ def main():
     else:
         fpath = os.path.join(web_area,'eft_stuff/tmp')
     if not os.path.exists(fpath):
-        print "ERROR: Unknown path {}".format(fpath)
+        print("ERROR: Unknown path {}".format(fpath))
         return
     make_html(fpath)
 

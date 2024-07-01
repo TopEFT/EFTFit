@@ -3,7 +3,7 @@ import math
 import logging
 
 import sys
-from cStringIO import StringIO
+from io import StringIO
 
 import CombineHarvester.CombineTools.ch as ch
 from utils import regex_match,run_command
@@ -106,7 +106,7 @@ class DatacardReader(object):
             m3 = (s.name() == syst_name)
             if m1 and m2 and m3:
                 ret = '{name} {vdown} {vup}'.format(name=s.name(),vdown=s.value_d(),vup=s.value_u())
-                print ret,
+                print(ret, end=' ')
         backup = sys.stdout         # backup original stdout
         sys.stdout = StringIO()     # capture output
         self.cb.ForEachSyst(f)
@@ -211,7 +211,7 @@ if __name__ == "__main__":
         tmp = reader.cb.cp()
         tmp.bin([b])
         tmp.PrintProcess()
-        print "%s: %.3f +/- %.3f" % (b.ljust(21),tmp.GetRate(),tmp.GetUncertainty())
+        print("%s: %.3f +/- %.3f" % (b.ljust(21),tmp.GetRate(),tmp.GetUncertainty()))
         
     #channels = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9']
     channels = ['ch13']

@@ -36,7 +36,7 @@ class EFT2DModel(PhysicsModel):
                 self.scaling = value
 
     def setup(self):
-        print "Setting up fits"
+        print("Setting up fits")
         scaling = np.load(self.scaling)[()]
         for process in self.processes:
             #for bin in self.bins:
@@ -62,7 +62,7 @@ class EFT2DModel(PhysicsModel):
         if process not in self.processes:
             return 1
         else:
-            print 'Scaling {0}, {1}'.format(process, bin)
+            print('Scaling {0}, {1}'.format(process, bin))
             name = 'r_{0}'.format(process)
 
             return name

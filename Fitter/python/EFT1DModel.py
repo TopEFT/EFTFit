@@ -41,17 +41,17 @@ class EFT1DModel(PhysicsModel):
             elif option == 'procbins':
                 procbin_override = value.split(',')
             else:
-                print "Unknown option",option
+                print("Unknown option",option)
 
         #If procbins are specified, only use subset that we have fits for.
         #Otherwise, use all of the process+bin combinations that we have fits for.
         fits = np.load(self.fits)[()]
-        self.procbins = fits[self.operator].keys()
+        self.procbins = list(fits[self.operator].keys())
         if len(procbin_override)>0: self.procbins = np.intersect1d(self.procbins,procbins_override)
 
 
     def setup(self):
-        print "Setting up fits"
+        print("Setting up fits")
         fits = np.load(self.fits)[()]
         #print fits
         #print self.operator
@@ -62,7 +62,7 @@ class EFT1DModel(PhysicsModel):
             if not self.modelBuilder.out.function(name):
                 template = "expr::{name}('{a0}+{a1}*{c}+{a2}*{c}*{c}',{c})"
                 a0, a1, a2 = fits[self.operator][procbin]
-                print template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator)
+                print(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator))
                 quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator))
                 #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator)
                 self.modelBuilder.out._import(quadratic)
