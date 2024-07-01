@@ -73,10 +73,10 @@ Now we can actually run combine to perform the fits.
 - Run combine with our EFTFit tools
   - Example:
     ```
-    python -i ../scripts/EFTFitter.py
+    python3 -i ../scripts/EFTFitter.py
     fitter.batch1DScanEFT(basename='.081921.njet.ptbl.Float', batch='condor', workspace='wps.root', other=['-t', '-1'])
     ```
-  - Once all jobs are finished, run the following (again inside `python -i ../scripts/EFTFitter.py`) to collect them in the `EFTFit/Fitter/fit_files` folder: 
+  - Once all jobs are finished, run the following (again inside `python3 -i ../scripts/EFTFitter.py`) to collect them in the `EFTFit/Fitter/fit_files` folder: 
     ```
     fitter.batchRetrieve1DScansEFT(basename='.081921.njet.ptbl.Float', batch='condor')
     ````
@@ -85,12 +85,12 @@ Now we can actually run combine to perform the fits.
 
 To make simple 1D plots, use:
 ```
-python -i ../scripts/EFTPlotter.py
+python3 -i ../scripts/EFTPlotter.py
 plotter.BatchLLPlot1DEFT(basename_lst=['.081121.njet.16wc.Float'])
 ```
 To make comparison plots (e.g. `njets` vs. `njets+ptbl`):
 ```
-python -i ../scripts/EFTPlotter.py
+python3 -i ../scripts/EFTPlotter.py
 plotter.BestScanPlot(basename_float_lst='.081721.njet.Float', basename_freeze_lst='.081821.njet.ptbl.Float', filename='_float_njet_ptbl', titles=['N_{jet} prof.', 'N_{jet}+p_{T}(b+l) prof.'], printFOM=True)
 ```
 ## Steps for reproducing the "official" TOP-22-006 workspace:
