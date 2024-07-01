@@ -24,8 +24,8 @@ Currently working with tag `v8.2.0`:
 
 ```
 git clone git@github.com:cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
-cd HiggsAnalysis/CombinedLimit/
-git checkout v8.2.0
+git fetch origin
+git checkout v10.0.1
 cd -
 scram b -j8
 ```
@@ -43,7 +43,7 @@ This package is designed to be used with the CombineHarvester fork. This might c
 ```
 git clone git@github.com:cms-analysis/CombineHarvester.git
 cd CombineHarvester
-git checkout 128e41eb
+git checkout v3.0.0-pre1
 scram b -j8
 ```
 
