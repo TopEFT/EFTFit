@@ -517,9 +517,9 @@ class EFTPlot(object):
         canvas = ROOT.TCanvas('canvas', 'canvas', 400, 100)
         canvas.cd()
         legend.Draw()
-        canvas.Print('ext{}_leg_Overlay1DNLL.png'.format(wc),'png')
-        canvas.Print('ext{}_leg_Overlay1DNLL.eps'.format(wc),'eps')
-        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext{}_leg_Overlay1DNLL.eps'.format(wc))
+        canvas.Print('ext_leg_Overlay1DNLL.png','png')
+        canvas.Print('ext_leg_Overlay1DNLL.eps','eps')
+        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
         os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext{}_leg_Overlay1DNLL.eps'.format(wc))
 
         legend2.Draw()
