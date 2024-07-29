@@ -26,6 +26,7 @@ class EFTFit(object):
         # WCs lists for easy use
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
+        self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         self.scan_wcs = ['ctW','ctZ']
