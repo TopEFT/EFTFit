@@ -108,6 +108,8 @@ class EFTFit(object):
     def log_subprocess_output(self,pipe,level):
         ### Pipes Popen streams to logging class ###
         for line in iter(pipe.readline, ''):
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
             if level=='info': logging.info(line.rstrip('\n'))
             if level=='err': logging.error(line.rstrip('\n'))
 
