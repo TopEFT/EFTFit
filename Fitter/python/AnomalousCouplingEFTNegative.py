@@ -1,7 +1,7 @@
 from HiggsAnalysis.CombinedLimit.PhysicsModel import *
 from HiggsAnalysis.CombinedLimit.SMHiggsBuilder import SMHiggsBuilder
 import ROOT, os
-import json 
+import json
 
 #
 # See derivation and explanation, validation, tests in AN-20-204
@@ -12,7 +12,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
     "Float independently cross sections and branching ratios"
     def __init__(self):
-        PhysicsModel.__init__(self)
+        PhysicsModel.__init__(self) # not using 'super(x,self).__init__' since I don't understand it
         self.mHRange = []
         self.poiNames = []
         self.alternative = False
@@ -45,138 +45,333 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         """ Handle any physics options specified by the user."""
         wcs_list_exists = False
         for po in physOptions:
+            if po.startswith("higgsMassRange="):
+                self.mHRange = po.replace("higgsMassRange=","").split(",")
+                if len(self.mHRange) != 2:
+                    raise RuntimeError("Higgs mass range definition requires two extrema")
+                elif float(self.mHRange[0]) >= float(self.mHRange[1]):
+                    raise RuntimeError("Extrema for Higgs mass range defined with inverterd order. Second must be larger the first")
+
+            if po.startswith("eftOperators="):
+                self.Operators = po.replace("eftOperators=","").split(",")
+                print(" Operators = ", self.Operators)
+                self.numOperators = len(self.Operators)
+
             if po.startswith("eftAlternative"):
                 self.alternative = True
-                raise RuntimeError("Alternative not yet implemented")
+
+            #
+            # this is needed in the case the complete list of operators is not the one provided above,
+            # but for some reason, like a new model or a new basis, different or more operators are added.
+            # There could be also the possibility that one operator is removed from the complete list of operators,
+            # who knows why ... by it might happen, thus the method to remove it is given hereafter
+            #
+            if po.startswith("defineOperators="):
+                self.Operators = po.replace("defineOperators=","").split(",")
+                print(" Operators = ", self.Operators)
+
+            if po.startswith("addToOperators="):
+                toAddOperators = po.replace("addToOperators=","").split(",")
+                self.Operators.extend ( toAddOperators )
+                print(" Operators = ", self.Operators)
+
+            if po.startswith("removeFromOperators="):
+                toRemoveOperators = po.replace("removeFromOperators=","").split(",")
+                newlist = [i for i in self.Operators if i not in toRemoveOperators]
+                self.Operators = newlist
+                print(" Operators = ", self.Operators)
+
             if po.startswith("selectedWCs="):
                 selected_wcs_fpath = po.replace("selectedWCs=","").strip()
                 wcs_list_exists = True
-            if po.startswith("verbose"):
-                self.verbose = True
-        
+
         assert wcs_list_exists, "selectedWCs.txt not provided. Provide the full path using the command line option `--PO selectedWCs=PATH_TO_DIR`."
 
         self.loadOperators(selected_wcs_fpath) 
 
 
+#
+# standard, not touched (end)
+#
+
+
+#
+# Define parameters of interest
+#
+
     def doParametersOfInterest(self):
-        """ Create POI and other parameters, and define the POI set."""
+        """Create POI and other parameters, and define the POI set."""
         self.modelBuilder.doVar("r[1,-10,10]")
         self.poiNames = "r"
         self.quadFactors = []
 
-        for operator in self.alloperators:
-            self.modelBuilder.doVar(operator + "[0,-200,200]")
-            self.poiNames += "," + operator
 
-        # This is the pure SM contribution
         for sig in self.sgnl_known:
-            sgnl_ops = self.Operators[sig]
-            if self.numOperators[sig] != 1:
-                for op in sgnl_ops:
-                    op_idx = sgnl_ops.index(op)
-                    oplist = sgnl_ops[op_idx:]
-                    terms = " ".join(['-@0*@%d'%(i+1) for i,x in enumerate(oplist[1:])])
-                    formula = "@0{}".format(terms)
-                    expression = "expr::func_{sig}_sm_{op}(\"{formula}\", {oplist})".format(
-                        sig=sig,
-                        op=op,
-                        formula=formula,
-                        oplist=','.join(oplist)
-                    )
-                    if self.verbose:
-                        print("SM sub-expr: {}".format(expression))
-                    self.modelBuilder.factory_(expression)
-                terms = "-@".join(str(i+1) for i,x in enumerate(sgnl_ops))
-                formula = "@0*(1-@{})".format(terms)
-                functions = ", ".join('func_{sig}_sm_{op}'.format(sig=sig,op=op) for op in self.Operators[sig])
-                expression = "expr::func_{sig}_sm(\"{formula}\", 1, {funcs})".format(
-                    sig=sig,
-                    formula=formula,
-                    funcs=functions
-                )
-                if self.verbose:
-                    print("SM expr: {}".format(expression))
-                self.modelBuilder.factory_(expression)
-            else:
-                formula = "@0*(1-(@1))"
-                expression = "expr::func_{sig}_sm(\"{formula}\", 1, {op})".format(
-                    sig=sig,
-                    formula=formula,
-                    op=sgnl_ops[0]
-                )
-                if self.verbose:
-                    print("SM expr: {}".format(expression))
-                self.modelBuilder.factory_(expression)
+            for operator in range(0, self.numOperators[sig]):
+              self.modelBuilder.doVar(str(self.Operators[sig][operator]) + "[0,-200,200]")
+              self.poiNames += "," + str(self.Operators[sig][operator])
 
-        # This is the coefficient of "SM + Lin_i + Quad_i"
-        for sig in self.sgnl_known:
-            sgnl_ops = self.Operators[sig]
-            if self.numOperators[sig] != 1:
-                for i in range(0,self.numOperators[sig]):
-                    op = sgnl_ops[i]
-                    oplist = [str(sgnl_ops[j]) for j in range(len(sgnl_ops)) if i != j]
-                    terms = "+@".join([str(j+2) for j in range(len(sgnl_ops) - 1)])
-                    formula = "@0*(@1 * (1-(@{terms})))".format(terms=terms)
-                    expression = "expr::func_{sig}_sm_linear_quadratic_{op}(\"{formula}\", 1,{op}, {oplist})".format(
-                        sig=sig,
-                        op=op,
-                        formula=formula,
-                        oplist=", ".join(oplist)
-                    )
-                    if self.verbose:
-                        print("SM+L+Q expr: {}".format(expression))
-                    self.modelBuilder.factory_(expression)
-            else:
-                formula = "@0*(@1)"
-                expression = "expr::func_{sig}_sm_linear_quadratic_(\"{formula}\", 1, {op})".format(
-                    sig=sig,
-                    formula=formula,
-                    op=sgnl_ops[0]
-                )
-                if self.verbose:
-                    print("SM+L+Q expr: {}".format(expression))
-                self.modelBuilder.factory_(expression)
+            #
+            # model: SM + k*linear + k**2 * quadratic
+            #
+            #   SM        = Asm**2
+            #   linear    = Asm*Absm
+            #   quadratic = Absm**2
+            #
+            #  ... and extended to more operators
+            #
+            #
+            # model: SM + k*linear + k**2 * quadratic
+            #
+            #   SM        = Asm**2
+            #   linear_1        = Asm*Abs_1
+            #   linear_2        = Asm*Absm_2
+            #   linear_3        = Absm_1*Absm_2
+            #   quadratic_1 = Absm_1**2
+            #   quadratic_2 = Absm_2**2
+            #
+            #
+            #  Combine limitation/assumption: all histograms are defined positive
+            #      See http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part2/physicsmodels/#interference
+            #  There will be some algebra here below to deal with it, but it will be transparent for the user
+            #  as if it was ...
+            #
+            #
+            # e.g. expr::func_"+sig+"_sm("@0*(1-(@1+@2+@3-@1*@2-@1*@3-@2*@1-@2*@3-@3*@1-@3*@2))",r,cG,cGtil, cG,cH, cGtil,cG, cGtil,cH, cH,cG, cH,cGtil)
+            #
 
-        # Quadratic term in each Wilson coefficient
-        # e.g. expr::func_sm_linear_quadratic_cH("@0*(@1 * (1-2*(@2+@3) ))", 1,cH, cG, cGtil)
-        for sig in self.sgnl_known:  
-            sgnl_ops = self.Operators[sig]
-            # This is the coefficient of "Quad_i"
-            for i in range(0,self.numOperators[sig]):
-                formula = "@0*(@1*@1-@1)"
-                expression = "expr::func_{sig}_quadratic_{op}(\"{formula}\", 1, {op})".format(
-                    sig=sig,
-                    op=sgnl_ops[i],
-                    formula=formula
-                )
-                if self.verbose:
-                    print("Quad expr: {}".format(expression))
-                self.modelBuilder.factory_(expression)
+            #
+            # sm
+            #
+            # print " Test = "
+
+
+            #
+            # this is the coefficient of "SM"
+            #
+
+            if not self.alternative :
+              #if self.numOperators != 1:
+                  #print "expr::func_"+sig+"_sm(\"@0*(1-(" +                                                                                                                                                                  \
+                                 #"@" + "+@".join([str(i+1) for i in range(len(self.Operators[sig]))])  +                                                                                                               \
+                                 #"-@" + "-@".join([str(i+1)+"*@"+str(j+1) for i in range(len(self.Operators[sig])) for j in range(len(self.Operators[sig])) if i<j ]) +                                                     \
+                                 #"))\",r," + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig]))]) + ")"
+              #else:
+                #print "expr::func_"+sig+"_sm(\"@0*(1-(" +                                                                     \
+                        #"@1" +                                                                                          \
+                        #"))\",r," + str(self.Operators[sig][0]) + ")"
+              if self.numOperators != 1:
+                self.modelBuilder.factory_(
+                     "expr::func_"+sig+"_sm(\"@0*(1-(" +
+                                              "@" + "+@".join([str(i+1) for i in range(len(self.Operators[sig]))])  +
+                                              "-@" + "-@".join([str(i+1)+"*@"+str(j+1) for i in range(len(self.Operators[sig])) for j in range(len(self.Operators[sig])) if i<j ]) +
+                                              "))\",r," + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig]))]) + ")"
+                     )
+              else :
+                self.modelBuilder.factory_(
+                     "expr::func_"+sig+"_sm(\"@0*(1-(" +
+                                              "@1" +
+                                              "))\",r," + str(self.Operators[sig][0]) + ")"
+                     )
+            else :
+
+              #print "expr::func_"+sig+"_sm(\"@0*(1-(" +                                                                                                                                                               \
+                             #"@" + "+@".join([str(i+1) for i in range(len(self.Operators[sig]))])  +                                                                                                               \
+                             #"))\",r," + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig]))]) + ")"
+
+              if self.numOperators != 1:
+                self.modelBuilder.factory_(
+                     "expr::func_"+sig+"_sm(\"@0*(1-(" +
+                                              "@" + "+@".join([str(i+1) for i in range(len(self.Operators[sig]))])  +
+                                              "))\",r," + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig]))]) + ")"
+                     )
+              else :
+                self.modelBuilder.factory_(
+                     "expr::func_"+sig+"_sm(\"@0*(1-(" +
+                                              "@1" +
+                                              "))\",r," + str(self.Operators[sig][0]) + ")"
+                     )
+
+
+
+
+
+            #
+            # this is the coefficient of "SM + Lin_i + Quad_i"
+            #
+
+            if not self.alternative :
+              if self.numOperators != 1:
+                for operator in range(0, self.numOperators[sig]):
+                  #print " Test = "
+                  #print "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +                                           \
+                                     #"(\"@0*(" +                                                                                      \
+                                     #"@1 * (1-(" + "@" + "+@".join( [str(j+2) for j in range(len(self.Operators[sig]) -1) ] ) + ") )" +      \
+                                     #")\",r," + str(self.Operators[sig][operator]) +                                                     \
+                                     #", " + ", ".join( [str(self.Operators[sig][j]) for j in range(len(self.Operators[sig])) if operator!=j ] ) +            \
+                                     #")"
+                  #
+                  #
+                  # expr::func_"+sig+"_sm_linear_quadratic_cG("@0*(@1 * (1-2*(@2+@3) ))",r,cG, cGtil, cH)
+                  #
+                  #
+                  self.modelBuilder.factory_(
+                          "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +
+                                     "(\"@0*(" +
+                                     "@1 * (1-(" + "@" + "+@".join( [str(j+2) for j in range(len(self.Operators[sig]) -1) ] ) + ") )" +
+                                     ")\",r," + str(self.Operators[sig][operator]) +
+                                     ", " + ", ".join( [str(self.Operators[sig][j]) for j in range(len(self.Operators[sig])) if operator!=j ] ) +
+                                     ")"
+                          )
+              else :
+                #print "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +                   \
+                          #"(\"@0*(" +                                                                      \
+                          #"@1" +                                                                           \
+                          #")\",r," + str(self.Operators[sig][0]) +                                           \
+                          #")"
+  
+                self.modelBuilder.factory_(
+                        "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +
+                                   "(\"@0*(" +
+                                   "@1" +
+                                   ")\",r," + str(self.Operators[sig][0]) +
+                                   ")"
+                        )
+
+            else :
+              for operator in range(0, self.numOperators[sig]):
+                #print "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +                   \
+                          #"(\"@0*(" +                                                                      \
+                          #"@1" +                                                                           \
+                          #")\",r," + str(self.Operators[sig][operator]) +                                           \
+                          #")"
+
+                self.modelBuilder.factory_(
+                        "expr::func_"+sig+"_sm_linear_quadratic_" + str(self.Operators[sig][operator]) +
+                                    "(\"@0*(" +
+                                    "@1" +
+                                    ")\",r," + str(self.Operators[sig][operator]) +
+                                    ")"
+                        )
+              
+              
+            #
+            # quadratic term in each Wilson coefficient
+            #
+            #
+            # e.g. expr::func_"+sig+"_sm_linear_quadratic_cH("@0*(@1 * (1-2*(@2+@3) ))",r,cH, cG, cGtil)
+            #
+
+            for operator in range(0, self.numOperators[sig]):
+
+              #
+              # this is the coefficient of "Quad_i"
+              #
+              
+              if not self.alternative :
+
+                #print "expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][operator]) + "(\"@0*(@1*@1-@1)\",r," + str(self.Operators[sig][operator]) + ")"
+
+                self.modelBuilder.factory_("expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][operator]) + "(\"@0*(@1*@1-@1)\",r," + str(self.Operators[sig][operator]) + ")")
+
+
+              else :
+
+                if self.numOperators != 1:
+
+                  #print "expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][operator]) +    \
+                                            #"(\"@0*(@1*@1-@1-@1*(" + "@" + "+@".join([str(j+1) for j in range(len(self.Operators[sig])) if j != 0 ]) +   \
+                                            #"))\",r," +  str(self.Operators[sig][operator]) + ", " + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig])) if i != operator ]) + ")"
+
+                  self.modelBuilder.factory_("expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][operator]) +      \
+                                            "(\"@0*(@1*@1-@1-@1*(" + "@" + "+@".join([str(j+1) for j in range(len(self.Operators[sig])) if j != 0 ]) +   \
+                                            "))\",r," +  str(self.Operators[sig][operator]) + ", " + ", ".join([str(self.Operators[sig][i]) for i in range(len(self.Operators[sig])) if i != operator ]) + ")"
+                                            )
+                                                                                                                                                                                    
+
+                else:
+
+                  #print "expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][0]) + \
+                                            #"(\"@0*(@1*@1-@1" +   \
+                                            #")\",r," + str(self.Operators[sig][0]) + ")"
+
+                  self.modelBuilder.factory_("expr::func_"+sig+"_quadratic_"+ str(self.Operators[sig][operator]) +  \
+                                            "(\"@0*(@1*@1-@1" +   \
+                                            ")\",r," + str(self.Operators[sig][0]) + ")"
+                                            )
+
+
+
+            #
             # (SM + linear) + quadratic + interference between pairs of Wilson coefficients
-            if self.numOperators[sig] != 1:
-                for i in range(0, self.numOperators[sig]):
-                    for j in range(i+1,self.numOperators[sig]):
-                        # This is the coefficient of "SM + Lin_i + Lin_j + Quad_i + Quad_j + 2 * M_ij"
-                        func_name = "func_{sig}_sm_linear_quadratic_mixed_{op1}_{op2}".format(
-                            sig=sig,
-                            op1=sgnl_ops[j],    # Note: This is the order as it was before the code cleanup
-                            op2=sgnl_ops[i]
-                        )
-                        self.quadFactors.append(func_name)
-                        formula = "@0*@1*@2"
-                        expression = "expr::{name}(\"{formula}\", 1,{op1},{op2})".format(
-                            name=func_name,
-                            formula=formula,
-                            op1=sgnl_ops[i],
-                            op2=sgnl_ops[j]
-                        )
-                        if self.verbose:
-                            print("Mixed expr: {}".format(expression))
-                        self.modelBuilder.factory_(expression)
-        print(" parameters of interest = {}".format(self.poiNames))
-        print(" self.numOperators = {}".format(self.numOperators))
+            #
+            
+            if not self.alternative :
+              
+              if self.numOperators != 1:
+                for operator in range(0, self.numOperators[sig]):
+                  for operator_sub in range(operator+1, self.numOperators[sig]):
+
+                    #
+                    # this is the coefficient of "SM + Lin_i + Lin_j + Quad_i + Quad_j + 2 * M_ij"
+                    #
+                    #print "expr::func_"+sig+"_sm_linear_quadratic_mixed_" + str(self.Operators[sig][operator_sub]) + "_" + str(self.Operators[sig][operator]) +          \
+                    #"(\"@0*@1*@2\",r," + str(self.Operators[sig][operator]) + "," + str(self.Operators[sig][operator_sub]) +                      \
+                    #")"
+
+                    self.modelBuilder.factory_(
+                            "expr::func_"+sig+"_sm_linear_quadratic_mixed_" + str(self.Operators[sig][operator_sub]) + "_" + str(self.Operators[sig][operator]) +
+                            "(\"@0*@1*@2\",r," + str(self.Operators[sig][operator]) + "," + str(self.Operators[sig][operator_sub]) +
+                            ")")
+                    func_name = "func_{sig}_sm_linear_quadratic_mixed_{op1}_{op2}".format(
+                        sig=sig,
+                        op1=self.Operators[sig][operator_sub],    # Note: This is the order as it was before the code cleanup
+                        op2=self.Operators[sig][operator]
+                    )
+                    self.quadFactors.append(func_name)
+                    if self.verbose:
+                        print(func_name)
+
+            else:
+
+              if self.numOperators != 1:
+                for operator in range(0, self.numOperators[sig]):
+                  for operator_sub in range(operator+1, self.numOperators[sig]):
+
+                    #
+                    # this is the coefficient of "Quad_i + Quad_j + 2 * M_ij"
+                    #
+                    #print "expr::func_"+sig+"_quadratic_mixed_" + str(self.Operators[sig][operator_sub]) + "_" + str(self.Operators[sig][operator]) +          \
+                    #"(\"@0*@1*@2\",r," + str(self.Operators[sig][operator]) + "," + str(self.Operators[sig][operator_sub]) +                      \
+                    #")"
+
+                    self.modelBuilder.factory_(
+                            "expr::func_"+sig+"_quadratic_mixed_" + str(self.Operators[sig][operator_sub]) + "_" + str(self.Operators[sig][operator]) +
+                            "(\"@0*@1*@2\",r," + str(self.Operators[sig][operator]) + "," + str(self.Operators[sig][operator_sub]) +
+                            ")")
+                    func_name = "func_{sig}_sm_linear_quadratic_mixed_{op1}_{op2}".format(
+                        sig=sig,
+                        op1=self.Operators[sig][operator_sub],    # Note: This is the order as it was before the code cleanup
+                        op2=self.Operators[sig][operator]
+                    )
+                    self.quadFactors.append(func_name)
+                    if self.verbose:
+                        print(func_name)
+
+
+
+        print(" parameters of interest = ", self.poiNames)
+        print(" self.numOperators = ", self.numOperators[sig])
+        
         self.modelBuilder.doSet("POI",self.poiNames)
+
+
+
+
+
+#
+# Define how the yields change
+#
 
 
     def getYieldScale(self,bin,process):
@@ -209,6 +404,7 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
         else:
             print("Process {} not a signal".format(process))
             return 1
+
 
 #
 #  Standard inputs:
