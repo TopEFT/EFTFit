@@ -1373,8 +1373,6 @@ class EFTFit(object):
         if not os.path.exists('unblind'):
             os.mkdir('unblind')
             os.system('ln -s {} unblind/'.format(workspace))
-            os.mkdir('new')
-            os.system('ln -s {} new/'.format(workspace))
         job_dir = 'asimov'
         if unblind:
             job_dir = 'unblind'
@@ -1429,6 +1427,12 @@ class EFTFit(object):
             os.system('cd ../')
 
     def ImpactNuisance(self, workspace='ptz-lj0pt_fullR2_anatest25v01_withAutostats_withSys.root', wcs=[], unblind=False, version=''):
+        if not os.path.exists('asimov'):
+            os.mkdir('asimov')
+            os.system('ln -s {} asimov/'.format(workspace))
+        if not os.path.exists('unblind'):
+            os.mkdir('unblind')
+            os.system('ln -s {} unblind/'.format(workspace))
         job_dir = 'asimov'
         if unblind:
             job_dir = 'unblind'
@@ -1454,9 +1458,9 @@ class EFTFit(object):
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
-                freeze = ','.join([w for w in wcs if w != w] + [n for n in self.systematics if n!= np])
+                freeze = ','.join([w for w in wcs if w != wc])# + [n for n in self.systematics if n!= np])
                 #condorFile.write('  combineTool.py -M Impacts -n %s --doFits --redefineSignalPOIs %s --floatOtherPOIs 0 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG,=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, wc, freeze, workspace))
-                condorFile.write('combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --freezeParameters %s --setParameterRanges %s -m 1 -d %s --setParameters %s' % (wc, np, wc, np, freeze, ranges, workspace, wcs_start))
+                condorFile.write('combine -M MultiDimFit -n _paramFit_%s_%s%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --freezeParameters %s --setParameterRanges %s -m 1 -d %s --setParameters %s' % (wc, np, version, wc, np, freeze, ranges, workspace, wcs_start))
                 #condorFile.write('combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --freezeParameters %s --setParameterRanges %s -m 1 -d %s --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG,=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0' % (wc, np, wc, np, freeze, ranges, workspace))
                 #condorFile.write('  combineTool.py -M Impacts -n paramFit_%s_%s --doFits --redefineSignalPOIs %s --floatOtherPOIs 0 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG,=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters %s --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, freeze, workspace))
                 #condorFile.write('  combine -M MultiDimFit -n _paramFit_%s_%s --algo impact --redefineSignalPOIs %s -P %s --floatOtherPOIs 1 --saveInactivePOI 1 --robustFit 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,%s=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:%s=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, np, wc, np ,wc, wc, workspace))
