@@ -294,7 +294,7 @@ def run_comparison():
     print("running interference fits")
     tic = time.monotonic()
     for wc in all_wcs:
-        cmd = f"combine -M MultiDimFit {scan} -P {wc} top22006-IM-wsp.root -n .top22006.scan.{wc}"
+        cmd = f"combine -M MultiDimFit {scan} -P {wc} workspace-interference.root -n .scan.me.{wc}"
         subprocess.call(cmd.split())
     toc = time.monotonic()
     print(f"CMSInterferenceFunc approach: {toc-tic:.1f}s")
