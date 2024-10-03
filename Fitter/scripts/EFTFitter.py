@@ -13,7 +13,7 @@ import json
 import uproot
 import numpy as np
 from collections import defaultdict
-from EFTFit.Fitter.findMask import findMask 
+#from EFTFit.Fitter.findMask import findMask
 from itertools import chain
 from scipy.stats import chi2
 
@@ -26,7 +26,9 @@ class EFTFit(object):
         # WCs lists for easy use
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
-        #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
+        self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
+        self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'cbW'] #TOP-24-004
+        self.wcs_4q = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         # Scan ranges of the wcs
@@ -103,9 +105,6 @@ class EFTFit(object):
         #TOP-22-006
         self.systematics = ['FF', 'FFcloseEl_2016', 'FFcloseEl_2017', 'FFcloseEl_2018', 'FFcloseMu_2016', 'FFcloseMu_2017', 'FFcloseMu_2018', 'FFeta', 'FFpt', 'FSR', 'ISR', 'ISR_gg', 'ISR_qg', 'ISR_qq', 'JER_2016', 'JER_2016APV', 'JER_2017', 'JER_2018', 'JES_Absolute', 'JES_BBEC1', 'JES_FlavorQCD', 'JES_RelativeBal', 'JES_RelativeSample', 'PU', 'PreFiring', 'btagSFbc_2016', 'btagSFbc_2016APV', 'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_corr', 'btagSFlight_2016', 'btagSFlight_2016APV', 'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_corr', 'charge_flips', 'diboson_njets', 'fact_Diboson', 'fact_Triboson', 'fact_convs', 'fact_tHq', 'fact_tWZ', 'fact_tllq', 'fact_ttH', 'fact_ttll', 'fact_ttlnu', 'fact_tttt', 'lepSF_elec', 'lepSF_muon', 'lumi', 'missing_parton', 'pdf_scale_gg', 'pdf_scale_qg', 'pdf_scale_qq', 'qcd_scale_V', 'qcd_scale_VV', 'qcd_scale_VVV', 'qcd_scale_tHq', 'qcd_scale_tWZ', 'qcd_scale_ttH', 'qcd_scale_ttll', 'qcd_scale_ttlnu', 'qcd_scale_tttt', 'renorm_Diboson', 'renorm_Triboson', 'renorm_convs', 'renorm_tHq', 'renorm_tWZ', 'renorm_tllq', 'renorm_ttH', 'renorm_ttll', 'renorm_ttlnu', 'renorm_tttt', 'triggerSF_2016', 'triggerSF_2016APV', 'triggerSF_2017', 'triggerSF_2018',
         'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch11_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin1', 'prop_binch12_bin2', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin0', 'prop_binch13_bin1', 'prop_binch13_bin2', 'prop_binch13_bin3', 'prop_binch14_bin0', 'prop_binch14_bin1', 'prop_binch14_bin2', 'prop_binch14_bin3', 'prop_binch14_bin3_fakes_sm', 'prop_binch15_bin0', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin1', 'prop_binch16_bin2', 'prop_binch16_bin3_fakes_sm', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch17_bin2', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch18_bin2', 'prop_binch18_bin3', 'prop_binch18_bin3_fakes_sm', 'prop_binch19_bin0', 'prop_binch19_bin1', 'prop_binch19_bin2', 'prop_binch19_bin3', 'prop_binch19_bin3_fakes_sm', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin0_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch20_bin3_fakes_sm', 'prop_binch21_bin0', 'prop_binch21_bin1', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin0', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin1', 'prop_binch23_bin1_fakes_sm', 'prop_binch23_bin2_fakes_sm', 'prop_binch23_bin3', 'prop_binch24_bin0_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch25_bin0', 'prop_binch25_bin1', 'prop_binch25_bin2', 'prop_binch25_bin3', 'prop_binch26_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch26_bin3', 'prop_binch26_bin4', 'prop_binch27_bin0', 'prop_binch27_bin1', 'prop_binch28_bin0', 'prop_binch28_bin1', 'prop_binch28_bin3', 'prop_binch29_bin0', 'prop_binch29_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch2_bin0_fakes_sm', 'prop_binch2_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch30_bin0', 'prop_binch30_bin1', 'prop_binch31_bin0', 'prop_binch32_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch32_bin3_fakes_sm', 'prop_binch33_bin0', 'prop_binch33_bin1', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin0', 'prop_binch34_bin1', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin0_fakes_sm', 'prop_binch36_bin1', 'prop_binch36_bin1_fakes_sm', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2', 'prop_binch37_bin2_fakes_sm', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch39_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch3_bin0_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin2_fakes_sm', 'prop_binch6_bin3_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin1', 'prop_binch9_bin2', 'prop_binch9_bin3']
-        #TOP-24-004
-        #self.systematics = ['CMS_ttbbnorm','FF','FFcloseEl_2016','FFcloseEl_2017','FFcloseEl_2018','FFcloseMu_2016','FFcloseMu_2017','FFcloseMu_2018','FFeta','FFpt','FSR','ISR','ISR_gg','ISR_qg','ISR_qq','JER_2016','JER_2017','JER_2018','JES_Absolute','JES_BBEC1','JES_FlavorQCD','JES_RelativeBal','JES_RelativeSample','ONE','PU','PreFiring','UE','ak8jer_2016','ak8jer_2017','ak8jer_2018','alphas','bbvlsf_2016','bbvlsf_2017','bbvlsf_2018','btagSFbc_2016','btagSFbc_2016APV','btagSFbc_2017','btagSFbc_2018','btagSFbc_corr','btagSFlight_2016','btagSFlight_2016APV','btagSFlight_2017','btagSFlight_2018','btagSFlight_corr','btgcferr1','btgcferr2','btghf','btghfstats1_2016','btghfstats1_2017','btghfstats1_2018','btghfstats2_2016','btghfstats2_2017','btghfstats2_2018','btgjes','btglf','btglfstats1_2016','btglfstats1_2017','btglfstats1_2018','btglfstats2_2016','btglfstats2_2017','btglfstats2_2018','charge_flips','diboson_njets','eleclepsf_2016','eleclepsf_2017','eleclepsf_2018','electrigeffsf_2016','electrigeffsf_2017','electrigeffsf_2018','fact_Diboson','fact_Triboson','fact_convs','fact_tHq','fact_tWZ','fact_tllq','fact_ttH','fact_ttll','fact_ttlnu','fact_tttt','fsr_ttbb','hdamp','hdamp_ttbb','isr_tt','isr_ttbb','jesEC2','jesEC22016','jesEC22017','jesEC22018','jesHEMIssue','jesHF','jesHF2016','jesHF2017','jesHF2018','jmrbkg_2016','jmrbkg_2017','jmrbkg_2018','jmrsig_2016','jmrsig_2017','jmrsig_2018','jmsbkg_2016','jmsbkg_2017','jmsbkg_2018','jmssig_2016','jmssig_2017','jmssig_2018','lepSF_elec','lepSF_muon','lumi','missing_parton','mu_f_tt','mu_f_ttbb','mu_r_tt','mu_r_ttbb','mulepsf_2016','mulepsf_2017','mulepsf_2018','mutrigeffsf_2016','mutrigeffsf_2017','mutrigeffsf_2018','pdf','pdf_scale_gg','pdf_scale_qg','pdf_scale_qq','pdf_ttbb','qcd_scale_V','qcd_scale_VV','qcd_scale_VVV','qcd_scale_tHq','qcd_scale_tWZ','qcd_scale_ttH','qcd_scale_ttll','qcd_scale_ttlnu','qcd_scale_tttt','renorm_Diboson','renorm_Triboson','renorm_convs','renorm_tHq','renorm_tWZ','renorm_tllq','renorm_ttH','renorm_ttll','renorm_ttlnu','renorm_tttt','singlet_qsc','triggerSF_2016','triggerSF_2016APV','triggerSF_2017','triggerSF_2018','tt2bxsec','ttCxsec','tt_qsc','tth_ggpdf','ttx_qsc','ttz_ggpdf',
-        #'prop_bintop21003_y2016_Zhpt1_0_bin0','prop_bintop21003_y2016_Zhpt1_10_bin0','prop_bintop21003_y2016_Zhpt1_11_bin0','prop_bintop21003_y2016_Zhpt1_12_bin0','prop_bintop21003_y2016_Zhpt1_13_bin0','prop_bintop21003_y2016_Zhpt1_14_bin0','prop_bintop21003_y2016_Zhpt1_15_bin0','prop_bintop21003_y2016_Zhpt1_16_bin0','prop_bintop21003_y2016_Zhpt1_17_bin0','prop_bintop21003_y2016_Zhpt1_1_bin0','prop_bintop21003_y2016_Zhpt1_2_bin0','prop_bintop21003_y2016_Zhpt1_3_bin0','prop_bintop21003_y2016_Zhpt1_4_bin0','prop_bintop21003_y2016_Zhpt1_5_bin0','prop_bintop21003_y2016_Zhpt1_6_bin0','prop_bintop21003_y2016_Zhpt1_7_bin0','prop_bintop21003_y2016_Zhpt1_8_bin0','prop_bintop21003_y2016_Zhpt1_9_bin0','prop_bintop21003_y2016_Zhpt2_0_bin0','prop_bintop21003_y2016_Zhpt2_10_bin0','prop_bintop21003_y2016_Zhpt2_11_bin0','prop_bintop21003_y2016_Zhpt2_12_bin0','prop_bintop21003_y2016_Zhpt2_13_bin0','prop_bintop21003_y2016_Zhpt2_14_bin0','prop_bintop21003_y2016_Zhpt2_15_bin0','prop_bintop21003_y2016_Zhpt2_16_bin0','prop_bintop21003_y2016_Zhpt2_17_bin0','prop_bintop21003_y2016_Zhpt2_18_bin0','prop_bintop21003_y2016_Zhpt2_19_bin0','prop_bintop21003_y2016_Zhpt2_1_bin0','prop_bintop21003_y2016_Zhpt2_20_bin0','prop_bintop21003_y2016_Zhpt2_21_bin0','prop_bintop21003_y2016_Zhpt2_22_bin0','prop_bintop21003_y2016_Zhpt2_23_bin0','prop_bintop21003_y2016_Zhpt2_2_bin0','prop_bintop21003_y2016_Zhpt2_3_bin0','prop_bintop21003_y2016_Zhpt2_4_bin0','prop_bintop21003_y2016_Zhpt2_5_bin0','prop_bintop21003_y2016_Zhpt2_6_bin0','prop_bintop21003_y2016_Zhpt2_7_bin0','prop_bintop21003_y2016_Zhpt2_8_bin0','prop_bintop21003_y2016_Zhpt2_9_bin0','prop_bintop21003_y2016_Zhpt3_0_bin0','prop_bintop21003_y2016_Zhpt3_10_bin0','prop_bintop21003_y2016_Zhpt3_11_bin0','prop_bintop21003_y2016_Zhpt3_12_bin0','prop_bintop21003_y2016_Zhpt3_13_bin0','prop_bintop21003_y2016_Zhpt3_14_bin0','prop_bintop21003_y2016_Zhpt3_15_bin0','prop_bintop21003_y2016_Zhpt3_16_bin0','prop_bintop21003_y2016_Zhpt3_17_bin0','prop_bintop21003_y2016_Zhpt3_18_bin0','prop_bintop21003_y2016_Zhpt3_19_bin0','prop_bintop21003_y2016_Zhpt3_1_bin0','prop_bintop21003_y2016_Zhpt3_20_bin0','prop_bintop21003_y2016_Zhpt3_21_bin0','prop_bintop21003_y2016_Zhpt3_22_bin0','prop_bintop21003_y2016_Zhpt3_23_bin0','prop_bintop21003_y2016_Zhpt3_2_bin0','prop_bintop21003_y2016_Zhpt3_3_bin0','prop_bintop21003_y2016_Zhpt3_4_bin0','prop_bintop21003_y2016_Zhpt3_5_bin0','prop_bintop21003_y2016_Zhpt3_6_bin0','prop_bintop21003_y2016_Zhpt3_7_bin0','prop_bintop21003_y2016_Zhpt3_8_bin0','prop_bintop21003_y2016_Zhpt3_9_bin0','prop_bintop21003_y2017_Zhpt1_0_bin0','prop_bintop21003_y2017_Zhpt1_10_bin0','prop_bintop21003_y2017_Zhpt1_11_bin0','prop_bintop21003_y2017_Zhpt1_12_bin0','prop_bintop21003_y2017_Zhpt1_13_bin0','prop_bintop21003_y2017_Zhpt1_14_bin0','prop_bintop21003_y2017_Zhpt1_15_bin0','prop_bintop21003_y2017_Zhpt1_16_bin0','prop_bintop21003_y2017_Zhpt1_17_bin0','prop_bintop21003_y2017_Zhpt1_1_bin0','prop_bintop21003_y2017_Zhpt1_2_bin0','prop_bintop21003_y2017_Zhpt1_3_bin0','prop_bintop21003_y2017_Zhpt1_4_bin0','prop_bintop21003_y2017_Zhpt1_5_bin0','prop_bintop21003_y2017_Zhpt1_6_bin0','prop_bintop21003_y2017_Zhpt1_7_bin0','prop_bintop21003_y2017_Zhpt1_8_bin0','prop_bintop21003_y2017_Zhpt1_9_bin0','prop_bintop21003_y2017_Zhpt2_0_bin0','prop_bintop21003_y2017_Zhpt2_10_bin0','prop_bintop21003_y2017_Zhpt2_11_bin0','prop_bintop21003_y2017_Zhpt2_12_bin0','prop_bintop21003_y2017_Zhpt2_13_bin0','prop_bintop21003_y2017_Zhpt2_14_bin0','prop_bintop21003_y2017_Zhpt2_15_bin0','prop_bintop21003_y2017_Zhpt2_16_bin0','prop_bintop21003_y2017_Zhpt2_17_bin0','prop_bintop21003_y2017_Zhpt2_18_bin0','prop_bintop21003_y2017_Zhpt2_19_bin0','prop_bintop21003_y2017_Zhpt2_1_bin0','prop_bintop21003_y2017_Zhpt2_20_bin0','prop_bintop21003_y2017_Zhpt2_21_bin0','prop_bintop21003_y2017_Zhpt2_22_bin0','prop_bintop21003_y2017_Zhpt2_23_bin0_TTBar','prop_bintop21003_y2017_Zhpt2_23_bin0_VJets','prop_bintop21003_y2017_Zhpt2_23_bin0_ttH','prop_bintop21003_y2017_Zhpt2_23_bin0_ttX','prop_bintop21003_y2017_Zhpt2_23_bin0_ttZ','prop_bintop21003_y2017_Zhpt2_23_bin0_tt_B','prop_bintop21003_y2017_Zhpt2_2_bin0','prop_bintop21003_y2017_Zhpt2_3_bin0','prop_bintop21003_y2017_Zhpt2_4_bin0','prop_bintop21003_y2017_Zhpt2_5_bin0','prop_bintop21003_y2017_Zhpt2_6_bin0','prop_bintop21003_y2017_Zhpt2_7_bin0','prop_bintop21003_y2017_Zhpt2_8_bin0','prop_bintop21003_y2017_Zhpt2_9_bin0','prop_bintop21003_y2017_Zhpt3_0_bin0','prop_bintop21003_y2017_Zhpt3_10_bin0','prop_bintop21003_y2017_Zhpt3_11_bin0','prop_bintop21003_y2017_Zhpt3_12_bin0','prop_bintop21003_y2017_Zhpt3_13_bin0','prop_bintop21003_y2017_Zhpt3_14_bin0','prop_bintop21003_y2017_Zhpt3_15_bin0','prop_bintop21003_y2017_Zhpt3_16_bin0','prop_bintop21003_y2017_Zhpt3_17_bin0','prop_bintop21003_y2017_Zhpt3_18_bin0','prop_bintop21003_y2017_Zhpt3_19_bin0','prop_bintop21003_y2017_Zhpt3_1_bin0','prop_bintop21003_y2017_Zhpt3_20_bin0','prop_bintop21003_y2017_Zhpt3_21_bin0','prop_bintop21003_y2017_Zhpt3_22_bin0','prop_bintop21003_y2017_Zhpt3_23_bin0','prop_bintop21003_y2017_Zhpt3_2_bin0','prop_bintop21003_y2017_Zhpt3_3_bin0','prop_bintop21003_y2017_Zhpt3_4_bin0','prop_bintop21003_y2017_Zhpt3_5_bin0','prop_bintop21003_y2017_Zhpt3_6_bin0','prop_bintop21003_y2017_Zhpt3_7_bin0','prop_bintop21003_y2017_Zhpt3_8_bin0','prop_bintop21003_y2017_Zhpt3_9_bin0','prop_bintop21003_y2018_Zhpt1_0_bin0','prop_bintop21003_y2018_Zhpt1_10_bin0','prop_bintop21003_y2018_Zhpt1_11_bin0','prop_bintop21003_y2018_Zhpt1_12_bin0','prop_bintop21003_y2018_Zhpt1_13_bin0','prop_bintop21003_y2018_Zhpt1_14_bin0','prop_bintop21003_y2018_Zhpt1_15_bin0','prop_bintop21003_y2018_Zhpt1_16_bin0','prop_bintop21003_y2018_Zhpt1_17_bin0','prop_bintop21003_y2018_Zhpt1_1_bin0','prop_bintop21003_y2018_Zhpt1_2_bin0','prop_bintop21003_y2018_Zhpt1_3_bin0','prop_bintop21003_y2018_Zhpt1_4_bin0','prop_bintop21003_y2018_Zhpt1_5_bin0','prop_bintop21003_y2018_Zhpt1_6_bin0','prop_bintop21003_y2018_Zhpt1_7_bin0','prop_bintop21003_y2018_Zhpt1_8_bin0','prop_bintop21003_y2018_Zhpt1_9_bin0','prop_bintop21003_y2018_Zhpt2_0_bin0','prop_bintop21003_y2018_Zhpt2_10_bin0','prop_bintop21003_y2018_Zhpt2_11_bin0','prop_bintop21003_y2018_Zhpt2_12_bin0','prop_bintop21003_y2018_Zhpt2_13_bin0','prop_bintop21003_y2018_Zhpt2_14_bin0','prop_bintop21003_y2018_Zhpt2_15_bin0','prop_bintop21003_y2018_Zhpt2_16_bin0','prop_bintop21003_y2018_Zhpt2_17_bin0','prop_bintop21003_y2018_Zhpt2_18_bin0','prop_bintop21003_y2018_Zhpt2_19_bin0','prop_bintop21003_y2018_Zhpt2_1_bin0','prop_bintop21003_y2018_Zhpt2_20_bin0','prop_bintop21003_y2018_Zhpt2_21_bin0','prop_bintop21003_y2018_Zhpt2_22_bin0','prop_bintop21003_y2018_Zhpt2_23_bin0','prop_bintop21003_y2018_Zhpt2_2_bin0','prop_bintop21003_y2018_Zhpt2_3_bin0','prop_bintop21003_y2018_Zhpt2_4_bin0','prop_bintop21003_y2018_Zhpt2_5_bin0','prop_bintop21003_y2018_Zhpt2_6_bin0','prop_bintop21003_y2018_Zhpt2_7_bin0','prop_bintop21003_y2018_Zhpt2_8_bin0','prop_bintop21003_y2018_Zhpt2_9_bin0','prop_bintop21003_y2018_Zhpt3_0_bin0','prop_bintop21003_y2018_Zhpt3_10_bin0','prop_bintop21003_y2018_Zhpt3_11_bin0','prop_bintop21003_y2018_Zhpt3_12_bin0','prop_bintop21003_y2018_Zhpt3_13_bin0','prop_bintop21003_y2018_Zhpt3_14_bin0','prop_bintop21003_y2018_Zhpt3_15_bin0','prop_bintop21003_y2018_Zhpt3_16_bin0','prop_bintop21003_y2018_Zhpt3_17_bin0','prop_bintop21003_y2018_Zhpt3_18_bin0','prop_bintop21003_y2018_Zhpt3_19_bin0','prop_bintop21003_y2018_Zhpt3_1_bin0','prop_bintop21003_y2018_Zhpt3_20_bin0','prop_bintop21003_y2018_Zhpt3_21_bin0','prop_bintop21003_y2018_Zhpt3_22_bin0','prop_bintop21003_y2018_Zhpt3_23_bin0','prop_bintop21003_y2018_Zhpt3_2_bin0','prop_bintop21003_y2018_Zhpt3_3_bin0','prop_bintop21003_y2018_Zhpt3_4_bin0','prop_bintop21003_y2018_Zhpt3_5_bin0','prop_bintop21003_y2018_Zhpt3_6_bin0','prop_bintop21003_y2018_Zhpt3_7_bin0','prop_bintop21003_y2018_Zhpt3_8_bin0','prop_bintop21003_y2018_Zhpt3_9_bin0','prop_bintop22006_ch10_bin0','prop_bintop22006_ch10_bin1','prop_bintop22006_ch10_bin2','prop_bintop22006_ch11_bin0','prop_bintop22006_ch11_bin1','prop_bintop22006_ch11_bin2','prop_bintop22006_ch11_bin3_fakes_sm','prop_bintop22006_ch12_bin0_fakes_sm','prop_bintop22006_ch12_bin1','prop_bintop22006_ch12_bin2','prop_bintop22006_ch12_bin3_fakes_sm','prop_bintop22006_ch13_bin0','prop_bintop22006_ch13_bin1','prop_bintop22006_ch13_bin2','prop_bintop22006_ch13_bin3','prop_bintop22006_ch14_bin0','prop_bintop22006_ch14_bin1','prop_bintop22006_ch14_bin2','prop_bintop22006_ch14_bin3','prop_bintop22006_ch15_bin0','prop_bintop22006_ch15_bin1','prop_bintop22006_ch15_bin2','prop_bintop22006_ch15_bin3_fakes_sm','prop_bintop22006_ch16_bin0_fakes_sm','prop_bintop22006_ch16_bin1','prop_bintop22006_ch16_bin2','prop_bintop22006_ch16_bin3_fakes_sm','prop_bintop22006_ch17_bin0','prop_bintop22006_ch17_bin1','prop_bintop22006_ch17_bin2','prop_bintop22006_ch18_bin0','prop_bintop22006_ch18_bin1','prop_bintop22006_ch18_bin2','prop_bintop22006_ch18_bin3','prop_bintop22006_ch19_bin0','prop_bintop22006_ch19_bin1','prop_bintop22006_ch19_bin2','prop_bintop22006_ch19_bin3','prop_bintop22006_ch1_bin0','prop_bintop22006_ch1_bin1','prop_bintop22006_ch1_bin2_fakes_sm','prop_bintop22006_ch20_bin0_fakes_sm','prop_bintop22006_ch20_bin1_fakes_sm','prop_bintop22006_ch20_bin3_fakes_sm','prop_bintop22006_ch21_bin0','prop_bintop22006_ch21_bin1','prop_bintop22006_ch21_bin2_fakes_sm','prop_bintop22006_ch22_bin0','prop_bintop22006_ch22_bin1','prop_bintop22006_ch22_bin2_fakes_sm','prop_bintop22006_ch23_bin0_fakes_sm','prop_bintop22006_ch23_bin1','prop_bintop22006_ch23_bin2_fakes_sm','prop_bintop22006_ch23_bin3','prop_bintop22006_ch24_bin0_fakes_sm','prop_bintop22006_ch24_bin2_fakes_sm','prop_bintop22006_ch25_bin0','prop_bintop22006_ch25_bin1','prop_bintop22006_ch25_bin2','prop_bintop22006_ch25_bin3','prop_bintop22006_ch26_bin0','prop_bintop22006_ch26_bin1','prop_bintop22006_ch26_bin2','prop_bintop22006_ch26_bin3','prop_bintop22006_ch26_bin4','prop_bintop22006_ch27_bin0','prop_bintop22006_ch27_bin1','prop_bintop22006_ch28_bin0','prop_bintop22006_ch28_bin1','prop_bintop22006_ch28_bin3','prop_bintop22006_ch29_bin0','prop_bintop22006_ch29_bin1','prop_bintop22006_ch29_bin2','prop_bintop22006_ch29_bin3','prop_bintop22006_ch2_bin0_fakes_sm','prop_bintop22006_ch2_bin1','prop_bintop22006_ch2_bin2_fakes_sm','prop_bintop22006_ch30_bin0','prop_bintop22006_ch30_bin1','prop_bintop22006_ch31_bin0','prop_bintop22006_ch32_bin0','prop_bintop22006_ch32_bin1','prop_bintop22006_ch32_bin2','prop_bintop22006_ch32_bin3_fakes_sm','prop_bintop22006_ch33_bin0','prop_bintop22006_ch33_bin1','prop_bintop22006_ch33_bin2','prop_bintop22006_ch33_bin3','prop_bintop22006_ch34_bin0','prop_bintop22006_ch34_bin1','prop_bintop22006_ch34_bin2','prop_bintop22006_ch34_bin3','prop_bintop22006_ch35_bin0','prop_bintop22006_ch35_bin1','prop_bintop22006_ch35_bin2','prop_bintop22006_ch35_bin3_fakes_sm','prop_bintop22006_ch36_bin0_fakes_sm','prop_bintop22006_ch36_bin1_fakes_sm','prop_bintop22006_ch36_bin2_fakes_sm','prop_bintop22006_ch37_bin0','prop_bintop22006_ch37_bin1','prop_bintop22006_ch37_bin2','prop_bintop22006_ch38_bin0','prop_bintop22006_ch38_bin1','prop_bintop22006_ch39_bin0_fakes_sm','prop_bintop22006_ch39_bin1_fakes_sm','prop_bintop22006_ch3_bin0_fakes_sm','prop_bintop22006_ch3_bin1_fakes_sm','prop_bintop22006_ch3_bin2_fakes_sm','prop_bintop22006_ch40_bin0_fakes_sm','prop_bintop22006_ch40_bin1_fakes_sm','prop_bintop22006_ch40_bin2_fakes_sm','prop_bintop22006_ch40_bin3_fakes_sm','prop_bintop22006_ch4_bin1_fakes_sm','prop_bintop22006_ch4_bin2_fakes_sm','prop_bintop22006_ch5_bin0','prop_bintop22006_ch5_bin1','prop_bintop22006_ch5_bin2_fakes_sm','prop_bintop22006_ch6_bin0_fakes_sm','prop_bintop22006_ch6_bin1','prop_bintop22006_ch6_bin2_fakes_sm','prop_bintop22006_ch6_bin3_fakes_sm','prop_bintop22006_ch7_bin0_fakes_sm','prop_bintop22006_ch7_bin1_fakes_sm','prop_bintop22006_ch7_bin2_fakes_sm','prop_bintop22006_ch7_bin3_fakes_sm','prop_bintop22006_ch8_bin1_fakes_sm','prop_bintop22006_ch8_bin2_fakes_sm','prop_bintop22006_ch8_bin3_fakes_sm','prop_bintop22006_ch9_bin0','prop_bintop22006_ch9_bin1','prop_bintop22006_ch9_bin2','prop_bintop22006_ch9_bin3']
 
     def log_subprocess_output(self,pipe,level):
         ### Pipes Popen streams to logging class ###
@@ -381,7 +380,7 @@ class EFTFit(object):
             index = other.index('--trackParameters')
             other.pop(index)
             track.append(other.pop(index))
-        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track), '--trackErrors rgx{.*}'])
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track), '--trackErr rgx{.*}'])
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         params = ['{}=0'.format(wc) for wc in scan_params+params_tracked]
         if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
@@ -410,7 +409,7 @@ class EFTFit(object):
         if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','5','--dry-run'])
         logging.info(' '.join(args))
 
         # Run the combineTool.py command
@@ -430,15 +429,16 @@ class EFTFit(object):
             sp.call(['mkdir','condor{}'.format(name)])
             sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
             sp.call(['sed','-i','s/ulimit.*/&\\nunset PERL5LIB/','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','/arguments/d','condor_{}.sub'.format(name.replace('.',''))])
+            #sp.call(['sed','-i','/arguments/d','condor_{}.sub'.format(name.replace('.',''))])
             sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
-            sp.call(['sed','-i','s/executable = \(.*\)/executable = \/afs\/crc.nd.edu\/user\/b\/byates2\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/cmssw.sh\\narguments = \/afs\/crc.nd.edu\/user\/b\/byates2\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/\\1 $(ProcId)/','condor_{}.sub'.format(name.replace('.',''))])
+            #sp.call(['sed','-i','s/executable = \(.*\)/executable = \/afs\/cern.ch\/user\/b\/byates\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/cmssw.sh\\narguments = \/afs\/cern.ch\/user\/b\/byates\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/\\1 $(ProcId)/','condor_{}.sub'.format(name.replace('.',''))])
+            #sp.call(['sed','-i','s/sh/sh\\n+SingularityImage     = "\/cvmfs\/unpacked.cern.ch\/registry.hub.docker.com\/cmssw\/slc6:latest"\\n+SINGULARITY_BIND_EXPR = "\/cvmfs\/"\\n/','condor_{}.sub'.format(name.replace('.',''))])
             logging.info('Now submitting condor jobs.')
-            condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
-            with condorsub.stdout,condorsub.stderr:
-                self.log_subprocess_output(condorsub.stdout,'info')
-                self.log_subprocess_output(condorsub.stderr,'err')
-            condorsub.wait()
+            #condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
+            #with condorsub.stdout,condorsub.stderr:
+            #    self.log_subprocess_output(condorsub.stdout,'info')
+            #    self.log_subprocess_output(condorsub.stderr,'err')
+            #condorsub.wait()
             
         if batch: logging.info("Done with gridScan batch submission.")
             
@@ -523,8 +523,8 @@ class EFTFit(object):
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
             host = os.uname()[1]
-            if 'lxplus' in host: hadooppath = '/eos/user/{}/{}/EFT/Combine/{}/*/*'.format(os.getlogin()[0], os.getlogin(), taskname)
-            #if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
+            #if 'lxplus' in host: hadooppath = '/eos/user/{}/{}/EFT/Combine/{}/*/*'.format(os.getlogin()[0], os.getlogin(), taskname)
+            if 'lxplus' in host: hadooppath = '/eos/cms/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
             elif 'earth' in host: hadooppath = '/hadoop/store/user/{}/EFT/Combine/{}/*/*'.format(user, taskname)
             else: raise NotImplementedError('The machine ' + host + ' is not configured! Please add its path to `retrieveGridScan`')
             paths = glob.glob(hadooppath)
@@ -806,7 +806,11 @@ class EFTFit(object):
             freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
             for iwc in ignore:
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
+        #FIXME this is for running the 4q WCs while freezing the rest
+        scan_wcs = self.wcs_4q
+        freeze_ignore = [wc for wc in self.wcs if wc not in self.wcs_4q]
         if wc_val is None:
+            #params = ','.join(['{}={}'.format(wc, np.random.uniform(wc_ranges[wc][0], wc_ranges[wc][1])) for wc in self.wcs])
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
         else:
             params = ','.join(['{}=0'.format(wc) if wc not in wc_val.keys() else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
@@ -1382,6 +1386,7 @@ class EFTFit(object):
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
+            if wc not in ['ctZ']: continue
             print 'Submitting', wc
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
@@ -1406,7 +1411,7 @@ class EFTFit(object):
 
             target = 'condor_%s.sub' % wc
             condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
+            condorFile.write('executable = /afs/cern.ch/user/b/byates/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
             condorFile.write('arguments = condor_%s.sh $(ProcId)\n' % wc)
             condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
             condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
@@ -1442,6 +1447,8 @@ class EFTFit(object):
         ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in self.wc_ranges_differential.items() if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
+            #if wc not in ['cptb', 'cbW']: continue
+            if wc not in ['ctZ']: continue
             print 'Submitting', wc
             if unblind:
                 print('Running over ACTUAL DATA!');
@@ -1451,10 +1458,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
@@ -1473,9 +1480,10 @@ class EFTFit(object):
 
             target = 'condor_%s_fit.sub' % wc
             condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
-            #condorFile.write('executable = condor_%s_fit.sh\n' % wc)
-            condorFile.write('arguments = condor_%s_fit.sh $(ProcId)\n' % wc)
+            #condorFile.write('executable = /afs/cern.ch/user/b/byates/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
+            condorFile.write('executable = condor_%s_fit.sh\n' % wc)
+            #condorFile.write('arguments = condor_%s_fit.sh $(ProcId)\n' % wc)
+            condorFile.write('arguments = $(ProcId)\n')
             condorFile.write('output                = %s_fit.$(ClusterId).$(ProcId).out\n' % wc)
             condorFile.write('error                 = %s_fit.$(ClusterId).$(ProcId).err\n' % wc)
             condorFile.write('log                   = %s_fit.$(ClusterId).log\n' % wc)
@@ -1485,6 +1493,7 @@ class EFTFit(object):
             condorFile.write('\n')
             condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
             condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+            condorFile.write('+JobFlavour = "tomorrow"\n')
             condorFile.write('\n')
             condorFile.write('requestMemory=8192\n')
             condorFile.write('\n')
@@ -1505,16 +1514,18 @@ class EFTFit(object):
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
+            if wc not in ['ctZ']: continue
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            #condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters %s -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wcs_start, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
@@ -1528,8 +1539,10 @@ class EFTFit(object):
 
             target = 'condor_%s_collect.sub' % wc
             condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
-            condorFile.write('arguments = condor_%s_collect.sh $(ProcId)\n' % wc)
+            #condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
+            condorFile.write('executable = condor_%s_collect.sh\n' % wc)
+            condorFile.write('arguments = $(ProcId)\n')
+            #condorFile.write('arguments = condor_%s_collect.sh $(ProcId)\n' % wc)
             condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
             condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
             condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
@@ -1539,6 +1552,7 @@ class EFTFit(object):
             condorFile.write('\n')
             condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
             condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+            condorFile.write('+JobFlavour = "tomorrow"\n')
             condorFile.write('\n')
             condorFile.write('\n')
             condorFile.write('queue 1\n')
