@@ -807,7 +807,7 @@ class EFTFit(object):
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
         #FIXME this is for running the 4q WCs while freezing the rest
         scan_wcs = self.wcs_4q
-        freeze_ignore = [wc for wc in self.wcs if wc not in self.wcs_4q]
+        freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in scan_wcs])]
         if wc_val is None:
             #params = ','.join(['{}={}'.format(wc, np.random.uniform(wc_ranges[wc][0], wc_ranges[wc][1])) for wc in self.wcs])
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
