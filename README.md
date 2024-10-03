@@ -123,3 +123,33 @@ Run
 fitter.ImpactCollect(workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[])
 ```
 to collect all jobs and create the final pdf plots. A blank `wcs` will run over all WCs.
+
+
+# Making postfit
+Note: If you are making Asimov data postfit, the best way to approach this is to simply create a seperate Asimov workspace with only Asimov datacards and perform the exact same steps in this section. (For topeft analysis group, turn off `--unblind` option to obtain Asimov datacards)
+1. Copy your workspace into `/Fitter/test` directory, make sure you activate `cmsenv`
+### Making the postfit root file
+2. In `Fitter/test` run `MultidimFit` to make postfit for the workspace `wsp.root` with the following command:
+```
+time combine --algo none --cminPreScan --cminDefaultMinimizerStrategy=0 -P ctW --trackParameters ctW,ctZ,ctp,cpQM,ctG,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1 --floatOtherPOIs 1 --setParameters ctW=0,ctZ=0,ctp=0,cpQM=0,ctG=0,cbW=0,cpQ3=0,cptb=0,cpt=0,cQl3i=0,cQlMi=0,cQei=0,ctli=0,ctei=0,ctlSi=0,ctlTi=0,cQq13=0,cQq83=0,cQq11=0,ctq1=0,cQq81=0,ctq8=0,ctt1=0,cQQ1=0,cQt8=0,cQt1=0 -M MultiDimFit -d wsp.root -v 2 --saveFitResult -n multidimfit
+```
+A file named `multidimfit.root` will be made in the `Fitter/test` directory.
+### Constructing postfit for all signal regions with condor
+3. Add the file `multidimfit.root` to `../../script/structMaker.C`, and change option `do_postfit` to `true` in the script.
+4. Open `../../condor/submit` script then queue the corresponding number of signal regions, which is 11 for top22-006. (Make sure all the necessary scripts to run condor have the correct directory to eventually point to your `../../script/structMaker.C`.)
+5. In `Fitter/test` directory, make a new directory called `fit_results`, and inside, make `SR_postfit` and `SR_sum_postfit` two directories. (The scripts are set already to read these directories otherwise it would fail the command.)
+6. Make a directory in `fit_results` called `condor/logs`.
+7. Run the condor jobs through:
+```
+condor_submit ../../condor/submit
+```
+8. When the jobs are finished, there will be 11 (or whatever number of signal regions your analysis has) SR files in `SR_postfit`, and the same number of files in `SR_sum_postfit`. (Note that file naming would start from zero)
+### Making the SR plots
+9. Go into `test/fit_results` directory, and run:
+```
+root -b -l -q '../../scripts/plot_maker.C("")'
+```
+The corresponding plots will be made in `fit_results/plots`
+
+### Changing WCs to other values
+For step 2. the command is used to fit all WCs = 0 case. If you want to set certain WC value to non-zero, simply change `--setParameters` option. 
