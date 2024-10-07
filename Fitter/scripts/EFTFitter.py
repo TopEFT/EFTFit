@@ -434,11 +434,11 @@ class EFTFit(object):
             #sp.call(['sed','-i','s/executable = \(.*\)/executable = \/afs\/cern.ch\/user\/b\/byates\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/cmssw.sh\\narguments = \/afs\/cern.ch\/user\/b\/byates\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/\\1 $(ProcId)/','condor_{}.sub'.format(name.replace('.',''))])
             #sp.call(['sed','-i','s/sh/sh\\n+SingularityImage     = "\/cvmfs\/unpacked.cern.ch\/registry.hub.docker.com\/cmssw\/slc6:latest"\\n+SINGULARITY_BIND_EXPR = "\/cvmfs\/"\\n/','condor_{}.sub'.format(name.replace('.',''))])
             logging.info('Now submitting condor jobs.')
-            #condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
+            condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
             #with condorsub.stdout,condorsub.stderr:
             #    self.log_subprocess_output(condorsub.stdout,'info')
             #    self.log_subprocess_output(condorsub.stderr,'err')
-            #condorsub.wait()
+            condorsub.wait()
             
         if batch: logging.info("Done with gridScan batch submission.")
             
