@@ -28,6 +28,7 @@ class EFTFit(object):
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
         #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
         self.wcs_4q = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
+        self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         # Scan ranges of the wcs
@@ -158,7 +159,7 @@ class EFTFit(object):
             for m in mask:
                 msk = findMask(m)
                 if not msk:
-                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    print('No bins found containig ' + m + '! Please check the spelling, and try again.')
                     return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
@@ -295,7 +296,7 @@ class EFTFit(object):
 
         if batch=='crab':
             args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(nsplit)])
-            args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in self.at23v01_2sig_prof.items()}.items())])])
+            args.extend(['--setParameterRanges',':'.join(['='.join(wc) for wc in list({k:','.join([str(l) for l in v]) for k,v in list(self.at23v01_2sig_prof.items())}.items())])])
             args.extend(['-P',' -P '.join(self.wcs)])
             args.extend(['--saveToys'])
             # Implement condor later
@@ -339,7 +340,7 @@ class EFTFit(object):
             for i in range(0, len(farray), dfile):
                 yield farray[i:i+dfile]
         # Extract the root files
-        print 'Extracting root files, this will take a few minutes'
+        print('Extracting root files, this will take a few minutes')
         tars = [tarfiles[0]+'/'+tarfile for tarfiles in paths for tarfile in tarfiles[2] if 'log' not in tarfile]
         for tar in divide_chunks(tars, dfile=100):
             process = [sp.Popen(['tar', '-xf', tarfile,'-C', taskname+'tmp'], stdout=sp.PIPE, stderr=sp.PIPE) for tarfile in tar]
@@ -354,7 +355,7 @@ class EFTFit(object):
         '''
         haddargs = ['hadd', '-f', chunk[0].split('.POINT')[0], '.MultiDimFit_', str(ichunk), '.root', ' '.join(chunk)]
         #haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
-        print haddargs
+        print(haddargs)
         return
         process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
@@ -393,7 +394,7 @@ class EFTFit(object):
             for m in mask:
                 msk = findMask(m)
                 if not msk:
-                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    print('No bins found containig ' + m + '! Please check the spelling, and try again.')
                     return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
@@ -413,9 +414,9 @@ class EFTFit(object):
 
         # Run the combineTool.py command
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
-        with process.stdout,process.stderr:
-            self.log_subprocess_output(process.stdout,'info')
-            self.log_subprocess_output(process.stderr,'err')
+        #with process.stdout,process.stderr:
+        #    self.log_subprocess_output(process.stdout,'info')
+        #    self.log_subprocess_output(process.stderr,'err')
         process.wait()
 
         # Condor needs executable permissions on the .sh file, so we used --dry-run
@@ -452,7 +453,7 @@ class EFTFit(object):
         bestEntry=-1;
 
         fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.root'
-        print fitFile
+        print(fitFile)
 
         if not os.path.isfile(fitFile):
             logging.error("fitFile does not exist!")
@@ -516,7 +517,7 @@ class EFTFit(object):
     def retrieveGridScan(self, name='.test', batch='crab', user='byates'):#getpass.getuser()):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
         taskname = name.replace('.','')
-        logging.info("Retrieving gridScan files. Task name: "+taskname)
+        #logging.info("Retrieving gridScan files. Task name: "+taskname)
 
 
         if batch=='crab':
@@ -543,7 +544,7 @@ class EFTFit(object):
             for tarfiles in paths:
                 for tarfile in tarfiles[2]:
                     if tarfile.endswith('.tar'):
-                        print tarfiles[0]+'/'+tarfile
+                        print(tarfiles[0]+'/'+tarfile)
                         sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
             haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -557,18 +558,18 @@ class EFTFit(object):
             
         elif batch=='condor':
             if not glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
-                logging.info("No files to hadd. Returning.")
+                #logging.info("No files to hadd. Returning.")
                 return
             #haddargs = ['hadd','-f','higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
             haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
-            print(['hadd','-f','../../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name))))
+            print((['hadd','-f','../../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))))
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
-            with process.stdout,process.stderr:
-                self.log_subprocess_output(process.stdout,'info')
-                self.log_subprocess_output(process.stderr,'err')
+            #with process.stdout,process.stderr:
+            #    self.log_subprocess_output(process.stdout,'info')
+            #    self.log_subprocess_output(process.stderr,'err')
             process.wait()
-            for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
-                os.remove(rootfile)
+            #for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
+            #    os.remove(rootfile)
             if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
                 os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
@@ -685,7 +686,7 @@ class EFTFit(object):
         fin = 'higgsCombine{}.GoodnessOfFit.mH120.root'.format(name)
         if asimov:
             fin = 'higgsCombine{}.Asimov.BestFit.GoodnessOfFit.mH120.root'.format(name)
-        print('Opening {}'.format(fin))
+        print(('Opening {}'.format(fin)))
         fit_file = ROOT.TFile.Open(fin)
         limit_tree = fit_file.Get('limit')
         best_fit = limit_tree.GetMinimum('limit')
@@ -696,7 +697,7 @@ class EFTFit(object):
         fin = 'higgsCombine{}.BestFit.MultiDimFit.mH120.root'.format(name)
         if asimov:
             fin = 'higgsCombine{}.Asimov.BestFit.MultiDimFit.mH120.root'.format(name)
-        print('Opening {}'.format(fin))
+        print(('Opening {}'.format(fin)))
         with uproot.open(fin) as limit_tree:
             limits = limit_tree['limit']['deltaNLL'].array()
             mask = limit_tree['limit']['quantileExpected'].array() >= 0
@@ -721,14 +722,14 @@ class EFTFit(object):
             process.wait()
         fin = '../fit_files/higgsCombine{}.GoodnessOfFit.root'.format(name)
         with uproot.open(fin) as limit_tree:
-            print('Opening {}'.format(fin))
+            print(('Opening {}'.format(fin)))
             limits = limit_tree['limit']['limit'].array()
             mask = limit_tree['limit']['quantileExpected'].array() > -2
             limits = limits[mask]
             alt_limits = np.min(limits[limits>1])
             alt_limits = np.min(limits)
-            print '\n\n', 'AlternativeFit =', alt_fit, 'BestFit =', best_fit
-            print '\n\nP({}>test statistic)='.format(alt_fit) + str(limits[limits > alt_fit].size/float(limits.size)) + '\n'
+            print('\n\n', 'AlternativeFit =', alt_fit, 'BestFit =', best_fit)
+            print('\n\nP({}>test statistic)='.format(alt_fit) + str(limits[limits > alt_fit].size/float(limits.size)) + '\n')
             '''
             >>> scipy.stats.chi2.ppf(.68, 1)
             0.988946481478023
@@ -737,12 +738,12 @@ class EFTFit(object):
             '''
             prob = chi2.cdf(alt_fit - best_fit, 1)
             target = 4
-            print 'P({}-{}={}, {})={}'.format(alt_fit, best_fit, alt_fit - best_fit, dof, prob)
+            print('P({}-{}={}, {})={}'.format(alt_fit, best_fit, alt_fit - best_fit, dof, prob))
             if prob < target:
-                print '\tPossible UNDER coverage!'
+                print('\tPossible UNDER coverage!')
             else:
-                print '\tPossible OVER coverage!'
-            print '\tTarget is P({}, {})={}'.format(target, dof, chi2.cdf(target, dof))
+                print('\tPossible OVER coverage!')
+            print('\tTarget is P({}, {})={}'.format(target, dof, chi2.cdf(target, dof)))
             #print 'P({}-{}={}, 26)={}'.format(alt_limits, best_fit, alt_limits - best_fit, chi2.cdf(alt_limits - best_fit, 26))
 
         ROOT.gROOT.SetBatch(True)
@@ -802,24 +803,25 @@ class EFTFit(object):
         freeze_ignore = []
         if len(ignore)>0:
             zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore])]
-            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
+            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore+self.wcs])]
             for iwc in ignore:
                 if iwc in scan_wcs: scan_wcs.remove(iwc)
+        else: 
+            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in scan_wcs])]
         #FIXME this is for running the 4q WCs while freezing the rest
         scan_wcs = self.wcs_4q
-        freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in scan_wcs])]
         if wc_val is None:
             #params = ','.join(['{}={}'.format(wc, np.random.uniform(wc_ranges[wc][0], wc_ranges[wc][1])) for wc in self.wcs])
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
         else:
-            params = ','.join(['{}=0'.format(wc) if wc not in wc_val.keys() else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
+            params = ','.join(['{}=0'.format(wc) if wc not in list(wc_val.keys()) else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
         for wc in scan_wcs:
             if isinstance(mask, list) and len(mask)==1:
                 masks = mask[0]
             else:
                 masks = ','.join(mask)
             mask = []
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
@@ -829,9 +831,9 @@ class EFTFit(object):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
         if differential is None:
             differential = 'njets' not in workspace
-            print 'Assuming',
-            print 'njets' if not differential else 'differential',
-            print 'based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.'
+            print('Assuming')
+            print('njets' if not differential else 'differential')
+            print('based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.')
         wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
 
         # Use EVERY combination of wcs
@@ -953,8 +955,8 @@ class EFTFit(object):
                     if isinstance(wc, tuple): scan_wcs.append(wc)
                     else: scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
             for wcs in scan_wcs:
-                print wcs
-                print '{}.{}{}'.format(basename,wcs[0],wcs[1]), batch
+                print(wcs)
+                print('{}.{}{}'.format(basename,wcs[0],wcs[1]), batch)
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
                 
     def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', final=True, from_wcs=[], alreadyRun=True):
@@ -1005,9 +1007,9 @@ class EFTFit(object):
         outTree.Branch('deltaNLL',deltaNLL_branch,'deltaNLL/F')
         
         # Fill the branches
-        for event in range(len(wc_dict_reduced.keys())):
-            wc_branch[0] = wc_dict_reduced.keys()[event]
-            deltaNLL_branch[0] = wc_dict_reduced.values()[event]
+        for event in range(len(list(wc_dict_reduced.keys()))):
+            wc_branch[0] = list(wc_dict_reduced.keys())[event]
+            deltaNLL_branch[0] = list(wc_dict_reduced.values())[event]
             outTree.Fill()
             
         # Write the file
@@ -1117,16 +1119,16 @@ class EFTFit(object):
         st = os.stat(fname)
         os.chmod(fname, st.st_mode | stat.S_IEXEC)
         # print JOB_PREFIX + command
-        print 'Created job script: %s' % fname
+        print('Created job script: %s' % fname)
 
         outscriptname = 'condor_%s.sh' % fname
         subfilename = 'condor_%s.sub' % fname
-        print '>> condor job script will be %s' % outscriptname
+        print('>> condor job script will be %s' % outscriptname)
         outscript = open(outscriptname, "w")
         outscript.write(JOB_PREFIX)
         jobs = 0
         wsp_files = set()
-        for i,proc in enumerate(range(0,points,split), points/split):
+        for i,proc in enumerate(list(range(0,points,split)), points/split):
             outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
             outscript.write('python /afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/scripts/reduce.py %d %d %s %s\n' % (proc, proc+split-1, name, ' '.join(wc)))
             jobs += 1
@@ -1217,7 +1219,7 @@ class EFTFit(object):
                 limit.GetEntry(entry)
                 currentNLL = limit.GetLeaf('deltaNLL').GetValue(0)
                 if bestNLL[1] > currentNLL: bestNLL = (entry,currentNLL)
-            print "Best entry for {} is {}.".format(poiwc,bestNLL[0])
+            print("Best entry for {} is {}.".format(poiwc,bestNLL[0]))
             limit.GetEntry(bestNLL[0])
             bestFits[poiwc][poiwc] = limit.GetLeaf(poiwc).GetValue(0)
             # Second get corresponding fits for the other wcs
@@ -1230,9 +1232,9 @@ class EFTFit(object):
         for poiwc in self.wcs:
             trackedwcs = list(self.wcs)
             trackedwcs.remove(poiwc)
-            print("Best value of {}: {}".format(poiwc,bestFits[poiwc][poiwc]))
+            print(("Best value of {}: {}".format(poiwc,bestFits[poiwc][poiwc])))
             for trackedwc in trackedwcs:
-                print("Value according to {}: {}".format(trackedwc,bestFits[poiwc][trackedwc]))
+                print(("Value according to {}: {}".format(trackedwc,bestFits[poiwc][trackedwc])))
             
     def printBestFitsSM(self, name='.EFT.SM.Float'):
         ### Print a table of SM signal strengths, their best fits, and their uncertainties ###
@@ -1258,7 +1260,7 @@ class EFTFit(object):
         logging.info("Quick result:")
         logging.info("Param, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
         for row in fit_array:
-            print row[0],row[1],"+/-",row[2]," ",row[3],"+{}".format(row[4])
+            print(row[0],row[1],"+/-",row[2]," ",row[3],"+{}".format(row[4]))
             logging.debug("{} {} +/- {}".format(row[0],row[1],row[2]))
 
     def printBestFitsEFT(self, basename='.EFT.SM.Float', wcs=[], simultaneous=True):
@@ -1299,11 +1301,11 @@ class EFTFit(object):
 
         logging.info("Quick result:")
         for row in fit_array:
-            print row[0],"+/-",row[1]
+            print(row[0],"+/-",row[1])
             logging.debug(row[0],"+/-",row[1])
         logging.info("WC, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
         for row in fit_array:
-            print ', '.join([str(ele) for ele in row])
+            print(', '.join([str(ele) for ele in row]))
             logging.debug(row)
 
     def printIntervalFitsEFT(self, basename='.EFT.SM.Float', wcs=[], wc_ranges=None):
@@ -1367,7 +1369,7 @@ class EFTFit(object):
             fit_array.append([wc,[list(l) for l in zip(true_minimums,lowedges,highedges)]])
 
         for line in fit_array:
-            print line              
+            print(line)              
 
     def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
         if not os.path.exists('asimov'):
@@ -1386,7 +1388,7 @@ class EFTFit(object):
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
             if wc not in ['ctZ']: continue
-            print 'Submitting', wc
+            print('Submitting', wc)
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1443,12 +1445,12 @@ class EFTFit(object):
         os.system('cd {}'.format(job_dir))
         if not wcs: wcs = self.wcs
         user = os.getlogin()
-        ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in self.wc_ranges_differential.items() if wc in self.wcs])
+        ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in list(self.wc_ranges_differential.items()) if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
             #if wc not in ['cptb', 'cbW']: continue
             if wc not in ['ctZ']: continue
-            print 'Submitting', wc
+            print('Submitting', wc)
             if unblind:
                 print('Running over ACTUAL DATA!');
             target = 'condor_%s_fit.sh' % wc
