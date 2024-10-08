@@ -829,10 +829,12 @@ class EFTFit(object):
         zero_ignore = []
         freeze_ignore = []
         if len(ignore)>0:
-            zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore])]
-            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore+self.wcs])]
-            for iwc in ignore:
-                if iwc in scan_wcs: scan_wcs.remove(iwc)
+            zero_string = ','.join(['{}=0'.format(wc) for wc in ignore if wc != "lumiScale"])
+            if zero_string != "":
+                #zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore if wc != "lumiScale"])]
+                zero_ignore = [zero_string]
+            #for iwc in ignore:
+            #    if iwc in scan_wcs: scan_wcs.remove(iwc)
         else: 
             freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in scan_wcs])]
         #FIXME this is for running the 4q WCs while freezing the rest
@@ -843,16 +845,22 @@ class EFTFit(object):
         else:
             params = ','.join(['{}=0'.format(wc) if wc not in list(wc_val.keys()) else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
         for wc in scan_wcs:
+            if wc in ignore:
+                continue #better to handle the --freezeParameters
+            if len(ignore)>0:
+                freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore+self.wcs if wcextra != wc])]
+            else:
+                freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in scan_wcs if wcextra != wc])]
             if isinstance(mask, list) and len(mask)==1:
                 masks = mask[0]
             else:
                 masks = ','.join(mask)
             mask = []
 
-            #Mine
-            #self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=42.8'], mask, mask_syst, workspace)
-            #Brent's
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'], mask, mask_syst, workspace)
+            if zero_ignore != []:
+                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'+',']+zero_ignore, mask, mask_syst, workspace)
+            else:
+                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
