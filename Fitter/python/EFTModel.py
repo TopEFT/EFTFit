@@ -71,7 +71,7 @@ class EFTModel(PhysicsModel):
                     'ctp':   (-9999,  99),
                 }
             else:
-                print "Unknown option",option
+                print("Unknown option",option)
 
         #If procbins are specified, only use subset that we have fits for.
         #Otherwise, use all of the process+bin combinations that we have fits for.
@@ -81,7 +81,7 @@ class EFTModel(PhysicsModel):
         if len(procbin_override)>0: self.procbins = np.intersect1d(self.procbins,procbins_override)
 
     def setup(self):
-        print "Setting up fits"
+        print("Setting up fits")
         fits = np.load(self.fits)[()]
         for i,procbin in enumerate(sorted(self.procbins)):
             #self.modelBuilder.out.var(procbin)
@@ -136,7 +136,7 @@ class EFTModel(PhysicsModel):
         # user can call combine with `--setPhysicsModelParameterRanges` to set to sensible ranges
         for wc in self.wcs:
             self.modelBuilder.doVar('{0}[0, {1}, {2}]'.format(wc,self.wc_ranges[wc][0],self.wc_ranges[wc][1]))
-        print "WCs to fit for: "+",".join(self.wcs)
+        print("WCs to fit for: "+",".join(self.wcs))
         self.modelBuilder.doSet('POI', ','.join(self.wcs))
         self.setup()
 

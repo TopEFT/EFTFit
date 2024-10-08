@@ -41,7 +41,7 @@ class EFT1DModel(PhysicsModel):
             elif option == 'procbins':
                 procbin_override = value.split(',')
             else:
-                print "Unknown option",option
+                print("Unknown option",option)
 
         #If procbins are specified, only use subset that we have fits for.
         #Otherwise, use all of the process+bin combinations that we have fits for.
@@ -51,10 +51,10 @@ class EFT1DModel(PhysicsModel):
 
 
     def setup(self):
-        print "Setting up fits"
+        print("Setting up fits")
         fits = np.load(self.fits)[()]
-        #print fits
-        #print self.operator
+        #print(fits)
+        #print(self.operator)
         #table = {}
         for procbin in self.procbins:
             #self.modelBuilder.out.var(procbin)
@@ -62,15 +62,15 @@ class EFT1DModel(PhysicsModel):
             if not self.modelBuilder.out.function(name):
                 template = "expr::{name}('{a0}+{a1}*{c}+{a2}*{c}*{c}',{c})"
                 a0, a1, a2 = fits[self.operator][procbin]
-                print template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator)
+                print(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator))
                 quadratic = self.modelBuilder.factory_(template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator))
-                #print 'Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator)
+                #print('Quadratic:',template.format(name=name, a0=a0, a1=a1, a2=a2, c=self.operator))
                 self.modelBuilder.out._import(quadratic)
             #if a0>0:
                 #categories = ["C_2lss_p_ee_1b_4j","C_2lss_p_ee_1b_5j","C_2lss_p_ee_1b_6j","C_2lss_p_ee_1b_7j","C_3l_ppp_1b_2j","C_3l_ppp_1b_3j","C_3l_ppp_1b_4j","C_3l_ppp_1b_5j","C_3l_ppp_1b_6j","C_3l_ppp_1b_7j","C_3l_ppp_1b_8j"]
                 #if procbin[1] in categories: table[procbin] = (a0,round((a0+a1+a2)/a0,8))
-            #print self.operator,"= 0",procbin,a0
-            #print self.operator,"= 1",procbin,a0+a1+a2
+            #print(self.operator,"= 0",procbin,a0)
+            #print(self.operator,"= 1",procbin,a0+a1+a2)
         #pprint.pprint(table,indent=1,width=100)
             
 
@@ -84,9 +84,9 @@ class EFT1DModel(PhysicsModel):
         if (process,bin) not in self.procbins:
             return 1
         else:
-            #print 'scaling {0}, {1}'.format(process, bin)
+            #print('scaling {0}, {1}'.format(process, bin))
             fits = np.load(self.fits)[()]
-            #print self.operator,process,bin,fits[self.operator][(process,bin)]
+            #print(self.operator,process,bin,fits[self.operator][(process,bin)])
             name = 'r_{0}_{1}'.format(process,bin)
             return name
 

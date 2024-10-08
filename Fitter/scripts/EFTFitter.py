@@ -107,11 +107,20 @@ class EFTFit(object):
         #self.systematics = ['CMS_ttbbnorm','FF','FFcloseEl_2016','FFcloseEl_2017','FFcloseEl_2018','FFcloseMu_2016','FFcloseMu_2017','FFcloseMu_2018','FFeta','FFpt','FSR','ISR','ISR_gg','ISR_qg','ISR_qq','JER_2016','JER_2017','JER_2018','JES_Absolute','JES_BBEC1','JES_FlavorQCD','JES_RelativeBal','JES_RelativeSample','ONE','PU','PreFiring','UE','ak8jer_2016','ak8jer_2017','ak8jer_2018','alphas','bbvlsf_2016','bbvlsf_2017','bbvlsf_2018','btagSFbc_2016','btagSFbc_2016APV','btagSFbc_2017','btagSFbc_2018','btagSFbc_corr','btagSFlight_2016','btagSFlight_2016APV','btagSFlight_2017','btagSFlight_2018','btagSFlight_corr','btgcferr1','btgcferr2','btghf','btghfstats1_2016','btghfstats1_2017','btghfstats1_2018','btghfstats2_2016','btghfstats2_2017','btghfstats2_2018','btgjes','btglf','btglfstats1_2016','btglfstats1_2017','btglfstats1_2018','btglfstats2_2016','btglfstats2_2017','btglfstats2_2018','charge_flips','diboson_njets','eleclepsf_2016','eleclepsf_2017','eleclepsf_2018','electrigeffsf_2016','electrigeffsf_2017','electrigeffsf_2018','fact_Diboson','fact_Triboson','fact_convs','fact_tHq','fact_tWZ','fact_tllq','fact_ttH','fact_ttll','fact_ttlnu','fact_tttt','fsr_ttbb','hdamp','hdamp_ttbb','isr_tt','isr_ttbb','jesEC2','jesEC22016','jesEC22017','jesEC22018','jesHEMIssue','jesHF','jesHF2016','jesHF2017','jesHF2018','jmrbkg_2016','jmrbkg_2017','jmrbkg_2018','jmrsig_2016','jmrsig_2017','jmrsig_2018','jmsbkg_2016','jmsbkg_2017','jmsbkg_2018','jmssig_2016','jmssig_2017','jmssig_2018','lepSF_elec','lepSF_muon','lumi','missing_parton','mu_f_tt','mu_f_ttbb','mu_r_tt','mu_r_ttbb','mulepsf_2016','mulepsf_2017','mulepsf_2018','mutrigeffsf_2016','mutrigeffsf_2017','mutrigeffsf_2018','pdf','pdf_scale_gg','pdf_scale_qg','pdf_scale_qq','pdf_ttbb','qcd_scale_V','qcd_scale_VV','qcd_scale_VVV','qcd_scale_tHq','qcd_scale_tWZ','qcd_scale_ttH','qcd_scale_ttll','qcd_scale_ttlnu','qcd_scale_tttt','renorm_Diboson','renorm_Triboson','renorm_convs','renorm_tHq','renorm_tWZ','renorm_tllq','renorm_ttH','renorm_ttll','renorm_ttlnu','renorm_tttt','singlet_qsc','triggerSF_2016','triggerSF_2016APV','triggerSF_2017','triggerSF_2018','tt2bxsec','ttCxsec','tt_qsc','tth_ggpdf','ttx_qsc','ttz_ggpdf',
         #'prop_bintop21003_y2016_Zhpt1_0_bin0','prop_bintop21003_y2016_Zhpt1_10_bin0','prop_bintop21003_y2016_Zhpt1_11_bin0','prop_bintop21003_y2016_Zhpt1_12_bin0','prop_bintop21003_y2016_Zhpt1_13_bin0','prop_bintop21003_y2016_Zhpt1_14_bin0','prop_bintop21003_y2016_Zhpt1_15_bin0','prop_bintop21003_y2016_Zhpt1_16_bin0','prop_bintop21003_y2016_Zhpt1_17_bin0','prop_bintop21003_y2016_Zhpt1_1_bin0','prop_bintop21003_y2016_Zhpt1_2_bin0','prop_bintop21003_y2016_Zhpt1_3_bin0','prop_bintop21003_y2016_Zhpt1_4_bin0','prop_bintop21003_y2016_Zhpt1_5_bin0','prop_bintop21003_y2016_Zhpt1_6_bin0','prop_bintop21003_y2016_Zhpt1_7_bin0','prop_bintop21003_y2016_Zhpt1_8_bin0','prop_bintop21003_y2016_Zhpt1_9_bin0','prop_bintop21003_y2016_Zhpt2_0_bin0','prop_bintop21003_y2016_Zhpt2_10_bin0','prop_bintop21003_y2016_Zhpt2_11_bin0','prop_bintop21003_y2016_Zhpt2_12_bin0','prop_bintop21003_y2016_Zhpt2_13_bin0','prop_bintop21003_y2016_Zhpt2_14_bin0','prop_bintop21003_y2016_Zhpt2_15_bin0','prop_bintop21003_y2016_Zhpt2_16_bin0','prop_bintop21003_y2016_Zhpt2_17_bin0','prop_bintop21003_y2016_Zhpt2_18_bin0','prop_bintop21003_y2016_Zhpt2_19_bin0','prop_bintop21003_y2016_Zhpt2_1_bin0','prop_bintop21003_y2016_Zhpt2_20_bin0','prop_bintop21003_y2016_Zhpt2_21_bin0','prop_bintop21003_y2016_Zhpt2_22_bin0','prop_bintop21003_y2016_Zhpt2_23_bin0','prop_bintop21003_y2016_Zhpt2_2_bin0','prop_bintop21003_y2016_Zhpt2_3_bin0','prop_bintop21003_y2016_Zhpt2_4_bin0','prop_bintop21003_y2016_Zhpt2_5_bin0','prop_bintop21003_y2016_Zhpt2_6_bin0','prop_bintop21003_y2016_Zhpt2_7_bin0','prop_bintop21003_y2016_Zhpt2_8_bin0','prop_bintop21003_y2016_Zhpt2_9_bin0','prop_bintop21003_y2016_Zhpt3_0_bin0','prop_bintop21003_y2016_Zhpt3_10_bin0','prop_bintop21003_y2016_Zhpt3_11_bin0','prop_bintop21003_y2016_Zhpt3_12_bin0','prop_bintop21003_y2016_Zhpt3_13_bin0','prop_bintop21003_y2016_Zhpt3_14_bin0','prop_bintop21003_y2016_Zhpt3_15_bin0','prop_bintop21003_y2016_Zhpt3_16_bin0','prop_bintop21003_y2016_Zhpt3_17_bin0','prop_bintop21003_y2016_Zhpt3_18_bin0','prop_bintop21003_y2016_Zhpt3_19_bin0','prop_bintop21003_y2016_Zhpt3_1_bin0','prop_bintop21003_y2016_Zhpt3_20_bin0','prop_bintop21003_y2016_Zhpt3_21_bin0','prop_bintop21003_y2016_Zhpt3_22_bin0','prop_bintop21003_y2016_Zhpt3_23_bin0','prop_bintop21003_y2016_Zhpt3_2_bin0','prop_bintop21003_y2016_Zhpt3_3_bin0','prop_bintop21003_y2016_Zhpt3_4_bin0','prop_bintop21003_y2016_Zhpt3_5_bin0','prop_bintop21003_y2016_Zhpt3_6_bin0','prop_bintop21003_y2016_Zhpt3_7_bin0','prop_bintop21003_y2016_Zhpt3_8_bin0','prop_bintop21003_y2016_Zhpt3_9_bin0','prop_bintop21003_y2017_Zhpt1_0_bin0','prop_bintop21003_y2017_Zhpt1_10_bin0','prop_bintop21003_y2017_Zhpt1_11_bin0','prop_bintop21003_y2017_Zhpt1_12_bin0','prop_bintop21003_y2017_Zhpt1_13_bin0','prop_bintop21003_y2017_Zhpt1_14_bin0','prop_bintop21003_y2017_Zhpt1_15_bin0','prop_bintop21003_y2017_Zhpt1_16_bin0','prop_bintop21003_y2017_Zhpt1_17_bin0','prop_bintop21003_y2017_Zhpt1_1_bin0','prop_bintop21003_y2017_Zhpt1_2_bin0','prop_bintop21003_y2017_Zhpt1_3_bin0','prop_bintop21003_y2017_Zhpt1_4_bin0','prop_bintop21003_y2017_Zhpt1_5_bin0','prop_bintop21003_y2017_Zhpt1_6_bin0','prop_bintop21003_y2017_Zhpt1_7_bin0','prop_bintop21003_y2017_Zhpt1_8_bin0','prop_bintop21003_y2017_Zhpt1_9_bin0','prop_bintop21003_y2017_Zhpt2_0_bin0','prop_bintop21003_y2017_Zhpt2_10_bin0','prop_bintop21003_y2017_Zhpt2_11_bin0','prop_bintop21003_y2017_Zhpt2_12_bin0','prop_bintop21003_y2017_Zhpt2_13_bin0','prop_bintop21003_y2017_Zhpt2_14_bin0','prop_bintop21003_y2017_Zhpt2_15_bin0','prop_bintop21003_y2017_Zhpt2_16_bin0','prop_bintop21003_y2017_Zhpt2_17_bin0','prop_bintop21003_y2017_Zhpt2_18_bin0','prop_bintop21003_y2017_Zhpt2_19_bin0','prop_bintop21003_y2017_Zhpt2_1_bin0','prop_bintop21003_y2017_Zhpt2_20_bin0','prop_bintop21003_y2017_Zhpt2_21_bin0','prop_bintop21003_y2017_Zhpt2_22_bin0','prop_bintop21003_y2017_Zhpt2_23_bin0_TTBar','prop_bintop21003_y2017_Zhpt2_23_bin0_VJets','prop_bintop21003_y2017_Zhpt2_23_bin0_ttH','prop_bintop21003_y2017_Zhpt2_23_bin0_ttX','prop_bintop21003_y2017_Zhpt2_23_bin0_ttZ','prop_bintop21003_y2017_Zhpt2_23_bin0_tt_B','prop_bintop21003_y2017_Zhpt2_2_bin0','prop_bintop21003_y2017_Zhpt2_3_bin0','prop_bintop21003_y2017_Zhpt2_4_bin0','prop_bintop21003_y2017_Zhpt2_5_bin0','prop_bintop21003_y2017_Zhpt2_6_bin0','prop_bintop21003_y2017_Zhpt2_7_bin0','prop_bintop21003_y2017_Zhpt2_8_bin0','prop_bintop21003_y2017_Zhpt2_9_bin0','prop_bintop21003_y2017_Zhpt3_0_bin0','prop_bintop21003_y2017_Zhpt3_10_bin0','prop_bintop21003_y2017_Zhpt3_11_bin0','prop_bintop21003_y2017_Zhpt3_12_bin0','prop_bintop21003_y2017_Zhpt3_13_bin0','prop_bintop21003_y2017_Zhpt3_14_bin0','prop_bintop21003_y2017_Zhpt3_15_bin0','prop_bintop21003_y2017_Zhpt3_16_bin0','prop_bintop21003_y2017_Zhpt3_17_bin0','prop_bintop21003_y2017_Zhpt3_18_bin0','prop_bintop21003_y2017_Zhpt3_19_bin0','prop_bintop21003_y2017_Zhpt3_1_bin0','prop_bintop21003_y2017_Zhpt3_20_bin0','prop_bintop21003_y2017_Zhpt3_21_bin0','prop_bintop21003_y2017_Zhpt3_22_bin0','prop_bintop21003_y2017_Zhpt3_23_bin0','prop_bintop21003_y2017_Zhpt3_2_bin0','prop_bintop21003_y2017_Zhpt3_3_bin0','prop_bintop21003_y2017_Zhpt3_4_bin0','prop_bintop21003_y2017_Zhpt3_5_bin0','prop_bintop21003_y2017_Zhpt3_6_bin0','prop_bintop21003_y2017_Zhpt3_7_bin0','prop_bintop21003_y2017_Zhpt3_8_bin0','prop_bintop21003_y2017_Zhpt3_9_bin0','prop_bintop21003_y2018_Zhpt1_0_bin0','prop_bintop21003_y2018_Zhpt1_10_bin0','prop_bintop21003_y2018_Zhpt1_11_bin0','prop_bintop21003_y2018_Zhpt1_12_bin0','prop_bintop21003_y2018_Zhpt1_13_bin0','prop_bintop21003_y2018_Zhpt1_14_bin0','prop_bintop21003_y2018_Zhpt1_15_bin0','prop_bintop21003_y2018_Zhpt1_16_bin0','prop_bintop21003_y2018_Zhpt1_17_bin0','prop_bintop21003_y2018_Zhpt1_1_bin0','prop_bintop21003_y2018_Zhpt1_2_bin0','prop_bintop21003_y2018_Zhpt1_3_bin0','prop_bintop21003_y2018_Zhpt1_4_bin0','prop_bintop21003_y2018_Zhpt1_5_bin0','prop_bintop21003_y2018_Zhpt1_6_bin0','prop_bintop21003_y2018_Zhpt1_7_bin0','prop_bintop21003_y2018_Zhpt1_8_bin0','prop_bintop21003_y2018_Zhpt1_9_bin0','prop_bintop21003_y2018_Zhpt2_0_bin0','prop_bintop21003_y2018_Zhpt2_10_bin0','prop_bintop21003_y2018_Zhpt2_11_bin0','prop_bintop21003_y2018_Zhpt2_12_bin0','prop_bintop21003_y2018_Zhpt2_13_bin0','prop_bintop21003_y2018_Zhpt2_14_bin0','prop_bintop21003_y2018_Zhpt2_15_bin0','prop_bintop21003_y2018_Zhpt2_16_bin0','prop_bintop21003_y2018_Zhpt2_17_bin0','prop_bintop21003_y2018_Zhpt2_18_bin0','prop_bintop21003_y2018_Zhpt2_19_bin0','prop_bintop21003_y2018_Zhpt2_1_bin0','prop_bintop21003_y2018_Zhpt2_20_bin0','prop_bintop21003_y2018_Zhpt2_21_bin0','prop_bintop21003_y2018_Zhpt2_22_bin0','prop_bintop21003_y2018_Zhpt2_23_bin0','prop_bintop21003_y2018_Zhpt2_2_bin0','prop_bintop21003_y2018_Zhpt2_3_bin0','prop_bintop21003_y2018_Zhpt2_4_bin0','prop_bintop21003_y2018_Zhpt2_5_bin0','prop_bintop21003_y2018_Zhpt2_6_bin0','prop_bintop21003_y2018_Zhpt2_7_bin0','prop_bintop21003_y2018_Zhpt2_8_bin0','prop_bintop21003_y2018_Zhpt2_9_bin0','prop_bintop21003_y2018_Zhpt3_0_bin0','prop_bintop21003_y2018_Zhpt3_10_bin0','prop_bintop21003_y2018_Zhpt3_11_bin0','prop_bintop21003_y2018_Zhpt3_12_bin0','prop_bintop21003_y2018_Zhpt3_13_bin0','prop_bintop21003_y2018_Zhpt3_14_bin0','prop_bintop21003_y2018_Zhpt3_15_bin0','prop_bintop21003_y2018_Zhpt3_16_bin0','prop_bintop21003_y2018_Zhpt3_17_bin0','prop_bintop21003_y2018_Zhpt3_18_bin0','prop_bintop21003_y2018_Zhpt3_19_bin0','prop_bintop21003_y2018_Zhpt3_1_bin0','prop_bintop21003_y2018_Zhpt3_20_bin0','prop_bintop21003_y2018_Zhpt3_21_bin0','prop_bintop21003_y2018_Zhpt3_22_bin0','prop_bintop21003_y2018_Zhpt3_23_bin0','prop_bintop21003_y2018_Zhpt3_2_bin0','prop_bintop21003_y2018_Zhpt3_3_bin0','prop_bintop21003_y2018_Zhpt3_4_bin0','prop_bintop21003_y2018_Zhpt3_5_bin0','prop_bintop21003_y2018_Zhpt3_6_bin0','prop_bintop21003_y2018_Zhpt3_7_bin0','prop_bintop21003_y2018_Zhpt3_8_bin0','prop_bintop21003_y2018_Zhpt3_9_bin0','prop_bintop22006_ch10_bin0','prop_bintop22006_ch10_bin1','prop_bintop22006_ch10_bin2','prop_bintop22006_ch11_bin0','prop_bintop22006_ch11_bin1','prop_bintop22006_ch11_bin2','prop_bintop22006_ch11_bin3_fakes_sm','prop_bintop22006_ch12_bin0_fakes_sm','prop_bintop22006_ch12_bin1','prop_bintop22006_ch12_bin2','prop_bintop22006_ch12_bin3_fakes_sm','prop_bintop22006_ch13_bin0','prop_bintop22006_ch13_bin1','prop_bintop22006_ch13_bin2','prop_bintop22006_ch13_bin3','prop_bintop22006_ch14_bin0','prop_bintop22006_ch14_bin1','prop_bintop22006_ch14_bin2','prop_bintop22006_ch14_bin3','prop_bintop22006_ch15_bin0','prop_bintop22006_ch15_bin1','prop_bintop22006_ch15_bin2','prop_bintop22006_ch15_bin3_fakes_sm','prop_bintop22006_ch16_bin0_fakes_sm','prop_bintop22006_ch16_bin1','prop_bintop22006_ch16_bin2','prop_bintop22006_ch16_bin3_fakes_sm','prop_bintop22006_ch17_bin0','prop_bintop22006_ch17_bin1','prop_bintop22006_ch17_bin2','prop_bintop22006_ch18_bin0','prop_bintop22006_ch18_bin1','prop_bintop22006_ch18_bin2','prop_bintop22006_ch18_bin3','prop_bintop22006_ch19_bin0','prop_bintop22006_ch19_bin1','prop_bintop22006_ch19_bin2','prop_bintop22006_ch19_bin3','prop_bintop22006_ch1_bin0','prop_bintop22006_ch1_bin1','prop_bintop22006_ch1_bin2_fakes_sm','prop_bintop22006_ch20_bin0_fakes_sm','prop_bintop22006_ch20_bin1_fakes_sm','prop_bintop22006_ch20_bin3_fakes_sm','prop_bintop22006_ch21_bin0','prop_bintop22006_ch21_bin1','prop_bintop22006_ch21_bin2_fakes_sm','prop_bintop22006_ch22_bin0','prop_bintop22006_ch22_bin1','prop_bintop22006_ch22_bin2_fakes_sm','prop_bintop22006_ch23_bin0_fakes_sm','prop_bintop22006_ch23_bin1','prop_bintop22006_ch23_bin2_fakes_sm','prop_bintop22006_ch23_bin3','prop_bintop22006_ch24_bin0_fakes_sm','prop_bintop22006_ch24_bin2_fakes_sm','prop_bintop22006_ch25_bin0','prop_bintop22006_ch25_bin1','prop_bintop22006_ch25_bin2','prop_bintop22006_ch25_bin3','prop_bintop22006_ch26_bin0','prop_bintop22006_ch26_bin1','prop_bintop22006_ch26_bin2','prop_bintop22006_ch26_bin3','prop_bintop22006_ch26_bin4','prop_bintop22006_ch27_bin0','prop_bintop22006_ch27_bin1','prop_bintop22006_ch28_bin0','prop_bintop22006_ch28_bin1','prop_bintop22006_ch28_bin3','prop_bintop22006_ch29_bin0','prop_bintop22006_ch29_bin1','prop_bintop22006_ch29_bin2','prop_bintop22006_ch29_bin3','prop_bintop22006_ch2_bin0_fakes_sm','prop_bintop22006_ch2_bin1','prop_bintop22006_ch2_bin2_fakes_sm','prop_bintop22006_ch30_bin0','prop_bintop22006_ch30_bin1','prop_bintop22006_ch31_bin0','prop_bintop22006_ch32_bin0','prop_bintop22006_ch32_bin1','prop_bintop22006_ch32_bin2','prop_bintop22006_ch32_bin3_fakes_sm','prop_bintop22006_ch33_bin0','prop_bintop22006_ch33_bin1','prop_bintop22006_ch33_bin2','prop_bintop22006_ch33_bin3','prop_bintop22006_ch34_bin0','prop_bintop22006_ch34_bin1','prop_bintop22006_ch34_bin2','prop_bintop22006_ch34_bin3','prop_bintop22006_ch35_bin0','prop_bintop22006_ch35_bin1','prop_bintop22006_ch35_bin2','prop_bintop22006_ch35_bin3_fakes_sm','prop_bintop22006_ch36_bin0_fakes_sm','prop_bintop22006_ch36_bin1_fakes_sm','prop_bintop22006_ch36_bin2_fakes_sm','prop_bintop22006_ch37_bin0','prop_bintop22006_ch37_bin1','prop_bintop22006_ch37_bin2','prop_bintop22006_ch38_bin0','prop_bintop22006_ch38_bin1','prop_bintop22006_ch39_bin0_fakes_sm','prop_bintop22006_ch39_bin1_fakes_sm','prop_bintop22006_ch3_bin0_fakes_sm','prop_bintop22006_ch3_bin1_fakes_sm','prop_bintop22006_ch3_bin2_fakes_sm','prop_bintop22006_ch40_bin0_fakes_sm','prop_bintop22006_ch40_bin1_fakes_sm','prop_bintop22006_ch40_bin2_fakes_sm','prop_bintop22006_ch40_bin3_fakes_sm','prop_bintop22006_ch4_bin1_fakes_sm','prop_bintop22006_ch4_bin2_fakes_sm','prop_bintop22006_ch5_bin0','prop_bintop22006_ch5_bin1','prop_bintop22006_ch5_bin2_fakes_sm','prop_bintop22006_ch6_bin0_fakes_sm','prop_bintop22006_ch6_bin1','prop_bintop22006_ch6_bin2_fakes_sm','prop_bintop22006_ch6_bin3_fakes_sm','prop_bintop22006_ch7_bin0_fakes_sm','prop_bintop22006_ch7_bin1_fakes_sm','prop_bintop22006_ch7_bin2_fakes_sm','prop_bintop22006_ch7_bin3_fakes_sm','prop_bintop22006_ch8_bin1_fakes_sm','prop_bintop22006_ch8_bin2_fakes_sm','prop_bintop22006_ch8_bin3_fakes_sm','prop_bintop22006_ch9_bin0','prop_bintop22006_ch9_bin1','prop_bintop22006_ch9_bin2','prop_bintop22006_ch9_bin3']
 
-    def log_subprocess_output(self,pipe,level):
+    def log_subprocess_output(self, pipe, level):
         ### Pipes Popen streams to logging class ###
-        for line in iter(pipe.readline, ''):
-            if level=='info': logging.info(line.rstrip('\n'))
-            if level=='err': logging.error(line.rstrip('\n'))
+        for line in iter(pipe.readline, b''):  # Use b'' to indicate the end condition for a bytes object
+            line = line.decode('utf-8')  # Decode the bytes object to a string
+            if level == 'info':
+                logging.info(line.rstrip('\n'))
+            elif level == 'err':
+                logging.error(line.rstrip('\n'))
+                
+    #def log_subprocess_output(self,pipe,level):
+    #    ### Pipes Popen streams to logging class ###
+    #    for line in iter(pipe.readline, ''):
+    #        if level=='info': logging.info(line.rstrip('\n'))
+    #        if level=='err': logging.error(line.rstrip('\n'))
 
     def makeWorkspaceSM(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard ###
@@ -160,7 +169,7 @@ class EFTFit(object):
             for m in mask:
                 msk = findMask(m)
                 if not msk:
-                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    print('No bins found containig ' + m + '! Please check the spelling, and try again.')
                     return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
@@ -341,7 +350,7 @@ class EFTFit(object):
             for i in range(0, len(farray), dfile):
                 yield farray[i:i+dfile]
         # Extract the root files
-        print 'Extracting root files, this will take a few minutes'
+        print('Extracting root files, this will take a few minutes')
         tars = [tarfiles[0]+'/'+tarfile for tarfiles in paths for tarfile in tarfiles[2] if 'log' not in tarfile]
         for tar in divide_chunks(tars, dfile=100):
             process = [sp.Popen(['tar', '-xf', tarfile,'-C', taskname+'tmp'], stdout=sp.PIPE, stderr=sp.PIPE) for tarfile in tar]
@@ -351,12 +360,12 @@ class EFTFit(object):
         for tarfiles in paths:
             for tarfile in tarfiles[2]:
                 if tarfile.endswith('.tar'):
-                    #print tarfiles[0]+'/'+tarfile
+                    #print(tarfiles[0]+'/'+tarfile)
                     sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
         '''
         haddargs = ['hadd', '-f', chunk[0].split('.POINT')[0], '.MultiDimFit_', str(ichunk), '.root', ' '.join(chunk)]
         #haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
-        print haddargs
+        print(haddargs)
         return
         process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
         with process.stdout,process.stderr:
@@ -372,7 +381,11 @@ class EFTFit(object):
         logging.info("Doing grid scan...")
 
         CMSSW_BASE = os.getenv('CMSSW_BASE')
-        args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        if not "/afs/" in workspace:
+            wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
+        else:
+            wsname = workspace
+        args = ['combineTool.py','-d',wsname,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
@@ -395,7 +408,7 @@ class EFTFit(object):
             for m in mask:
                 msk = findMask(m)
                 if not msk:
-                    print 'No bins found containig ' + m + '! Please check the spelling, and try again.'
+                    print('No bins found containig ' + m + '! Please check the spelling, and try again.')
                     return
                 if 'sfz' not in m:
                     msk = [x for x in msk if 'sfz' not in x]
@@ -415,36 +428,55 @@ class EFTFit(object):
 
         # Run the combineTool.py command
         process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
-        with process.stdout,process.stderr:
-            self.log_subprocess_output(process.stdout,'info')
-            self.log_subprocess_output(process.stderr,'err')
+        with process.stdout, process.stderr:
+            self.log_subprocess_output(process.stdout, 'info')
+            self.log_subprocess_output(process.stderr, 'err')
         process.wait()
 
         # Condor needs executable permissions on the .sh file, so we used --dry-run
         # Add the permission and complete the submission.
-        if batch=='condor':
+        if batch == 'condor':
             if os.path.exists('condor{}'.format(name)):
                 logging.error("Directory condor{} already exists!".format(name))
                 logging.error("Aborting submission.")
-                #return
-            sp.call(['mkdir','condor{}'.format(name)])
-            sp.call(['chmod','a+x','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/ulimit.*/&\\nunset PERL5LIB/','condor_{}.sh'.format(name.replace('.',''))])
-            sp.call(['sed','-i','/arguments/d','condor_{}.sub'.format(name.replace('.',''))])
-            sp.call(['sed','-i','s/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/','condor_{}.sub'.format(name.replace('.',''))]) # Ask for at least 3GB of RAM
-            sp.call(['sed','-i','s/executable = \(.*\)/executable = \/afs\/crc.nd.edu\/user\/b\/byates2\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/cmssw.sh\\narguments = \/afs\/crc.nd.edu\/user\/b\/byates2\/CMSSW_10_2_13\/src\/EFTFit\/Fitter\/test\/\\1 $(ProcId)/','condor_{}.sub'.format(name.replace('.',''))])
+                # return
+            sp.call(['mkdir', 'condor{}'.format(name)])
+            sp.call(['chmod', 'a+x', 'condor_{}.sh'.format(name.replace('.', ''))])
+            sp.call(['sed', '-i', 's/ulimit.*/&\\nunset PERL5LIB/', 'condor_{}.sh'.format(name.replace('.', ''))])
+            sp.call(['sed', '-i', '/arguments/d', 'condor_{}.sub'.format(name.replace('.', ''))])
+            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/', 
+                     'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
+
+            # Replace hardcoded paths with $CMSSW_BASE and dynamic paths
+            cmssw_base = os.getenv('CMSSW_BASE')
+            current_dir = os.getcwd()
+
+            #### THE LINE TO CHANGE
+            #sp.call(['sed', '-i', 
+            #         #'s|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/cmssw.sh\\narguments = {}/src/EFTFit/Fitter/test/\\1 $(ProcId)|'.format(cmssw_base, current_dir),
+            #         #'s|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sub\\narguments = $(ProcId)|'.format(cmssw_base, name.replace('.', '')),
+            #         ])
+
+            sp.call(['sed', '-i',
+                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(cmssw_base, name.replace('.', '')),
+                     'condor_{}.sub'.format(name.replace('.', ''))
+            ])
+            
             logging.info('Now submitting condor jobs.')
-            condorsub = sp.Popen(['condor_submit','-append','initialdir=condor{}'.format(name),'condor_{}.sub'.format(name.replace('.',''))], stdout=sp.PIPE, stderr=sp.PIPE)
-            with condorsub.stdout,condorsub.stderr:
-                self.log_subprocess_output(condorsub.stdout,'info')
-                self.log_subprocess_output(condorsub.stderr,'err')
+            condorsub = sp.Popen(['condor_submit', '-append', 'initialdir=condor{}'.format(name), 'condor_{}.sub'.format(name.replace('.', ''))], 
+                                 stdout=sp.PIPE, stderr=sp.PIPE)
+            with condorsub.stdout, condorsub.stderr:
+                self.log_subprocess_output(condorsub.stdout, 'info')
+                self.log_subprocess_output(condorsub.stderr, 'err')
             condorsub.wait()
-            
-        if batch: logging.info("Done with gridScan batch submission.")
-            
+
+        if batch:
+            logging.info("Done with gridScan batch submission.")
+
         if not batch:
-            sp.call(['mv','higgsCombine'+name+'.MultiDimFit.mH120.root','../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+            sp.call(['mv', 'higgsCombine'+name+'.MultiDimFit.mH120.root', '../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
             logging.info("Done with gridScan.")
+
 
     def getBestValues2D(self, name, scan_params=[], params_tracked=[]):
         ### Gets values of parameters for grid scan point with best deltaNLL ###
@@ -453,7 +485,7 @@ class EFTFit(object):
         bestEntry=-1;
 
         fitFile = '../fit_files/higgsCombine'+name+'.MultiDimFit.root'
-        print fitFile
+        print(fitFile)
 
         if not os.path.isfile(fitFile):
             logging.error("fitFile does not exist!")
@@ -514,7 +546,7 @@ class EFTFit(object):
         return ','.join(startValues)
 
 
-    def retrieveGridScan(self, name='.test', batch='crab', user='byates'):#getpass.getuser()):
+    def retrieveGridScan(self, name='.test', batch='crab', user='apiccine'):#getpass.getuser()):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
         taskname = name.replace('.','')
         logging.info("Retrieving gridScan files. Task name: "+taskname)
@@ -544,7 +576,7 @@ class EFTFit(object):
             for tarfiles in paths:
                 for tarfile in tarfiles[2]:
                     if tarfile.endswith('.tar'):
-                        print tarfiles[0]+'/'+tarfile
+                        print(tarfiles[0]+'/'+tarfile)
                         sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
             haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -677,7 +709,7 @@ class EFTFit(object):
         wcs=['cQq81', 'ctq8', 'ctG', 'ctp', 'cpQM', 'cpt'] #TOP-22-00 linear dominant terms
         for wc in wcs:
             self.submitEFTWilks(name+'.'+wc, wc=wc, sig=0, doBest=False, fixed=True, workspace=workspace, batch=batch)
-        #print 'Submitting +/-2 sigma s:seaturated tests for {}'.format(wc)
+        #print('Submitting +/-2 sigma s:seaturated tests for {}'.format(wc))
         #self.submitEFTWilks(name+'.'+wc+'-2sigma', wc=wc, sig=-2, doBest=True)
         #self.submitEFTWilks(name+'.'+wc+'+2sigma', wc=wc, sig=+2, doBest=True)
 
@@ -728,8 +760,8 @@ class EFTFit(object):
             limits = limits[mask]
             alt_limits = np.min(limits[limits>1])
             alt_limits = np.min(limits)
-            print '\n\n', 'AlternativeFit =', alt_fit, 'BestFit =', best_fit
-            print '\n\nP({}>test statistic)='.format(alt_fit) + str(limits[limits > alt_fit].size/float(limits.size)) + '\n'
+            print('\n\n', 'AlternativeFit =', alt_fit, 'BestFit =', best_fit)
+            print('\n\nP({}>test statistic)='.format(alt_fit) + str(limits[limits > alt_fit].size/float(limits.size)) + '\n')
             '''
             >>> scipy.stats.chi2.ppf(.68, 1)
             0.988946481478023
@@ -738,13 +770,13 @@ class EFTFit(object):
             '''
             prob = chi2.cdf(alt_fit - best_fit, 1)
             target = 4
-            print 'P({}-{}={}, {})={}'.format(alt_fit, best_fit, alt_fit - best_fit, dof, prob)
+            print('P({}-{}={}, {})={}'.format(alt_fit, best_fit, alt_fit - best_fit, dof, prob))
             if prob < target:
-                print '\tPossible UNDER coverage!'
+                print('\tPossible UNDER coverage!')
             else:
-                print '\tPossible OVER coverage!'
-            print '\tTarget is P({}, {})={}'.format(target, dof, chi2.cdf(target, dof))
-            #print 'P({}-{}={}, 26)={}'.format(alt_limits, best_fit, alt_limits - best_fit, chi2.cdf(alt_limits - best_fit, 26))
+                print('\tPossible OVER coverage!')
+            print('\tTarget is P({}, {})={}'.format(target, dof, chi2.cdf(target, dof)))
+            #print('P({}-{}={}, 26)={}'.format(alt_limits, best_fit, alt_limits - best_fit, chi2.cdf(alt_limits - best_fit, 26)))
 
         ROOT.gROOT.SetBatch(True)
         ROOT.gStyle.SetOptStat(0)
@@ -797,7 +829,8 @@ class EFTFit(object):
         #else: self.wcs = scan_wcs
 
         # Set the WC ranges if not specified
-        if wc_ranges is None: wc_ranges = self.wc_ranges_njets
+        if wc_ranges is None:
+            wc_ranges = self.wc_ranges_njets
 
         zero_ignore = []
         freeze_ignore = []
@@ -816,8 +849,10 @@ class EFTFit(object):
             else:
                 masks = ','.join(mask)
             mask = []
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
-
+            print(zero_ignore)
+            print(freeze_ignore)
+            #self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=42.8'], mask, mask_syst, workspace)
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs='ctZ', workspace='wps_njet_runII.root')`
@@ -826,9 +861,9 @@ class EFTFit(object):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
         if differential is None:
             differential = 'njets' not in workspace
-            print 'Assuming',
-            print 'njets' if not differential else 'differential',
-            print 'based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.'
+            print('Assuming',)
+            print('njets' if not differential else 'differential',)
+            print('based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.')
         wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
 
         # Use EVERY combination of wcs
@@ -838,7 +873,7 @@ class EFTFit(object):
             params = ','.join(['{}=0'.format(wc) for wc in scan_wcs])
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
-                #print pois, wcs_tracked
+                #print(pois, wcs_tracked)
                 self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],wc_ranges[wcs[0]][0],wc_ranges[wcs[0]][1],wcs[1],wc_ranges[wcs[1]][0],wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
 
         # Use each wc only once
@@ -857,7 +892,7 @@ class EFTFit(object):
             params = ','.join(['{}=0'.format(w) for wc in scan_wcs for w in wc])
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
-                #print scan_wcs, wcs_tracked
+                #print(scan_wcs, wcs_tracked)
                 self.gridScan(name='{}.{}{}'.format(basename,wcs[0],wcs[1]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=['--setParameterRanges {}={},{}:{}={},{}'.format(wcs[0],wc_ranges[wcs[0]][0],wc_ranges[wcs[0]][1],wcs[1],wc_ranges[wcs[1]][0],wc_ranges[wcs[1]][1])]+other+['--setParameters', params], mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batch3DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=27000000, allPairs=False, other=[], wc_triplet=[], mask=[], mask_syst=[]):
@@ -869,7 +904,7 @@ class EFTFit(object):
 
             for wcs in itertools.combinations(scan_wcs,2):
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
-                #print pois, wcs_tracked
+                #print(pois, wcs_tracked)
                 self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask, mask_syst=mask_syst, workspace=workspace)
 
         # Use each wc only once
@@ -879,7 +914,7 @@ class EFTFit(object):
 
             for wcs in scan_wcs:
                 wcs_tracked = [wc for wc in self.wcs if wc not in wcs]
-                #print pois, wcs_tracked
+                #print(pois, wcs_tracked)
                 self.gridScan(name='{}.{}{}{}'.format(basename,wcs[0],wcs[1],wcs[2]), batch=batch, freeze=freeze, scan_params=list(wcs), params_tracked=wcs_tracked, points=points, other=other, mask=mask, mask_syst=mask_syst, workspace=workspace)
 
     def batchResubmit1DScansEFT(self, basename='.EFT.gridScan', scan_wcs=[]):
@@ -950,8 +985,8 @@ class EFTFit(object):
                     if isinstance(wc, tuple): scan_wcs.append(wc)
                     else: scan_wcs = scan_wcs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
             for wcs in scan_wcs:
-                print wcs
-                print '{}.{}{}'.format(basename,wcs[0],wcs[1]), batch
+                print(wcs)
+                print('{}.{}{}'.format(basename,wcs[0],wcs[1]), batch)
                 self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
                 
     def reductionFitEFT(self, name='.EFT.Private.Unblinded.Nov16.28redo.Float.cptcpQM', wc='cpt', final=True, from_wcs=[], alreadyRun=True):
@@ -1113,28 +1148,35 @@ class EFTFit(object):
                     #text_file.write(command)
         st = os.stat(fname)
         os.chmod(fname, st.st_mode | stat.S_IEXEC)
-        # print JOB_PREFIX + command
-        print 'Created job script: %s' % fname
+        # print(JOB_PREFIX + command)
+        print('Created job script: %s' % fname)
 
         outscriptname = 'condor_%s.sh' % fname
         subfilename = 'condor_%s.sub' % fname
-        print '>> condor job script will be %s' % outscriptname
+        print('>> condor job script will be %s' % outscriptname)
         outscript = open(outscriptname, "w")
         outscript.write(JOB_PREFIX)
         jobs = 0
         wsp_files = set()
-        for i,proc in enumerate(range(0,points,split), points/split):
+
+        cmssw_base = os.getenv('CMSSW_BASE')
+        script_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'scripts')
+        
+        for i, proc in enumerate(range(0, points, split), points // split):
             outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
-            outscript.write('python /afs/crc.nd.edu/user/b/byates2/CMSSW_8_1_0/src/EFTFit/Fitter/scripts/reduce.py %d %d %s %s\n' % (proc, proc+split-1, name, ' '.join(wc)))
+            outscript.write('python {}/reduce.py %d %d %s %s\n'.format(script_dir) % (proc, proc+split-1, name, ' '.join(wc)))
             jobs += 1
             outscript.write('fi')
-        #for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
-            #outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
-            #jobs += 1
-            #for line in self.job_queue[j:j + self.merge]:
-                #newline = line
-                #outscript.write('  ' + newline + '\n')
-            #outscript.write('fi')
+
+        # Uncommented block with additional logic (left for reference)
+        # for i, j in enumerate(range(0, len(self.job_queue), self.merge)):
+        #     outscript.write('\nif [ $1 -eq %i ]; then\n' % jobs)
+        #     jobs += 1
+        #     for line in self.job_queue[j:j + self.merge]:
+        #         newline = line
+        #         outscript.write('  ' + newline + '\n')
+        #     outscript.write('fi')
+        
         outscript.close()
         st = os.stat(outscriptname)
         os.chmod(outscriptname, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
@@ -1214,7 +1256,7 @@ class EFTFit(object):
                 limit.GetEntry(entry)
                 currentNLL = limit.GetLeaf('deltaNLL').GetValue(0)
                 if bestNLL[1] > currentNLL: bestNLL = (entry,currentNLL)
-            print "Best entry for {} is {}.".format(poiwc,bestNLL[0])
+            print("Best entry for {} is {}.".format(poiwc,bestNLL[0]))
             limit.GetEntry(bestNLL[0])
             bestFits[poiwc][poiwc] = limit.GetLeaf(poiwc).GetValue(0)
             # Second get corresponding fits for the other wcs
@@ -1232,7 +1274,7 @@ class EFTFit(object):
                 print("Value according to {}: {}".format(trackedwc,bestFits[poiwc][trackedwc]))
             
     def printBestFitsSM(self, name='.EFT.SM.Float'):
-        ### Print a table of SM signal strengths, their best fits, and their uncertainties ###
+        ### Print(a table of SM signal strengths, their best fits, and their uncertainties ###
         params = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
 
         fit_array = []
@@ -1255,7 +1297,7 @@ class EFTFit(object):
         logging.info("Quick result:")
         logging.info("Param, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
         for row in fit_array:
-            print row[0],row[1],"+/-",row[2]," ",row[3],"+{}".format(row[4])
+            print(row[0],row[1],"+/-",row[2]," ",row[3],"+{}".format(row[4]))
             logging.debug("{} {} +/- {}".format(row[0],row[1],row[2]))
 
     def printBestFitsEFT(self, basename='.EFT.SM.Float', wcs=[], simultaneous=True):
@@ -1296,11 +1338,11 @@ class EFTFit(object):
 
         logging.info("Quick result:")
         for row in fit_array:
-            print row[0],"+/-",row[1]
+            print(row[0],"+/-",row[1])
             logging.debug(row[0],"+/-",row[1])
         logging.info("WC, Best Fit Value, Symmetric Error, Low side of Asym Error, High side of Asym Error")
         for row in fit_array:
-            print ', '.join([str(ele) for ele in row])
+            print(', '.join([str(ele) for ele in row]))
             logging.debug(row)
 
     def printIntervalFitsEFT(self, basename='.EFT.SM.Float', wcs=[], wc_ranges=None):
@@ -1364,7 +1406,7 @@ class EFTFit(object):
             fit_array.append([wc,[list(l) for l in zip(true_minimums,lowedges,highedges)]])
 
         for line in fit_array:
-            print line              
+            print(line)              
 
     def ImpactInitialFit(self, workspace='ptz-lj0pt_fullR2_anatest17_noAutostats_withSys.root', wcs=[], unblind=False, version=''):
         if not os.path.exists('asimov'):
@@ -1382,7 +1424,7 @@ class EFTFit(object):
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
-            print 'Submitting', wc
+            print('Submitting', wc)
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1404,24 +1446,26 @@ class EFTFit(object):
             condorFile.write('fi\n')
             condorFile.close()
 
-            target = 'condor_%s.sub' % wc
-            condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
-            condorFile.write('arguments = condor_%s.sh $(ProcId)\n' % wc)
-            condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
-            condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
-            condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
-            condorFile.write('\n')
-            condorFile.write('# Send the job to Held state on failure.\n')
-            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
-            condorFile.write('\n')
-            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
-            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
-            condorFile.write('\n')
-            condorFile.write('\n')
-            condorFile.write('queue 1\n')
-            condorFile.close()
+            cmssw_base = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
 
+            target = 'condor_%s.sub' % wc
+            with open(target, 'w') as condorFile:
+                condorFile.write('executable = {}/cmssw.sh\n'.format(test_dir))
+                condorFile.write('arguments = condor_%s.sh $(ProcId)\n' % wc)
+                condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
+                condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
+                condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
+                condorFile.write('\n')
+                condorFile.write('# Send the job to Held state on failure.\n')
+                condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+                condorFile.write('\n')
+                condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+                condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+                condorFile.write('\n')
+                condorFile.write('\n')
+                condorFile.write('queue 1\n')
+            
             os.system('chmod 777 condor_%s.sh' % wc)
             os.system('condor_submit %s -batch-name %s_initial' % (target, wc))
             os.system('cd ../')
@@ -1442,7 +1486,7 @@ class EFTFit(object):
         ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in self.wc_ranges_differential.items() if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
-            print 'Submitting', wc
+            print('Submitting', wc)
             if unblind:
                 print('Running over ACTUAL DATA!');
             target = 'condor_%s_fit.sh' % wc
@@ -1471,26 +1515,28 @@ class EFTFit(object):
                 condorFile.write('fi\n')
             condorFile.close()
 
+            cmssw_base = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            
             target = 'condor_%s_fit.sub' % wc
-            condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
-            #condorFile.write('executable = condor_%s_fit.sh\n' % wc)
-            condorFile.write('arguments = condor_%s_fit.sh $(ProcId)\n' % wc)
-            condorFile.write('output                = %s_fit.$(ClusterId).$(ProcId).out\n' % wc)
-            condorFile.write('error                 = %s_fit.$(ClusterId).$(ProcId).err\n' % wc)
-            condorFile.write('log                   = %s_fit.$(ClusterId).log\n' % wc)
-            condorFile.write('\n')
-            condorFile.write('# Send the job to Held state on failure.\n')
-            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
-            condorFile.write('\n')
-            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
-            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
-            condorFile.write('\n')
-            condorFile.write('requestMemory=8192\n')
-            condorFile.write('\n')
-            condorFile.write('queue %d\n' % len(self.systematics))
-            condorFile.close()
-
+            with open(target, 'w') as condorFile:
+                condorFile.write('executable = {}/cmssw.sh\n'.format(test_dir))
+                #condorFile.write('executable = condor_%s_fit.sh\n' % wc)
+                condorFile.write('arguments = condor_%s_fit.sh $(ProcId)\n' % wc)
+                condorFile.write('output                = %s_fit.$(ClusterId).$(ProcId).out\n' % wc)
+                condorFile.write('error                 = %s_fit.$(ClusterId).$(ProcId).err\n' % wc)
+                condorFile.write('log                   = %s_fit.$(ClusterId).log\n' % wc)
+                condorFile.write('\n')
+                condorFile.write('# Send the job to Held state on failure.\n')
+                condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+                condorFile.write('\n')
+                condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+                condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+                condorFile.write('\n')
+                condorFile.write('requestMemory=8192\n')
+                condorFile.write('\n')
+                condorFile.write('queue %d\n' % len(self.systematics))
+            
             os.system('chmod 777 condor_%s_fit.sh' % wc)
             #sp.call(['sed','-i','s/sh/sh\\n+SingularityImage     = "\/cvmfs\/unpacked.cern.ch\/registry.hub.docker.com\/cmssw\/slc6:latest"\\n+SINGULARITY_BIND_EXPR = "\/cvmfs\/"\\n/',target]) # Ask for at least 3GB of RAM
             os.system('condor_submit %s -batch-name %s_nuisance' % (target, wc))
@@ -1526,28 +1572,30 @@ class EFTFit(object):
             condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s%s\n' % (wc, version, wc, version))
             condorFile.close()
 
-            target = 'condor_%s_collect.sub' % wc
-            condorFile = open(target,'w')
-            condorFile.write('executable = /afs/crc.nd.edu/user/b/byates2/CMSSW_10_2_13/src/EFTFit/Fitter/test/cmssw.sh\n')
-            condorFile.write('arguments = condor_%s_collect.sh $(ProcId)\n' % wc)
-            condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
-            condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
-            condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
-            condorFile.write('\n')
-            condorFile.write('# Send the job to Held state on failure.\n')
-            condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
-            condorFile.write('\n')
-            condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
-            condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
-            condorFile.write('\n')
-            condorFile.write('\n')
-            condorFile.write('queue 1\n')
-            condorFile.close()
+            cmssw_base = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
 
+            target = 'condor_%s_collect.sub' % wc
+            with open(target, 'w') as condorFile:
+                condorFile.write('executable = {}/cmssw.sh\n'.format(test_dir))
+                condorFile.write('arguments = condor_%s_collect.sh $(ProcId)\n' % wc)
+                condorFile.write('output                = %s.$(ClusterId).$(ProcId).out\n' % wc)
+                condorFile.write('error                 = %s.$(ClusterId).$(ProcId).err\n' % wc)
+                condorFile.write('log                   = %s.$(ClusterId).log\n' % wc)
+                condorFile.write('\n')
+                condorFile.write('# Send the job to Held state on failure.\n')
+                condorFile.write('on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)\n')
+                condorFile.write('\n')
+                condorFile.write('# Periodically retry the jobs every 10 minutes, up to a maximum of 5 retries.\n')
+                condorFile.write('periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)\n')
+                condorFile.write('\n')
+                condorFile.write('queue 1\n')
+                
             os.system('chmod 777 condor_%s_collect.sh' % wc)
             os.system('condor_submit %s -batch-name %s_collect' % (target, wc))
             os.system('cd ../')
-
+            
+            
 if __name__ == "__main__":
     log_file = 'EFTFit_out.log'
 

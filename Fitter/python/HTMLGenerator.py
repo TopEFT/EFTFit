@@ -289,7 +289,7 @@ class TableTag(BaseHTMLTag):
     # Returns the n-th <th> tag for this <table> tag
     def getHeaderColumn(self,n):
         if n >= self.nCols or n < 0:
-            print "ERROR: Requested column out of range!"
+            print("ERROR: Requested column out of range!")
             return
         elif self.table_head_index < 0:
             return
@@ -355,7 +355,7 @@ class TableTag(BaseHTMLTag):
     # Adds a <tr> tag to the <tbody> (if present) for this <table> tag, otherwise add the row directly to the table
     def addTableRow(self,table_row):
         if not self.nCols() is None and self.nCols() != table_row.nCols():
-            print "ERROR: Column Mismatch!"
+            print("ERROR: Column Mismatch!")
             return
 
         table_body = self.getTableBody()
@@ -370,7 +370,7 @@ class TableTag(BaseHTMLTag):
     # Adds a <tr> tag to the <tbody> for this <table> tag
     def addRow(self,td_list):
         if self.nCols() != len(td_list):
-            print "ERROR: Column Mismatch!"
+            print("ERROR: Column Mismatch!")
             return
         new_row = TableRowTag()
         new_row.setPrettyPrint(self.pretty_print)   # See comment in init()
@@ -424,7 +424,7 @@ class TableHeadTag(BaseHTMLTag):
     # Returns the n-th <th> tag for this <thead> tag
     def getColumn(self,n):
         if n >= self.nCols or n < 0:
-            print "ERROR: Requested column out of range!"
+            print("ERROR: Requested column out of range!")
             return
         head_row = self.getHeaderRow()
         return head_row.nested_tags[n]
@@ -602,7 +602,7 @@ class HTMLGenerator:
         output = self.dumpHTML()
         f_path = os.path.join(f_dir,f_name);
         
-        print "Saving HTML output to: %s" % f_path
+        print("Saving HTML output to: %s" % f_path)
         
         #html_file = open(f_path,'wb')
         html_file = open(f_path,'w')

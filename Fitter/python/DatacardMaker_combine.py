@@ -5,7 +5,7 @@ import re
 def cropNegativeYields(histo):
     for bin in range(1, histo.GetNbinsX()+1):
         if histo.GetBinContent(bin)<0:
-            print '[W]: Negative yields in %s: %f. Cropping to zero'%(histo.GetName(), histo.GetBinContent(bin))
+            print('[W]: Negative yields in %s: %f. Cropping to zero'%(histo.GetName(), histo.GetBinContent(bin)))
             histo.SetBinContent(bin,0)
     return histo
 
@@ -73,7 +73,7 @@ class DatacardMaker:
                         allyields[proc]=self.hr.th1Tree[cat][proc][''].Integral()
 
                     if not self.hr.th1Tree[cat][proc][syst].Integral():
-                        print "Warning: underflow template for %s %s %s. Will take the nominal scaled down by a factor 2" % (cat, proc, syst)
+                        print("Warning: underflow template for %s %s %s. Will take the nominal scaled down by a factor 2" % (cat, proc, syst))
                         self.hr.th1Tree[cat][proc][syst].Add(self.hr.th1Tree[cat][proc][''])
                         self.hr.th1Tree[cat][proc][syst].Scale(0.5)
                         

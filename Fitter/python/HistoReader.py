@@ -87,7 +87,7 @@ class HistoReader(object):
     
     def convertToTH1(self):
         for process in self.eftTree:
-            print 'Processing', process
+            print('Processing', process)
 
             for category in self.eftTree[process]:
                 if category not in self.th1Tree:
@@ -104,7 +104,7 @@ class HistoReader(object):
 
                     if process not in self.sgnl_known:
                         continue
-                    print process
+                    print(process)
                     for i1, wc1 in enumerate(self.coefs):
                         
                         if wc1 in currentWCs:
@@ -132,7 +132,7 @@ class HistoReader(object):
                                     addProcessToDict( self.th1Tree[category], '%s_quad_mixed_%s_%s'%(process,wc1,wc2), systematic, th1_quad_mixed)
                                     
                         else:
-                            print 'Coefficient %s does not exist!'%wc1
+                            print('Coefficient %s does not exist!'%wc1)
                             # if the wc does not exist (the dependence is zero) the linear term is that of the sm 
                             th1_lin=th1_sm.Clone( "%s.%s.%s.lin_%s"%(process,category,systematic, wc1))
                             addProcessToDict( self.th1Tree[category], '%s_lin_%s'%(process,wc1), systematic, th1_lin)

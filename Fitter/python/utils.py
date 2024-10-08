@@ -84,12 +84,12 @@ def move_files(files,target):
 def clean_dir(tdir,targets,dry_run=False):
     fnames = regex_match(get_files(tdir),targets)
     if len(fnames) == 0: return
-    print "Removing files from: {}".format(tdir)
-    print "\tTargets: {}".format(targets)
+    print("Removing files from: {}".format(tdir))
+    print("\tTargets: {}".format(targets))
     for fn in fnames:
         fpath = os.path.join(tdir,fn)
         if not dry_run:
-            print "\tRemoving {}".format(fn)
+            print("\tRemoving {}".format(fn))
             os.remove(fpath)
         else:
-            print "\tRemoving {}".format(fpath)
+            print("\tRemoving {}".format(fpath))
