@@ -56,7 +56,7 @@ POI_SYTLE_MAP = {
 def find_root_file_path(base_name,wc):
     root_file_name = '../fit_files/higgsCombine{}.MultiDimFit.root'.format(base_name+"."+wc)
     if not os.path.exists(root_file_name):
-        print("Warning: File {} does not exist.".format(root_file_name))
+        print(("Warning: File {} does not exist.".format(root_file_name)))
         return None
     else:
         #print("File {} exists.".format(root_file_name))
@@ -107,9 +107,9 @@ def get_unique_points(in_dict,scan_var,minimize_var):
 
     # Make sure all of the lists have the same lenght
     ref_len = len(in_dict[scan_var])
-    for var_name in in_dict.keys():
+    for var_name in list(in_dict.keys()):
         if len(in_dict[var_name]) != ref_len:
-            print ref_len, len(in_dict[var_name])
+            print(ref_len, len(in_dict[var_name]))
             raise Exception("Error: Something is wrong , not all lists are the same len")
 
     # Find the index of the unique points we want to keep
@@ -132,10 +132,10 @@ def get_unique_points(in_dict,scan_var,minimize_var):
 
     # Mask each array, keeping only the elements corresponding to the indices we've selected
     out_dict = {}
-    idx_to_keep = scan_var_val_lst_unique.values()
+    idx_to_keep = list(scan_var_val_lst_unique.values())
     idx_to_keep.sort()
     idx_to_keep = np.array(idx_to_keep)
-    for var_name in in_dict.keys():
+    for var_name in list(in_dict.keys()):
         var_val_arr = np.array(in_dict[var_name])
         var_val_arr_unique = np.take(var_val_arr,idx_to_keep)
         out_dict[var_name] = list(var_val_arr_unique)
@@ -181,14 +181,14 @@ def make_scatter_plot(lst_of_points_to_plot,xaxis_ticklabels_lst,save_name="test
 def plotter_wrapper(lst_of_bestfit_dicts):
 
     lst_of_points_for_plotter = []
-    for wc_name,bestfit_point in lst_of_bestfit_dicts.iteritems():
+    for wc_name,bestfit_point in lst_of_bestfit_dicts.items():
         plotting_info_dict = {}
         plotting_info_dict["label"] = wc_name+" scan"
         plotting_info_dict["color"] = POI_SYTLE_MAP[wc_name][0]
         plotting_info_dict["marker"] = POI_SYTLE_MAP[wc_name][1]
-        plotting_info_dict["yarr"] = np.array(bestfit_point.values())
+        plotting_info_dict["yarr"] = np.array(list(bestfit_point.values()))
         plotting_info_dict["xarr"] = []
-        for poi_name_in_bestfit_point in bestfit_point.keys():
+        for poi_name_in_bestfit_point in list(bestfit_point.keys()):
             plotting_info_dict["xarr"].append(POI_IDX_MAP[poi_name_in_bestfit_point])
         lst_of_points_for_plotter.append(plotting_info_dict)
 
@@ -231,14 +231,14 @@ def main():
     # Get the best fit from each scan
     bestfit_dict = {}
     for poi_name in POI_LST:
-        print "\n",poi_name
+        print("\n",poi_name)
         root_file_name = find_root_file_path(root_file_tag,poi_name)
         branches_to_get = make_branches_lst(POI_LST,poi_name)
         root_dict = get_vals_from_root_file(root_file_name,branches_to_get,True)
         unique_points_dict = get_unique_points(root_dict,poi_name,"deltaNLL")
         best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
-        print best_point
-        print best_point["deltaNLL"]
+        print(best_point)
+        print(best_point["deltaNLL"])
         bestfit_dict[poi_name] = best_point
 
     plotter_wrapper(bestfit_dict)

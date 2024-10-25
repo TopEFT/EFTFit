@@ -26,7 +26,7 @@ class ContourHelper(object):
 
         ret = ROOT.TList()
         if conts.GetSize() > 1:
-            print "Woah, multiple contours!"
+            print("Woah, multiple contours!")
        
         contLevel = conts.At(0)
         for idy in range(0,contLevel.GetSize()):
