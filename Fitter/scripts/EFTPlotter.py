@@ -15,7 +15,7 @@ import parse_nll as nlltools
 
 class EFTPlot(object):
     def __init__(self,wc_ranges=None):
-        self.logger = logging.getLogger(__name__)
+        #self.logger = logging.getLogger(__name__)
         self.ContourHelper = ContourHelper()
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
@@ -115,7 +115,7 @@ class EFTPlot(object):
             'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
             'cQt1': '\it{c}^{1}_{\mathrm{Qt}}'
         }
-        self.texdicrev = {v: k for k,v in self.texdic.items()}
+        self.texdicrev = {v: k for k,v in list(self.texdic.items())}
 
         # CMS-required text
         self.CMS_text = ROOT.TLatex(0.88, 0.895, "CMS")# Simulation")
@@ -850,8 +850,8 @@ class EFTPlot(object):
         hist.GetZaxis().SetRangeUser(full_edge_y[0], full_edge_y[-1])
         #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
         #hist.GetXaxis().SetRangeUser(self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
-        print(wcs[0], self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1])
-        print(wcs[1], self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1])
+        print((wcs[0], self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1]))
+        print((wcs[1], self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1]))
         hist.GetZaxis().SetRangeUser(0, ceiling)
         # Profile
         hist = hist.Project3DProfile()
@@ -1538,7 +1538,7 @@ class EFTPlot(object):
                 ex = rooFit.floatParsFinal().find(cx).getError()
                 ey = rooFit.floatParsFinal().find(cy).getError()
                 m.append(val/(ex*ey))
-                print 'x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey)
+                print('x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey))
                 if abs(val) > abs_min:
                     # skip e.g. (ctG, cpQM) <-> (cpQM, ctG)
                     if any(cx in c and cy in c for c in corr): continue
@@ -1551,16 +1551,16 @@ class EFTPlot(object):
         m = np.array(m).reshape(nwcs,nwcs)
         print(m)
         eigenval, eigenvec = np.linalg.eig(m)
-        print 'Eigenvalues=', eigenval
+        print('Eigenvalues=', eigenval)
         for n,eig in enumerate(eigenvec.T):
             mask = np.abs(eig)>abs_min
             if not any(mask): continue
-            print 'Eigenvector for', eigenval[n]
-            print '    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]]
-            print '    |basis| >', abs_min, eig[mask]
+            print('Eigenvector for', eigenval[n])
+            print('    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]])
+            print('    |basis| >', abs_min, eig[mask])
 
 
-        print 'Interesting pairs: ', corr
+        print('Interesting pairs: ', corr)
 
         # Decide whether or not to keep the nuisance parameters in
         # If not, the number of bins (parameters) varies on whether the scan froze the others
@@ -1687,14 +1687,14 @@ class EFTPlot(object):
 
         j=0
         for i in range(0, len(self.wcs)):
-            if i ==0: print '  '.join(self.wcs)
+            if i ==0: print('  '.join(self.wcs))
             lst = [str(round(float(w[1]), 3)) for w in best[i]]
-            print best[i][j][0], ' '.join(lst)
+            print(best[i][j][0], ' '.join(lst))
             j = j + 1
 
     def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW'], final=False):
         ROOT.gROOT.SetBatch(True)
-        print gridScanName
+        print(gridScanName)
         self.ResetHistoFile(gridScanName)
 
         #self.LLPlot2DEFT(gridScanName,wcs,1,False)
@@ -1792,7 +1792,7 @@ class EFTPlot(object):
 
             if not os.path.isdir('Histos{}'.format(basenamegrid)):
                 sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
-                print 'Created directory Histos{}'.format(basenamegrid)
+                print('Created directory Histos{}'.format(basenamegrid))
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
@@ -1843,7 +1843,7 @@ class EFTPlot(object):
                     fit_file.Close()
                 except:
                     missing_wc = True
-                    if param not in map(itemgetter(0),fit_array):
+                    if param not in list(map(itemgetter(0),fit_array)):
                         fit_array.append([param,0,[-999 ],[999]])
             if missing_wc: continue
 
@@ -1858,9 +1858,9 @@ class EFTPlot(object):
             nll_values = [oldValue-bestNLL for oldValue in nll_values]
 
             # Sort values just in case
-            coords = zip(wc_values,nll_values)
+            coords = list(zip(wc_values,nll_values))
             coords.sort(key = lambda t: t[0])
-            wc_values, nll_values = zip(*coords)
+            wc_values, nll_values = list(zip(*coords))
             wc_values = numpy.asarray(wc_values)
             nll_values = numpy.asarray(nll_values)
 
@@ -1889,7 +1889,7 @@ class EFTPlot(object):
                     interval = prevnll-nll
                     linPctInterp = (prevnll-nll_max)/interval
                     if idx == 0:
-                        print 'Range not found, setting to infinity'
+                        print('Range not found, setting to infinity')
                         lowedges.append(-999)
                         highedges.append(999)
                     else:
@@ -1908,7 +1908,7 @@ class EFTPlot(object):
                     interval = prevnll-nll
                     linPctInterp = (prevnll-1)/interval
                     if idx == 0:
-                        print 'Range not found, setting to infinity'
+                        print('Range not found, setting to infinity')
                         l1sigma.append(-999)
                         h1sigma.append(999)
                     else:
@@ -1978,7 +1978,7 @@ class EFTPlot(object):
             else:
                 #s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
                 s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
-            print s
+            print(s)
 
         return fit_array
 
@@ -2001,25 +2001,25 @@ class EFTPlot(object):
         titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
-        print 'two sigma'
-        print 'float'
+        print('two sigma')
+        print('float')
         fits_float = self.getIntervalFits(basename_lst=basename_float_lst)
-        print 'freeze'
+        print('freeze')
         fits_freeze = self.getIntervalFits(basename_lst=basename_freeze_lst)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
-            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
-        print '\n'
-        print 'one sigma'
-        print 'float'
+            print(('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0])))
+            print(('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1])))
+        print('\n')
+        print('one sigma')
+        print('float')
         fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
-        print 'freeze'
+        print('freeze')
         fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
-            print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print(('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0])))
+            print(('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1])))
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
