@@ -1532,7 +1532,7 @@ class EFTPlot(object):
                 val = matrix.GetBinContent(ibinx, ibiny)
                 cx = matrix.GetXaxis().GetBinLabel(ibinx)
                 cy = matrix.GetYaxis().GetBinLabel(ibiny)
-                if cx[0] is not 'c' or cy[0] is not 'c': continue
+                if cx[0] != 'c' or cy[0] != 'c': continue
                 if 'charge' in cx or 'charge' in cy: continue
                 if cx not in wcs: wcs.append(cx)
                 ex = rooFit.floatParsFinal().find(cx).getError()
@@ -1613,7 +1613,7 @@ class EFTPlot(object):
                         val = orig.GetBinContent(ibinx, ibiny)
                         cx = orig.GetXaxis().GetBinLabel(ibinx)
                         cy = orig.GetYaxis().GetBinLabel(ibiny)
-                        if cx[0] is not 'c' or cy[0] is not 'c': continue
+                        if cx[0] != 'c' or cy[0] != 'c': continue
                         if 'charge' in cx or 'charge' in cy: continue
                         matrix.SetBinContent(matrix.FindBin(wcs.index(cx)+0, wcs.index(cy)+0), val)
                         matrix.GetXaxis().SetBinLabel(wcs.index(cx)+1, cx)
@@ -1724,9 +1724,6 @@ class EFTPlot(object):
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             wcs_pairs = [('ctp','cpt'), ('ctp','cQq11'), ('ctp','ctq1'), ('ctp','cQq81'), ('ctp','ctq8')]
-            wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
-            wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
-            wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
