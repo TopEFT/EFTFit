@@ -11,6 +11,8 @@ def custom_crab(config):
     config.JobType.psetName = os.environ['CMSSW_BASE']+'/src/EFTFit/Fitter/test/do_nothing_cfg.py'
     config.General.transferLogs = True
     config.Data.outLFNDirBase = '/store/user/%s/EFT/' % str(os.getlogin()) # REPLACE with your username
-    config.JobType.maxMemoryMB = 8000 # Request 5000 MB of RAM (works for 64 2D scan points per job)
-    config.JobType.numCores = 4
-    config.JobType.maxJobRuntimeMin = 2880
+    # Ask for ~8 GB RAM, 4 cours, and more than 1 day
+    # This will limit what nodes can run your jobs
+    #config.JobType.maxMemoryMB = 8000 # Request 5000 MB of RAM (works for 64 2D scan points per job)
+    #config.JobType.numCores = 4
+    #config.JobType.maxJobRuntimeMin = 2880
