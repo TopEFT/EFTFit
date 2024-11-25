@@ -23,7 +23,7 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-
+        #self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1']
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
             'cQQ1' : (-6.0,6.0),
@@ -358,16 +358,16 @@ class EFTPlot(object):
         for n,z in enumerate(graph1nlls):
             if abs(z) < abs(graph1nlls[zero]): zero = n
         #zero = graph1nlls.index(min(graph1nlls))
-        #print graph1nlls[zero], graph1wcs[zero]
-        #print graph2nlls[zero], graph2wcs[zero]
-        #print graph2nlls
+        #print(graph1nlls[zero], graph1wcs[zero])
+        #print(graph2nlls[zero], graph2wcs[zero])
+        #print(graph2nlls)
         min_2 = min([g for g in graph2nlls if g > 0.1])
         #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
         #graph2nlls = [val-min_2 for val in graph2nlls]
-        #print graph2nlls
-        #print 'Min is', min_2
+        #print(graph2nlls)
+        #print('Min is', min_2)
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
         graph2 = ROOT.TGraph(len(graph2wcs),numpy.asarray(graph2wcs),numpy.asarray(graph2nlls))
         del graph1nlls,graph2nlls,graph1wcs,graph2wcs
@@ -886,7 +886,7 @@ class EFTPlot(object):
         l = conts.At(0)
         c95 = ROOT.TList()
         if conts.GetSize() > 1:
-            print "Woah, multiple contours!"
+            print("Woah, multiple contours!")
        
         contLevel = conts.At(0)
         for idy in range(0,contLevel.GetSize()):
@@ -1532,13 +1532,13 @@ class EFTPlot(object):
                 val = matrix.GetBinContent(ibinx, ibiny)
                 cx = matrix.GetXaxis().GetBinLabel(ibinx)
                 cy = matrix.GetYaxis().GetBinLabel(ibiny)
-                if cx[0] is not 'c' or cy[0] is not 'c': continue
+                if cx[0] != 'c' or cy[0] != 'c': continue
                 if 'charge' in cx or 'charge' in cy: continue
                 if cx not in wcs: wcs.append(cx)
                 ex = rooFit.floatParsFinal().find(cx).getError()
                 ey = rooFit.floatParsFinal().find(cy).getError()
                 m.append(val/(ex*ey))
-                print 'x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey)
+                print('x=', cx, 'y=', cy, 'corr=', val, 'sigma_x=', ex, 'sigma_y=', ey, 'cov=', val/(ex*ey))
                 if abs(val) > abs_min:
                     # skip e.g. (ctG, cpQM) <-> (cpQM, ctG)
                     if any(cx in c and cy in c for c in corr): continue
@@ -1551,16 +1551,16 @@ class EFTPlot(object):
         m = np.array(m).reshape(nwcs,nwcs)
         print(m)
         eigenval, eigenvec = np.linalg.eig(m)
-        print 'Eigenvalues=', eigenval
+        print('Eigenvalues=', eigenval)
         for n,eig in enumerate(eigenvec.T):
             mask = np.abs(eig)>abs_min
             if not any(mask): continue
-            print 'Eigenvector for', eigenval[n]
-            print '    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]]
-            print '    |basis| >', abs_min, eig[mask]
+            print('Eigenvector for', eigenval[n])
+            print('    wcs          ', [wcs[x] for x in np.argwhere(mask).T[0]])
+            print('    |basis| >', abs_min, eig[mask])
 
 
-        print 'Interesting pairs: ', corr
+        print('Interesting pairs: ', corr)
 
         # Decide whether or not to keep the nuisance parameters in
         # If not, the number of bins (parameters) varies on whether the scan froze the others
@@ -1613,7 +1613,7 @@ class EFTPlot(object):
                         val = orig.GetBinContent(ibinx, ibiny)
                         cx = orig.GetXaxis().GetBinLabel(ibinx)
                         cy = orig.GetYaxis().GetBinLabel(ibiny)
-                        if cx[0] is not 'c' or cy[0] is not 'c': continue
+                        if cx[0] != 'c' or cy[0] != 'c': continue
                         if 'charge' in cx or 'charge' in cy: continue
                         matrix.SetBinContent(matrix.FindBin(wcs.index(cx)+0, wcs.index(cy)+0), val)
                         matrix.GetXaxis().SetBinLabel(wcs.index(cx)+1, cx)
@@ -1687,14 +1687,14 @@ class EFTPlot(object):
 
         j=0
         for i in range(0, len(self.wcs)):
-            if i ==0: print '  '.join(self.wcs)
-            lst = [str(round(float(w[1]), 3)) for w in best[i]]
-            print best[i][j][0], ' '.join(lst)
+            if i ==0: print('  '.join(self.wcs))
+            lst = [str(round(float(w[1]), 5)) for w in best[i]]
+            print(best[i][j][0], ' '.join(lst))
             j = j + 1
 
     def Batch2DPlotsEFT(self, gridScanName='.EFT.SM.Float.gridScan.ctZctW', wcs=['ctZ','ctW'], final=False):
         ROOT.gROOT.SetBatch(True)
-        print gridScanName
+        print(gridScanName)
         self.ResetHistoFile(gridScanName)
 
         #self.LLPlot2DEFT(gridScanName,wcs,1,False)
@@ -1724,9 +1724,9 @@ class EFTPlot(object):
             wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
             wcs_pairs = [('ctp','cpt'), ('ctp','cQq11'), ('ctp','ctq1'), ('ctp','cQq81'), ('ctp','ctq8')]
-            wcs_pairs = [('cQei',w) for w in self.wcs if w is not 'cQei']
-            wcs_pairs = [('cQq83',w) for w in self.wcs if w is not 'cQq83']
-            wcs_pairs = [('cQlMi',w) for w in self.wcs if w is not 'cQlMi']
+            wcs_pairs = [('cQei',w) for w in self.wcs if w != 'cQei']
+            wcs_pairs = [('cQq83',w) for w in self.wcs if w != 'cQq83']
+            wcs_pairs = [('cQlMi',w) for w in self.wcs if w != 'cQlMi']
             # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
             wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
             wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
@@ -1792,7 +1792,7 @@ class EFTPlot(object):
 
             if not os.path.isdir('Histos{}'.format(basenamegrid)):
                 sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
-                print 'Created directory Histos{}'.format(basenamegrid)
+                print('Created directory Histos{}'.format(basenamegrid))
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
@@ -1859,7 +1859,7 @@ class EFTPlot(object):
 
             # Sort values just in case
             coords = zip(wc_values,nll_values)
-            coords.sort(key = lambda t: t[0])
+            coords = sorted(list(coords), key = lambda t: t[0])
             wc_values, nll_values = zip(*coords)
             wc_values = numpy.asarray(wc_values)
             nll_values = numpy.asarray(nll_values)
@@ -1889,7 +1889,7 @@ class EFTPlot(object):
                     interval = prevnll-nll
                     linPctInterp = (prevnll-nll_max)/interval
                     if idx == 0:
-                        print 'Range not found, setting to infinity'
+                        print('Range not found, setting to infinity')
                         lowedges.append(-999)
                         highedges.append(999)
                     else:
@@ -1908,7 +1908,7 @@ class EFTPlot(object):
                     interval = prevnll-nll
                     linPctInterp = (prevnll-1)/interval
                     if idx == 0:
-                        print 'Range not found, setting to infinity'
+                        print('Range not found, setting to infinity')
                         l1sigma.append(-999)
                         h1sigma.append(999)
                     else:
@@ -1951,13 +1951,13 @@ class EFTPlot(object):
             if pline[0][-1] == 'i': pline[0] = pline[0][:-1] 
             pline[0] = '\\' + pline[0] + '$/\\Lambda^{2}$'
             pline[0] = pline[0].replace('3','a')
-            #print line
+            #print(line)
             best = pline[1]
-            best = round(float(best), 2)
+            best = round(float(best), 5)
             one = pline[2]
-            one = ['%.2f' % elem for elem in one]
+            one = ['%.5f' % elem for elem in one]
             two = pline[3]
-            two = ['%.2f' % elem for elem in two]
+            two = ['%.5f' % elem for elem in two]
             s = pline[0] + ' & '
             minima = []
             if len(one)==2:
@@ -1973,12 +1973,12 @@ class EFTPlot(object):
                 one = ', '.join(one)
                 two = ', '.join(two)
                 #s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
-                s += str(best) + ' (' + ', '.join([str(round(x,2)) for x in minima]) + ') ' + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
+                s += str(best) + ' (' + ', '.join([str(round(x,5)) for x in minima]) + ') ' + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
                 line.append([x for x in minima])
             else:
                 #s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
                 s += str(best) + '& [' + str(one[0]) + ', ' + str(two[0]) + ']' #uncomment to show best fit
-            print s
+            print(s)
 
         return fit_array
 
@@ -2001,25 +2001,25 @@ class EFTPlot(object):
         titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
-        print 'two sigma'
-        print 'float'
+        print('two sigma')
+        print('float')
         fits_float = self.getIntervalFits(basename_lst=basename_float_lst)
-        print 'freeze'
+        print('freeze')
         fits_freeze = self.getIntervalFits(basename_lst=basename_freeze_lst)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
-        print '\n'
-        print 'one sigma'
-        print 'float'
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],5) / round(lim[0][2][0] - lim[0][3][0], 3),5))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+        print('\n')
+        print('one sigma')
+        print('float')
         fits_float1sigma = self.getIntervalFits(basename_lst=basename_float_lst,siginterval=1)
-        print 'freeze'
+        print('freeze')
         fits_freeze1sigma = self.getIntervalFits(basename_lst=basename_freeze_lst,siginterval=1)
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],5) / round(lim[0][2][0] - lim[0][3][0], 5),5))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':

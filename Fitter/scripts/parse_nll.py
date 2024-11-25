@@ -109,7 +109,7 @@ def get_unique_points(in_dict,scan_var,minimize_var):
     ref_len = len(in_dict[scan_var])
     for var_name in in_dict.keys():
         if len(in_dict[var_name]) != ref_len:
-            print ref_len, len(in_dict[var_name])
+            print(ref_len, len(in_dict[var_name]))
             raise Exception("Error: Something is wrong , not all lists are the same len")
 
     # Find the index of the unique points we want to keep
@@ -132,7 +132,7 @@ def get_unique_points(in_dict,scan_var,minimize_var):
 
     # Mask each array, keeping only the elements corresponding to the indices we've selected
     out_dict = {}
-    idx_to_keep = scan_var_val_lst_unique.values()
+    idx_to_keep = list(scan_var_val_lst_unique.values())
     idx_to_keep.sort()
     idx_to_keep = np.array(idx_to_keep)
     for var_name in in_dict.keys():
@@ -231,14 +231,14 @@ def main():
     # Get the best fit from each scan
     bestfit_dict = {}
     for poi_name in POI_LST:
-        print "\n",poi_name
+        print("\n",poi_name)
         root_file_name = find_root_file_path(root_file_tag,poi_name)
         branches_to_get = make_branches_lst(POI_LST,poi_name)
         root_dict = get_vals_from_root_file(root_file_name,branches_to_get,True)
         unique_points_dict = get_unique_points(root_dict,poi_name,"deltaNLL")
         best_point = get_best_nll_eft_point(unique_points_dict,POI_LST)
-        print best_point
-        print best_point["deltaNLL"]
+        print(best_point)
+        print(best_point["deltaNLL"])
         bestfit_dict[poi_name] = best_point
 
     plotter_wrapper(bestfit_dict)

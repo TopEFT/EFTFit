@@ -27,8 +27,8 @@ class EFTFit(object):
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
         #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
-        self.wcs_4q = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
-        self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
+        #self.wcs_4q = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
+        #self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         # Scan ranges of the wcs
@@ -543,8 +543,7 @@ class EFTFit(object):
     def retrieveGridScan(self, name='.test', batch='crab', user='apiccine'):#getpass.getuser()):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
         taskname = name.replace('.','')
-        #logging.info("Retrieving gridScan files. Task name: "+taskname)
-
+        logging.info("Retrieving gridScan files. Task name: "+taskname)
 
         if batch=='crab':
             # Find crab output files (defaults to user's hadoop directory)
@@ -590,9 +589,9 @@ class EFTFit(object):
             haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
             print((['hadd','-f','../../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))))
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
-            #with process.stdout,process.stderr:
-            #    self.log_subprocess_output(process.stdout,'info')
-            #    self.log_subprocess_output(process.stderr,'err')
+            with process.stdout,process.stderr:
+                self.log_subprocess_output(process.stdout,'info')
+                self.log_subprocess_output(process.stderr,'err')
             process.wait()
             #for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
             #    os.remove(rootfile)
@@ -831,14 +830,10 @@ class EFTFit(object):
         if len(ignore)>0:
             zero_string = ','.join(['{}=0'.format(wc) for wc in ignore if wc != "lumiScale"])
             if zero_string != "":
-                #zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore if wc != "lumiScale"])]
                 zero_ignore = [zero_string]
-            #for iwc in ignore:
-            #    if iwc in scan_wcs: scan_wcs.remove(iwc)
-        else: 
-            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in scan_wcs])]
+            #freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
         #FIXME this is for running the 4q WCs while freezing the rest
-        scan_wcs = self.wcs_4q
+        scan_wcs = self.wcs
         if wc_val is None:
             #params = ','.join(['{}={}'.format(wc, np.random.uniform(wc_ranges[wc][0], wc_ranges[wc][1])) for wc in self.wcs])
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
@@ -846,21 +841,27 @@ class EFTFit(object):
             params = ','.join(['{}=0'.format(wc) if wc not in list(wc_val.keys()) else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
         for wc in scan_wcs:
             if wc in ignore:
-                continue #better to handle the --freezeParameters
+                continue #don't run over WCs to be ignored
             if len(ignore)>0:
-                freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore+self.wcs if wcextra != wc])]
+                if freeze:
+                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore+self.wcs if wcextra != wc])]
+                else:
+                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore if wcextra not in self.wcs])]
             else:
-                freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in scan_wcs if wcextra != wc])]
+                if freeze:
+                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in scan_wcs if wcextra != wc])]
             if isinstance(mask, list) and len(mask)==1:
                 masks = mask[0]
             else:
                 masks = ','.join(mask)
             mask = []
-
+            lumiscale = "1" #Run2
+            #lumiscale = "28.6" #4 ab
+            #lumiscale = "42.8" #6 ab
             if zero_ignore != []:
-                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'+',']+zero_ignore, mask, mask_syst, workspace)
+                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale='+lumiscale+',']+zero_ignore, mask, mask_syst, workspace)
             else:
-                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale=1'], mask, mask_syst, workspace)
+                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale='+lumiscale], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
@@ -973,7 +974,6 @@ class EFTFit(object):
 
     def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False, wcs=[]):
         ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
-
         # Use EVERY combination of wcs
         if allPairs:
             scan_wcs = self.wcs
