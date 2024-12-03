@@ -13,7 +13,7 @@ import json
 import uproot
 import numpy as np
 from collections import defaultdict
-#from EFTFit.Fitter.findMask import findMask
+from EFTFit.Fitter.findMask import findMask
 from itertools import chain
 from scipy.stats import chi2
 
@@ -27,8 +27,6 @@ class EFTFit(object):
         # Full list of opeators
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
         #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
-        #self.wcs_4q = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
-        #self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1'] #4-quark operators (2h2l and 4h)
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
         # Scan ranges of the wcs
@@ -422,7 +420,7 @@ class EFTFit(object):
         if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
-        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','5','--dry-run'])
+        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         logging.info(' '.join(args))
 
         # Run the combineTool.py command
@@ -583,7 +581,7 @@ class EFTFit(object):
             
         elif batch=='condor':
             if not glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
-                #logging.info("No files to hadd. Returning.")
+                logging.info("No files to hadd. Returning.")
                 return
             #haddargs = ['hadd','-f','higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
             haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
@@ -593,8 +591,8 @@ class EFTFit(object):
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
             process.wait()
-            #for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
-            #    os.remove(rootfile)
+            for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
+                os.remove(rootfile)
             if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
                 os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
@@ -1434,8 +1432,6 @@ class EFTFit(object):
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
-            if wc not in ['ctZ']:
-                continue
             print('Submitting', wc)
             target = 'condor_%s.sh' % wc
             condorFile = open(target,'w')
@@ -1498,10 +1494,6 @@ class EFTFit(object):
         ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in list(self.wc_ranges_differential.items()) if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
-
-            if wc not in ['ctZ']:
-                continue
-
             print('Submitting', wc)
             if unblind:
                 print('Running over ACTUAL DATA!');
@@ -1511,10 +1503,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
@@ -1566,7 +1558,6 @@ class EFTFit(object):
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
         for wc in wcs:
-            if wc not in ['ctZ']: continue
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
             condorFile.write('#!/bin/sh\n')
@@ -1574,10 +1565,10 @@ class EFTFit(object):
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
             #condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
-            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src\n'.format(user[0], user))
             condorFile.write('export SCRAM_ARCH=slc6_amd64_gcc700\n')
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/cern.ch/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_10_2_13/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters %s -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wcs_start, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
