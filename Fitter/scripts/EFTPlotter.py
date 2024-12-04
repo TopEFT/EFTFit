@@ -23,7 +23,6 @@ class EFTPlot(object):
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
         self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-        #self.wcs = ['cQq13',  'cQq83',  'cQq11',  'ctq1',  'cQq81',  'ctq8',  'ctt1',  'cQQ1',  'cQt8',  'cQt1']
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
             'cQQ1' : (-6.0,6.0),
@@ -1688,7 +1687,7 @@ class EFTPlot(object):
         j=0
         for i in range(0, len(self.wcs)):
             if i ==0: print('  '.join(self.wcs))
-            lst = [str(round(float(w[1]), 5)) for w in best[i]]
+            lst = [str(round(float(w[1]), 3)) for w in best[i]]
             print(best[i][j][0], ' '.join(lst))
             j = j + 1
 
@@ -1953,11 +1952,11 @@ class EFTPlot(object):
             pline[0] = pline[0].replace('3','a')
             #print(line)
             best = pline[1]
-            best = round(float(best), 5)
+            best = round(float(best), 2)
             one = pline[2]
-            one = ['%.5f' % elem for elem in one]
+            one = ['%.2f' % elem for elem in one]
             two = pline[3]
-            two = ['%.5f' % elem for elem in two]
+            two = ['%.2f' % elem for elem in two]
             s = pline[0] + ' & '
             minima = []
             if len(one)==2:
@@ -1973,7 +1972,7 @@ class EFTPlot(object):
                 one = ', '.join(one)
                 two = ', '.join(two)
                 #s += '[' + str(one) + ']' + ' and [' + str(two) + ']'
-                s += str(best) + ' (' + ', '.join([str(round(x,5)) for x in minima]) + ') ' + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
+                s += str(best) + ' (' + ', '.join([str(round(x,2)) for x in minima]) + ') ' + '& [' + str(one) + ']' + ' and [' + str(two) + ']' #uncomment to show best fit
                 line.append([x for x in minima])
             else:
                 #s += '[' + str(one[0]) + ', ' + str(two[0]) + ']'
@@ -2009,7 +2008,7 @@ class EFTPlot(object):
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],5) / round(lim[0][2][0] - lim[0][3][0], 3),5))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float, fits_freeze) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
         print('\n')
         print('one sigma')
         print('float')
@@ -2019,7 +2018,7 @@ class EFTPlot(object):
         if printFOM:
             print('\n\nFoM (<1 is better)\nWC\tFoM')
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
-            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],5) / round(lim[0][2][0] - lim[0][3][0], 5),5))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
+            print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
 
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
