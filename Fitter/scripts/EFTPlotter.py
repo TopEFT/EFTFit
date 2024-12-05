@@ -201,7 +201,12 @@ class EFTPlot(object):
         ROOT.gROOT.SetBatch(True)
         canvas = ROOT.TCanvas()
 
-        graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc,unique=True)
+        try:
+            graphwcs, graphnlls = self.GetWCsNLLFromRoot(name_lst,wc,unique=True)
+        except:
+            print("Ciao!")
+            return
+
         if graphwcs == [] or graphnlls == []:
             # Something went wrong
             print("Error, probably could not find root file")
