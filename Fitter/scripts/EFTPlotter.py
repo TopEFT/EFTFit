@@ -192,7 +192,7 @@ class EFTPlot(object):
 
 
 
-    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False):
+    def LLPlot1DEFT(self, name_lst=['.test'], frozen=False, wc='', log=False, final=False):
         if not wc:
             logging.error("No WC specified!")
             return
