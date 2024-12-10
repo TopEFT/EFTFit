@@ -380,8 +380,12 @@ class EFTFit(object):
         CMSSW_BASE = os.getenv('CMSSW_BASE')
         if not "/afs/" in workspace:
             wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
-        else:
-            wsname = workspace
+            if not os.path.exists(wsname):
+                print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
+                wsname = workspace
+        if not os.path.exists(wsname):
+            raise RuntimeError('Failed to find the workspace, either considering it as a local afs path or an absolute path. Please, fix it!')
+        print('Workspace found! I am gonna use it for running fits...')
         args = ['combineTool.py','-d',wsname,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
