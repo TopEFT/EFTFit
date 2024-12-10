@@ -824,51 +824,32 @@ class EFTFit(object):
         #else: self.wcs = scan_wcs
 
         # Set the WC ranges if not specified
-        if wc_ranges is None:
-            wc_ranges = self.wc_ranges_njets
+        if wc_ranges is None: wc_ranges = self.wc_ranges_njets
 
         zero_ignore = []
         freeze_ignore = []
         if len(ignore)>0:
-            zero_string = ','.join(['{}=0'.format(wc) for wc in ignore if wc != "lumiScale"])
-            if zero_string != "":
-                zero_ignore = [zero_string]
-            #freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
-        #FIXME this is for running the 4q WCs while freezing the rest
-        scan_wcs = self.wcs
+            zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore])]
+            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
+            for iwc in ignore:
+                if iwc in scan_wcs: scan_wcs.remove(iwc)
         if wc_val is None:
-            #params = ','.join(['{}={}'.format(wc, np.random.uniform(wc_ranges[wc][0], wc_ranges[wc][1])) for wc in self.wcs])
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
         else:
-            params = ','.join(['{}=0'.format(wc) if wc not in list(wc_val.keys()) else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
+            params = ','.join(['{}=0'.format(wc) if wc not in wc_val.keys() else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
         for wc in scan_wcs:
-            if wc in ignore:
-                continue #don't run over WCs to be ignored
-            if len(ignore)>0:
-                if freeze:
-                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore+self.wcs if wcextra != wc])]
-                else:
-                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in ignore if wcextra not in self.wcs])]
-            else:
-                if freeze:
-                    freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wcextra) for wcextra in scan_wcs if wcextra != wc])]
             if isinstance(mask, list) and len(mask)==1:
                 masks = mask[0]
             else:
                 masks = ','.join(mask)
             mask = []
-            lumiscale = "1" #Run2
-            #lumiscale = "28.6" #4 ab
-            #lumiscale = "42.8" #6 ab
-            if zero_ignore != []:
-                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale='+lumiscale+',']+zero_ignore, mask, mask_syst, workspace)
-            else:
-                self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+freeze_ignore+other+['--setParameters', params+','+masks+'lumiScale='+lumiscale], mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs='ctZ', workspace='wps_njet_runII.root')`
     '''
+
     def batch2DScanEFT(self, basename='.EFT.gridScan', batch='crab', freeze=False, points=90000, allPairs=False, other=[], mask=[], mask_syst=[], wcs=[], workspace='EFTWorkspace.root', differential=None):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
         if differential is None:
