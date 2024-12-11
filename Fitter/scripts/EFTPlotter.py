@@ -1532,7 +1532,7 @@ class EFTPlot(object):
                 val = matrix.GetBinContent(ibinx, ibiny)
                 cx = matrix.GetXaxis().GetBinLabel(ibinx)
                 cy = matrix.GetYaxis().GetBinLabel(ibiny)
-                if cx[0] is not 'c' or cy[0] is not 'c': continue
+                if cx[0] != 'c' or cy[0] != 'c': continue
                 if 'charge' in cx or 'charge' in cy: continue
                 if cx not in wcs: wcs.append(cx)
                 ex = rooFit.floatParsFinal().find(cx).getError()
