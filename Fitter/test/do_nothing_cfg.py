@@ -3,4 +3,5 @@ process = cms.Process("MAIN")
 
 process.source = cms.Source("EmptySource")
 process.options = cms.untracked.PSet()
-process.options.numberOfThreads=cms.untracked.uint32(4)
+# More threads if asking for more than 1 core in custom_crab.py
+#process.options.numberOfThreads=cms.untracked.uint32(4)

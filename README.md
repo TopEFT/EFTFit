@@ -86,7 +86,7 @@ Now we can actually run combine to perform the fits.
 To make simple 1D plots, use:
 ```
 python -i ../scripts/EFTPlotter.py
-plotter.BatchLLPlot1DEFT(basename_lst=['.081121.njet.16wc.Float'])
+plotter.BatchOverlayLLPlot1DEFT(basename_lst=['.081121.njet.16wc.Float'])
 ```
 To make comparison plots (e.g. `njets` vs. `njets+ptbl`):
 ```

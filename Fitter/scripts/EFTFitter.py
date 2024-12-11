@@ -373,7 +373,7 @@ class EFTFit(object):
         # Remove the temporary directory and split root files
         sp.call(['rm','-r',taskname+'tmp'])
 
-    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root'):
+    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW','ctZ'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', track_error=False):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
@@ -395,7 +395,10 @@ class EFTFit(object):
             index = other.index('--trackParameters')
             other.pop(index)
             track.append(other.pop(index))
-        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track), '--trackErr rgx{.*}'])
+
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track)])
+        if track_error: args.extend('--trackErrors rgx{.*}')
+
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         params = ['{}=0'.format(wc) for wc in scan_params+params_tracked]
         if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
