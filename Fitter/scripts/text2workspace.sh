@@ -8,6 +8,8 @@
 
     Make sure you have the corret input to run the each model
     '''
+# extend run time
+ulimit -s unlimited
 
 # workspace naming
 WS_NAME="workspace.root"
