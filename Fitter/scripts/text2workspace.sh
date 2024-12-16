@@ -1,13 +1,11 @@
-    '''
-    This scipt makes the workspace needed for running combine fits, workspace both for interference model (IM) and Dim6top model (AAC)
-    The default is running with IM. Uncomment the AAC command lines to run with AAC model.
+#    This scipt makes the workspace needed for running combine fits, workspace both for interference model (IM) and Dim6top model (AAC). The default is running with IM. Uncomment the AAC command lines to run with AAC model.
 
-    Note: Difference in two models
-          IM model - uses scalings.json file and datacards with ONLY sm templates
-          AAC model - uses selectedWCs.txt file and datacards with ALL EFT templates
+#    Note: Difference in two models
+#          IM model - uses scalings.json file and datacards with ONLY sm templates
+#          AAC model - uses selectedWCs.txt file and datacards with ALL EFT templates
 
-    Make sure you have the corret input to run the each model
-    '''
+#    Make sure you have the corret input to run the each model
+
 # extend run time
 ulimit -s unlimited
 
