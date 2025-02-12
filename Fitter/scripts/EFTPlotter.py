@@ -21,7 +21,7 @@ class EFTPlot(object):
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.wcs = ['cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', 'ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8' ] #TOP-22-006
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
@@ -114,6 +114,34 @@ class EFTPlot(object):
             'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
             'cQt1': '\it{c}^{1}_{\mathrm{Qt}}'
         }
+        self.texdicmacro = {
+            'ctW': '\ctW',
+            'ctZ': '\ctZ',
+            'ctp': '\ctp',
+            'cpQM': '\cpQM',
+            'ctG': '\ctG',
+            'cbW': '\cbW',
+            'cpQ3': '\cpQa',
+            'cptb': '\cptb',
+            'cpt': '\cpt',
+            'cQl3i': '\cQla',
+            'cQlMi': '\cQlM',
+            'cQei': '\cQe',
+            'ctli': '\ctl',
+            'ctei': '\cte',
+            'ctlSi': '\ctlS',
+            'ctlTi': '\ctlT',
+            'cQq81': '\cQqEightOne',
+            'cQq11': '\cQqOneOne',
+            'ctq8': '\ctqEight',
+            'ctq1': '\ctqOne',
+            'cQq13': '\cQqOneThree',
+            'cQq83': '\cQqEightThree',
+            'ctt1': '\cttOne',
+            'cQQ1': '\cQQOne',
+            'cQt8': '\cQtEight',
+            'cQt1': '\cQtOne',
+        }
         self.texdicrev = {v: k for k,v in self.texdic.items()}
 
         # CMS-required text
@@ -168,6 +196,7 @@ class EFTPlot(object):
             limitTree = rootFile.Get('limit')
 
             # Get coordinates for TGraph
+            print(name)
             for entry in range(limitTree.GetEntries()):
                 limitTree.GetEntry(entry)
                 graphwcs.append(limitTree.GetLeaf(wc).GetValue(0))
@@ -2544,6 +2573,30 @@ class EFTPlot(object):
             lines_1=makeLines(lines_1, y_float, clr_float)
             lines_2=makeLines(lines_2, y_freeze, clr_freeze)
             draw(h_fit, lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
+            print('\n LaTex table:\n')
+            print('\\begin{table}[!htb]')
+            print('\\centering')
+            print('\\begin{tabular}{lccc}')
+            print('    \\hline ')
+            print('    WC   & <OLD NAME>    & <NEW NAME> & Improvement \\\\')
+            print('    \\hline ')
+            for i in range(len(fits_float)):
+                wc = self.texdicmacro[fits_float[i][0].split('#')[0]]
+                old_low  = fits_float[i][2]
+                old_high = fits_float[i][3]
+                new_low  = fits_freeze[i][2]
+                new_high = fits_freeze[i][3]
+                if len(old_low) == len(new_low) and len(old_low) == 1:
+                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+                elif len(old_low) == 2 and len(new_low) == 1:
+                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + ']$\cup{}$[' + str(old_low[1]) + ', ' + str(old_high[1]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+                elif len(old_low) == 1 and len(new_low) == 2:
+                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + ']$\cup{}$[' + str(new_low[1]) + ', ' + str(new_high[1]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+            print('    \\hline')
+            print('\\end{tabular}')
+            print('\\caption{<CAPTION>}')
+            print('\\label{<LABEL>}')
+            print('\\end{table}')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
