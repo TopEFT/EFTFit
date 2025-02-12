@@ -2049,6 +2049,33 @@ class EFTPlot(object):
             print('`(CI_({} high) - CI_({} low)) / (CI_({} high) - CI_({} low))`'.format(titles[1], titles[1], titles[0], titles[0]))
             print('\n'.join([' '.join([lim[0][0], str(round(round(lim[1][2][0] - lim[1][3][0],3) / round(lim[0][2][0] - lim[0][3][0], 3),3))]) for lim in zip(fits_float1sigma, fits_freeze1sigma) if len(lim[0][2])==len(lim[1][2])==1 and len(lim[0][3])==len(lim[1][3])==1]))
 
+            print('\n LaTex table:\n')
+            print('\\begin{table}[!htb]')
+            print('\\centering')
+            print('\\begin{tabular}{lccc}')
+            print('    \\hline ')
+            print('    WC   & <OLD NAME>    & <NEW NAME> & Improvement \\\\')
+            print('    \\hline ')
+            for i in range(len(fits_float)):
+                wc = fits_float[i][0]
+                wc = wc.split('#')[0]
+                wc = self.texdicmacro[wc]
+                old_low  = fits_float[i][2]
+                old_high = fits_float[i][3]
+                new_low  = fits_freeze[i][2]
+                new_high = fits_freeze[i][3]
+                if len(old_low) == len(new_low) and len(old_low) == 1:
+                    print('    ' + wc + ' & [' + str(round(old_low[0], 2)) + ', ' + str(round(old_high[0], 2)) + '] & [' + str(round(new_low[0], 2)) + ', ' + str(round(new_high[0], 2)) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+                elif len(old_low) == 2 and len(new_low) == 1:
+                    print('    ' + wc + ' & [' + str(round(old_low[0], 2)) + ', ' + str(round(old_high[0], 2)) + ']$\cup{}$[' + str(round(old_low[1], 2)) + ', ' + str(round(old_high[1], 2)) + '] & [' + str(round(new_low[0], 2)) + ', ' + str(round(new_high[0], 2)) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+                elif len(old_low) == 1 and len(new_low) == 2:
+                    print('    ' + wc + ' & [' + str(round(old_low[0], 2)) + ', ' + str(round(old_high[0], 2)) + '] & [' + str(round(new_low[0], 2)) + ', ' + str(round(new_high[0], 2)) + ']$\cup{}$[' + str(round(new_low[1], 2)) + ', ' + str(round(new_high[1], 2)) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
+            print('    \\hline')
+            print('\\end{tabular}')
+            print('\\caption{<CAPTION>}')
+            print('\\label{<LABEL>}')
+            print('\\end{table}')
+
         for idx,line in enumerate(fits_float):
             if line[0]=='ctG':
                 line[0] = 'ctG#times5'
@@ -2573,30 +2600,6 @@ class EFTPlot(object):
             lines_1=makeLines(lines_1, y_float, clr_float)
             lines_2=makeLines(lines_2, y_freeze, clr_freeze)
             draw(h_fit, lines_float=lines_1, lines_freeze_1sigma=lines_2, name='FoM')
-            print('\n LaTex table:\n')
-            print('\\begin{table}[!htb]')
-            print('\\centering')
-            print('\\begin{tabular}{lccc}')
-            print('    \\hline ')
-            print('    WC   & <OLD NAME>    & <NEW NAME> & Improvement \\\\')
-            print('    \\hline ')
-            for i in range(len(fits_float)):
-                wc = self.texdicmacro[fits_float[i][0].split('#')[0]]
-                old_low  = fits_float[i][2]
-                old_high = fits_float[i][3]
-                new_low  = fits_freeze[i][2]
-                new_high = fits_freeze[i][3]
-                if len(old_low) == len(new_low) and len(old_low) == 1:
-                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
-                elif len(old_low) == 2 and len(new_low) == 1:
-                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + ']$\cup{}$[' + str(old_low[1]) + ', ' + str(old_high[1]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
-                elif len(old_low) == 1 and len(new_low) == 2:
-                    print('    ' + wc + ' & [' + str(old_low[0]) + ', ' + str(old_high[0]) + '] & [' + str(new_low[0]) + ', ' + str(new_high[0]) + ']$\cup{}$[' + str(new_low[1]) + ', ' + str(new_high[1]) + '] & ' + str(100*round(1 - (new_high[0] - new_low[0])/(old_high[0] - old_low[0]), 2)) + '\% \\\\')
-            print('    \\hline')
-            print('\\end{tabular}')
-            print('\\caption{<CAPTION>}')
-            print('\\label{<LABEL>}')
-            print('\\end{table}')
 
     def BestFitPlot(self):
         ### Plot the best fit results for 1D scans (others frozen) and 16D scan (simultaneous) ###
