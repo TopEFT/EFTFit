@@ -61,6 +61,34 @@ class EFTFit(object):
             'ctq8' : (-1.4,1.4),
             'ctt1' : (-2.6,2.6),
         }
+        self.wc_ranges_differential = {
+            'cQQ1' : (-6.0*2,6.0*2),
+            'cQei' : (-4.0*2,4.0*2),
+            'cQl3i': (-5.5*2,5.5*2),
+            'cQlMi': (-4.0*2,4.0*2),
+            'cQq11': (-0.7*2,0.7*2),
+            'cQq13': (-0.35*2,0.35*2),
+            'cQq81': (-1.7*2,1.5*2),
+            'cQq83': (-0.6*2,0.6*2),
+            'cQt1' : (-6.0*2,6.0*2),
+            'cQt8' : (-10.0*2,10.0*2),
+            'cbW'  : (-3.0*2,3.0*2),
+            'cpQ3' : (-4.0*2,4.0*2),
+            'cpQM' : (-15.0*2,20.0*2),
+            'cpt'  : (-15.0*2,15.0*2),
+            'cptb' : (-9.0*2,9.0*2),
+            'ctG'  : (-0.8*2,0.8*2),
+            'ctW'  : (-1.5*2,1.5*2),
+            'ctZ'  : (-2.0*2,2.0*2),
+            'ctei' : (-4.0*2,4.0*2),
+            'ctlSi': (-5.0*2,5.0*2),
+            'ctlTi': (-0.9*2,0.9*2),
+            'ctli' : (-4.0*2,4.0*2),
+            'ctp'  : (-15.0*2,40.0*2),
+            'ctq1' : (-0.6*2,0.6*2),
+            'ctq8' : (-1.4*2,1.4*2),
+            'ctt1' : (-2.6*2,2.6*2),
+        }
 
         # Limits appropriate for asimov njets fits (for prof, but can be used for frozen too)
         self.wc_ranges_njets = {
@@ -598,12 +626,14 @@ class EFTFit(object):
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
             process.wait()
+            '''
             for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
                 os.remove(rootfile)
             if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
                 os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
+            '''
 
     def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
         '''
