@@ -315,11 +315,14 @@ class EFTPlot(object):
     def OverlayLLPlot1DEFT(self,**kwargs):
         name1_lst = kwargs.pop('name1_lst',['.test'])
         name2_lst = kwargs.pop('name2_lst',['.test'])
+        name3_lst = kwargs.pop('name3_lst',['.test'])
         wc  = kwargs.pop('wc','')
         d1  = kwargs.pop('dir1','../fit_files')
         d2  = kwargs.pop('dir2','../fit_files')
+        d3  = kwargs.pop('dir3','../fit_files')
         pf1 = kwargs.pop('pf1','')
         pf2 = kwargs.pop('pf2','')
+        pf3 = kwargs.pop('pf3','')
         log = kwargs.pop('log',False)
         nll_1sigma = kwargs.pop('nll_1sigma',1)
         nll_2sigma = kwargs.pop('nll_2sigma',4)
@@ -328,7 +331,8 @@ class EFTPlot(object):
         #ceiling = kwargs.pop('ceiling',max(10, nll_3sigma+1))
         final = kwargs.pop('final',False)
         filename = kwargs.pop('filename','')
-        titles = kwargs.pop('titles',['Other WCs profiled', 'Others WCs fixed to SM'])
+        #titles = kwargs.pop('titles',['Other WCs profiled', 'Others WCs fixed to SM'])
+        titles = kwargs.pop('titles',['4 ab^{-1}', '6 ab^{-1}','Run 2'])
         if not wc:
             logging.error("No wc specified!")
             return
@@ -339,6 +343,10 @@ class EFTPlot(object):
         for name2 in name1_lst:
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
                 logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
+                return
+        for name3 in name3_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d3,name3,pf3)):
+                logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name3,pf3))
                 return
 
         ROOT.gROOT.SetBatch(True)
@@ -351,6 +359,7 @@ class EFTPlot(object):
         # Get coordinates for TGraphs
         graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True,dir_path=d1)
         graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True,dir_path=d2)
+        graph3wcs,graph3nlls = self.GetWCsNLLFromRoot(name3_lst,wc,unique=True,dir_path=d3)
 
         # Rezero the y axis and make the tgraphs
         #zero = graph1nlls.index(0)
@@ -365,17 +374,21 @@ class EFTPlot(object):
         #graph1nlls[zero] = 11
         graph1nlls = [val-min(graph1nlls) for val in graph1nlls]
         graph2nlls = [val-min(graph2nlls) for val in graph2nlls]
+        graph3nlls = [val-min(graph3nlls) for val in graph3nlls]
         #graph2nlls = [val-min_2 for val in graph2nlls]
         #print graph2nlls
         #print 'Min is', min_2
         graph1 = ROOT.TGraph(len(graph1wcs),numpy.asarray(graph1wcs),numpy.asarray(graph1nlls))
         graph2 = ROOT.TGraph(len(graph2wcs),numpy.asarray(graph2wcs),numpy.asarray(graph2nlls))
-        del graph1nlls,graph2nlls,graph1wcs,graph2wcs
+        graph3 = ROOT.TGraph(len(graph3wcs),numpy.asarray(graph3wcs),numpy.asarray(graph3nlls))
+        del graph1nlls,graph2nlls,graph1wcs,graph2wcs,graph3nlls, graph3wcs
+        #del graph1nlls,graph2nlls,graph1wcs,graph2wcs
 
         # Combine into TMultiGraph
         multigraph = ROOT.TMultiGraph()
         multigraph.Add(graph1)
         multigraph.Add(graph2)
+        multigraph.Add(graph3)
         multigraph.Draw("AP")
         multigraph.GetXaxis().SetLabelSize(0.05)
         multigraph.GetYaxis().SetLabelSize(0.05)
@@ -413,6 +426,9 @@ class EFTPlot(object):
         graph2.SetMarkerStyle(32)
         graph2.SetMarkerSize(1)
 
+        graph3.SetMarkerColor(8)
+        graph3.SetMarkerStyle(27)
+        graph3.SetMarkerSize(1)
         #Add 1-sigma and 2-sigma lines. (Vertical lines were too hard, sadly)
         canvas.SetGrid(1)
         p1.SetGrid(1)
@@ -487,6 +503,7 @@ class EFTPlot(object):
         #legend = ROOT.TLegend(0.1,0.85,0.45,0.945)
         legend.AddEntry(graph1,titles[0],'p')
         legend.AddEntry(graph2,titles[1],'p')
+        legend.AddEntry(graph3,titles[2],'p')
         legend.SetTextSize(0.35)
         legend.SetBorderSize(0)
         #legend.SetTextSize(0.035)
@@ -678,12 +695,17 @@ class EFTPlot(object):
             print(wc)
             self.OverlayLLPlot1DEFT(name1_lst=basename1_lst, name2_lst=basename2_lst, wc=wc, log=log, final=final, titles=titles)
 
-    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
+#    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], wcs=[], log=False, final=False, titles=['Others profiled', 'Others fixed to SM']):
+    def BatchOverlayLLPlot1DEFT(self, basename1_lst=['.EFT.SM.Float'], basename2_lst=['.EFT.SM.Freeze'], basename3_lst=['.Combined'], wcs=[], log=False, final=False, titles=['4 ab^{-1}', '6 ab^{-1}','Run 2']):
         if type(basename1_lst) == str: basename1_lst = [basename1_lst]
         if type(basename2_lst) == str: basename2_lst = [basename2_lst]
         if (type(basename1_lst) is not list) or (type(basename2_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
+        if type(basename3_lst) == str: basename3_lst = [basename3_lst]
+        if (type(basename1_lst) is not list) or (type(basename2_lst) is not list) or (type(basename3_lst) is not list): raise Exception("Error: Pass the name of the file as a list (even if it's just of length 1)")
         if not wcs:
             wcs = self.wcs
+        #if '4k' in basename1_lst: wcs = [wc for wc in wcs if wc not in ['cpt', 'cQq11', 'cQq13', 'cQq83', 'ctW']]
+        #if '6k' in basename1_lst: wcs = [wc for wc in wcs if wc not in ['cpQ3', 'cpQM', 'cpt', 'cQq13', 'cQq81', 'ctG', 'ctq8', 'ctW']]
 
         ROOT.gROOT.SetBatch(True)
 
@@ -691,7 +713,9 @@ class EFTPlot(object):
             print(wc)
             basename1_lst_with_wc_appended = self.AppendStrToItemsInLst(basename1_lst,"."+wc)
             basename2_lst_with_wc_appended = self.AppendStrToItemsInLst(basename2_lst,"."+wc)
-            self.OverlayLLPlot1DEFT(name1_lst=basename1_lst_with_wc_appended, name2_lst=basename2_lst_with_wc_appended, wc=wc, log=log, final=final, titles=titles)
+            basename3_lst_with_wc_appended = self.AppendStrToItemsInLst(basename3_lst,"."+wc)
+            #self.OverlayLLPlot1DEFT(name1_lst=basename1_lst_with_wc_appended, name2_lst=basename2_lst_with_wc_appended, wc=wc, log=log, final=final, titles=titles)
+            self.OverlayLLPlot1DEFT(name1_lst=basename1_lst_with_wc_appended, name2_lst=basename2_lst_with_wc_appended, name3_lst=basename3_lst_with_wc_appended, wc=wc, log=log, final=final, titles=titles)
 
     def BatchOverlayZoomLLPlot1DEFT(self, basename1='.EFT.SM.Float', basename2='.EFT.SM.Freeze', wcs=[], log=False):
         if not wcs:
