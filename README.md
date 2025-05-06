@@ -55,7 +55,12 @@ scramv1 b clean; scramv1 b
 Now we can actually run combine to perform the fits.
 
 #### Running the fits
-- Make sure you have done a `cmsenv` inside of `CMSSW_14_1_0_pre4/src/` (wherever you have it installed)
+- Inside of `CMSSW_14_1_0_pre4/src/` (wherever you have it installed), run
+  ```
+  unset PYTHONPATH
+  unset PERL5LIB
+  cmsenv
+  ```
 - Enter `CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test`
 - Copy all .txt and .root files created by `python analysis/topEFT/datacard_maker.py` (in the `histos` directory of your toplevel topcoffea directory)
 - Run `combineCards.py` to merge them all into one txt file. **DO NOT** merge multiple variables for the **same** channel, as this would artifically double the statistics!
