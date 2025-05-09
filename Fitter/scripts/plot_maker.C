@@ -2105,11 +2105,13 @@ void make_overlay_sub_plots(
 
 // When calling this function, passing postfix as the arg. The postfix is used in the folder name like "SR_xxx" 
 void plot_maker(std::string postfix = "") {
-    std::string in_dir  = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
-    std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
+    //The in_dir and out_dir can be same and can point to same area inside "test" dir. The out_dir is currently unused. 
+    //CAUTION: Hardcoded paths
+    std::string in_dir  = "/afs/crc.nd.edu/user/a/abasnet/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
+    std::string out_dir = "/afs/crc.nd.edu/user/a/abasnet/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
     
-    //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub/combinedcard.txt";
-    TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ht_7bins/combinedcard.txt";
+    //CAUTION: Hardcoded datacard path and name
+    TString fpath_datacard = "/afs/crc.nd.edu/user/a/abasnet/CMSSW_10_2_13/src/EFTFit/Fitter/test/top22006_wps/combinedcard.txt";
     //TString fpath_datacard = "/afs/crc.nd.edu/user/y/ywan2/important-test-scripts/combinedcard.txt";
 
     std::map<std::string,TString> ch_map = get_channel_map( fpath_datacard.Data(), true); // map from to long string jet subcategory name to the short channel name
@@ -2129,10 +2131,10 @@ void plot_maker(std::string postfix = "") {
         ch_map.insert(std::move(nodeHandler));
     }
     
-    // Plot options
-    bool incl_mega_plots = false;
+    // Plot options. Toggle this if you want mega plots or not
+    bool incl_mega_plots = true;
     bool incl_njet_plots = false;
-    bool incl_sub_plots  = true;
+    bool incl_sub_plots  = false;
     bool incl_sum_plots  = false;
     
     // Plot layout options
@@ -2163,7 +2165,7 @@ void plot_maker(std::string postfix = "") {
     
     std::string pData_path = TString::Format("%sSR_%s/", in_dir.c_str(), fit_type.c_str()).Data();
     std::vector<std::string> files = all_files(pData_path);
-    
+
     PlotData pData_raw = read_PlotData_from_file(files);
     PlotData pData;
     if (fit_type.find("ht") != -1) pData = pData_raw;
@@ -2172,7 +2174,8 @@ void plot_maker(std::string postfix = "") {
     // PlotData pData_arranged = rearrange(pData, ch_map, kin_map, SR_list_2); // Split onZ 2b
     PlotData pData_arranged = rearrange(pData, ch_map, kin_map, SR_list_2); // Don't split onZ 2b
     PlotData pData_arranged2 = rearrange(pData, ch_map, {}, SR_list);
-    PlotData pData_aggregated = aggregateDifferential(pData_arranged2);
+    //PlotData pData_aggregated = aggregateDifferential(pData_arranged2); //ORIGINALLY WHAT THE SCRIPT HAD
+    PlotData pData_aggregated = aggregateDifferential(pData_arranged); //MODIFIED BY Aashwin. kin_map is needed to map channels to kinematic diff. variable
     
     cout << pData.SR_name.size() << endl;
     cout << pData_arranged.SR_name.size() << endl;
