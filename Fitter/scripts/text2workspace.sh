@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# This scipt makes the workspace needed for running combine fits, workspace both for interference model (IM) and Dim6top model (AAC).
+# The default is running with IM, but it can be switched to AAC (see -m option in PrintUsage function).
+
 #----------------------------------------
 # Default parameters
 #----------------------------------------
