@@ -1,33 +1,70 @@
-#    This scipt makes the workspace needed for running combine fits, workspace both for interference model (IM) and Dim6top model (AAC). The default is running with IM. Uncomment the AAC command lines to run with AAC model.
+#!/usr/bin/env bash
 
-#    Note: Difference in two models
-#          IM model - uses scalings.json file and datacards with ONLY sm templates
-#          AAC model - uses selectedWCs.txt file and datacards with ALL EFT templates
-
-#    Make sure you have the corret input to run the each model
-
-# extend run time
-ulimit -s unlimited
-
-# workspace naming
+#----------------------------------------
+# Default parameters
+#----------------------------------------
 WS_NAME="workspace.root"
-
-# files input
 COM_CARD="combinedcard.txt"
 SCAL_DATA="scalings.json"
+MODEL="IM"  # IM or AAC
 
-# physics model - interference model
-PHY_MODEL="HiggsAnalysis.CombinedLimit.InterferenceModels:interferenceModel"
+#----------------------------------------
+# Usage function
+#----------------------------------------
+PrintUsage() {
+  cat <<EOF
+Usage: $0 [options]
 
-# physics model option - uncomment for AAC model, need selectedWC.txt file
-#PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative"
-#AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms --PO selectedWCs=selectedWCs.txt"
+  -n <workspace>    Name of the output workspace file (default: $WS_NAME)
+  -c <card>         Combined card input file       (default: $COM_CARD)
+  -s <scaling-data> Scalings JSON file             (default: $SCAL_DATA)
+  -m <model>        Physics model: IM or AAC       (default: $MODEL)
+  -h                Show this help message and exit
+EOF
+  exit 1
+}
 
-# run text2workspace using interference model
-RUN_COMMAND="time text2workspace.py $COM_CARD -P $PHY_MODEL --PO scalingData=$SCAL_DATA --PO verbose -o $WS_NAME"
+#----------------------------------------
+# Parse options
+#----------------------------------------
+while getopts "n:c:s:m:h" opt; do
+  case "$opt" in
+    n) WS_NAME="$OPTARG"    ;;
+    c) COM_CARD="$OPTARG"   ;;
+    s) SCAL_DATA="$OPTARG"  ;;
+    m) MODEL="$OPTARG"      ;;
+    h) PrintUsage           ;;
+    *) PrintUsage           ;;
+  esac
+done
+shift $((OPTIND -1))
 
-# run text2workspace using AAC model 
-#RUN_COMMAND="time text2workspace.py $COM_CARD -P $PHY_MODEL -o $WS_NAME $AAC_OPTION" 
+#----------------------------------------
+# Main script
+#----------------------------------------
 
-printf "\nRunning the following command:\n$RUN_COMMAND\n\n"
+# extend stack size
+ulimit -s unlimited
+
+# choose physics model
+if [[ "$MODEL" == "AAC" ]]; then
+  PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative"
+  AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows \
+--optimize-simpdf-constraints=cms --PO selectedWCs=selectedWCs.txt"
+  RUN_COMMAND="time text2workspace.py \
+    ${COM_CARD} \
+    -P ${PHY_MODEL} \
+    -o ${WS_NAME} \
+    ${AAC_OPTION}"
+else
+  PHY_MODEL="HiggsAnalysis.CombinedLimit.InterferenceModels:interferenceModel"
+  RUN_COMMAND="time text2workspace.py \
+    ${COM_CARD} \
+    -P ${PHY_MODEL} \
+    --PO scalingData=${SCAL_DATA} \
+    --PO verbose \
+    -o ${WS_NAME}"
+fi
+
+printf "\nRunning the following command:\n%s\n\n" "$RUN_COMMAND"
 $RUN_COMMAND
