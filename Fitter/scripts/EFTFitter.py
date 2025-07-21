@@ -657,7 +657,7 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
+    def submitEFTWilks(self, name='.test', limits='/users/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
         '''
         Submit jobs for GoodnessOfFit:
             doBest = False - Fix all NPs to 0, run toys with seed(s) speicfied below
@@ -1471,6 +1471,7 @@ class EFTFit(object):
         if not wcs: wcs = self.wcs
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+        CMSSW_BASE = self.__override_CMSSW_BASE()
         for wc in wcs:
             print('Submitting', wc)
             target = 'condor_%s.sh' % wc
@@ -1479,10 +1480,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
             condorFile.write('  combineTool.py -M Impacts -n %s%s --doInitialFit --redefineSignalPOIs %s --robustFit 1 --setParameters %s --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wcs_start, workspace))
@@ -1533,6 +1534,9 @@ class EFTFit(object):
         user = os.getlogin()
         ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in list(self.wc_ranges_differential.items()) if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         for wc in wcs:
             print('Submitting', wc)
             if unblind:
@@ -1543,10 +1547,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
@@ -1597,6 +1601,9 @@ class EFTFit(object):
         if not wcs: wcs = self.wcs
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         for wc in wcs:
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
@@ -1604,10 +1611,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters %s -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wcs_start, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
