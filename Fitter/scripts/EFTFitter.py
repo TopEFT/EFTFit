@@ -147,6 +147,24 @@ class EFTFit(object):
     #        if level=='info': logging.info(line.rstrip('\n'))
     #        if level=='err': logging.error(line.rstrip('\n'))
 
+    def __override_CMSSW_BASE(self):
+        """If CMSSW_BASE points to an /afs/ path but cwd is under /users/,
+        climb back up from cwd until you hit the CMSSW_* directory and reset CMSSW_BASE."""
+        cmssw_base = os.environ.get('CMSSW_BASE', '')
+        cwd = os.getcwd()
+        cmssw_dir = os.path.basename(cmssw_base)
+
+        if cmssw_base.startswith('/afs/') and cwd.startswith('/users/'):
+            path = cwd
+            # walk up until we find the CMSSW_* dir
+            while os.path.basename(path) != cmssw_dir and path not in ('', os.path.sep):
+                path = os.path.dirname(path)
+
+            if os.path.basename(path) == cmssw_dir:
+                cmssw_base = path
+
+        return cmssw_base
+
     def makeWorkspaceSM(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard ###
         logging.info("Creating workspace")
@@ -405,12 +423,18 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
-        if not "/afs/" in workspace:
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
+        print(f"CMSSW_BASE after manipulation is {CMSSW_BASE}")
+
+        if not (workspace.startswith("/afs/") or workspace.startswith("/users/")):
             wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
             if not os.path.exists(wsname):
                 print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
                 wsname = workspace
+        else:
+            wsname = workspace
+
         if not os.path.exists(wsname):
             raise RuntimeError('Failed to find the workspace, either considering it as a local afs path or an absolute path. Please, fix it!')
         print('Workspace found! I am gonna use it for running fits...')
@@ -479,11 +503,11 @@ class EFTFit(object):
             sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
 
             # Replace hardcoded paths with $CMSSW_BASE and dynamic paths
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            CMSSW_BASE = self.__override_CMSSW_BASE()
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             sp.call(['sed', '-i',
-                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(cmssw_base, name.replace('.', '')),
+                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(CMSSW_BASE, name.replace('.', '')),
                      'condor_{}.sub'.format(name.replace('.', ''))
             ])
             
@@ -1182,8 +1206,8 @@ class EFTFit(object):
         jobs = 0
         wsp_files = set()
 
-        cmssw_base = os.getenv('CMSSW_BASE')
-        script_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'scripts')
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        script_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'scripts')
         
         #for i, proc in enumerate(range(0, points, split), points // split):
         for i,proc in enumerate(list(range(0,points,split)), points/split):
@@ -1470,8 +1494,8 @@ class EFTFit(object):
             condorFile.write('fi\n')
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            CMSSW_BASE = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s.sub' % wc
             with open(target, 'w') as condorFile:
@@ -1539,8 +1563,8 @@ class EFTFit(object):
                 condorFile.write('fi\n')
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')            
+            CMSSW_BASE = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')            
             target = 'condor_%s_fit.sub' % wc
 
             with open(target, 'w') as condorFile:
@@ -1595,8 +1619,8 @@ class EFTFit(object):
             condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s%s\n' % (wc, version, wc, version))
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            CMSSW_BASE = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s_collect.sub' % wc
             with open(target, 'w') as condorFile:
