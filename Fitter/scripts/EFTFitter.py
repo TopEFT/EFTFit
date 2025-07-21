@@ -171,7 +171,9 @@ class EFTFit(object):
         if not os.path.isfile(datacard):
             logging.error("Datacard does not exist!")
             return
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
                 '--channel-masks',
                 #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1,0,3]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,3]','--PO','map=.*/ttH:mu_ttH[1,0,3]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
@@ -195,7 +197,9 @@ class EFTFit(object):
 
     def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[], mask=[], mask_syst=[]):
         ### Multidimensional fit ###
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if freeze:
             params_all=['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
@@ -236,7 +240,8 @@ class EFTFit(object):
         ### Can be used to do 2D scans as well ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
@@ -285,7 +290,9 @@ class EFTFit(object):
         if not os.path.isfile(datacard):
             logging.error("Datacard does not exist!")
             sys.exit()
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['text2workspace.py',datacard,'-P','EFTFit.Fitter.EFTModel:eftmodel','--PO','fits='+CMSSW_BASE+'/src/EFTFit/Fitter/hist_files/EFT_Parameterization.npy','-o','EFTWorkspace.root','--channel-masks']
 
         logging.info(' '.join(args))
@@ -297,7 +304,9 @@ class EFTFit(object):
         
     def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         if params_POI == []:
             params_POI = self.wcs
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
@@ -335,7 +344,7 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in for a single parameter using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
 
         nsplit = 100 # jobs per task
         jobs = points // nsplit # points per job
@@ -681,7 +690,9 @@ class EFTFit(object):
         if not doBest:
             best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items() if key in self.wcs])
         '''
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','GoodnessOfFit','--algo','saturated','--cminPreScan','--cminDefaultMinimizerStrategy=0', '--noMCbonly=1']
         if not doBest:
             args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo', 'none', '--skipInitialFit', '--cminPreScan','--cminDefaultMinimizerStrategy=0']
@@ -1157,7 +1168,7 @@ class EFTFit(object):
         eval `scramv1 runtime -sh`
         cd %(PWD)s
         """ % ({
-            'CMSSW_BASE': os.environ['CMSSW_BASE'],
+            'CMSSW_BASE': self.__override_CMSSW_BASE,
             'SCRAM_ARCH': os.environ['SCRAM_ARCH'],
             'PWD': os.environ['PWD']
         })
@@ -1206,7 +1217,7 @@ class EFTFit(object):
         jobs = 0
         wsp_files = set()
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
         script_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'scripts')
         
         #for i, proc in enumerate(range(0, points, split), points // split):
@@ -1495,7 +1506,8 @@ class EFTFit(object):
             condorFile.write('fi\n')
             condorFile.close()
 
-            CMSSW_BASE = os.getenv('CMSSW_BASE')
+            CMSSW_BASE = self.__override_CMSSW_BASE()
+
             test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s.sub' % wc
@@ -1567,7 +1579,6 @@ class EFTFit(object):
                 condorFile.write('fi\n')
             condorFile.close()
 
-            CMSSW_BASE = os.getenv('CMSSW_BASE')
             test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')            
             target = 'condor_%s_fit.sub' % wc
 
@@ -1626,7 +1637,6 @@ class EFTFit(object):
             condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s%s\n' % (wc, version, wc, version))
             condorFile.close()
 
-            CMSSW_BASE = os.getenv('CMSSW_BASE')
             test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s_collect.sub' % wc
