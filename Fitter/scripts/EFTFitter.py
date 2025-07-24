@@ -436,7 +436,7 @@ class EFTFit(object):
 
         print(f"CMSSW_BASE after manipulation is {CMSSW_BASE}")
 
-        if not (workspace.startswith("/afs/") or workspace.startswith("/users/")):
+        if not (workspace.startswith("/afs/") or workspace.startswith("/users/") or  workspace.startswith("/scratch365/")):
             wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
             if not os.path.exists(wsname):
                 print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
