@@ -11,6 +11,9 @@ COM_CARD="combinedcard.txt"
 SCAL_DATA="scalings.json"
 MODEL="IM"  # IM or AAC
 
+# Will be set later based on the combined card path
+SELECTED_WCS=""
+
 #----------------------------------------
 # Usage function
 #----------------------------------------
@@ -43,6 +46,12 @@ done
 shift $((OPTIND -1))
 
 #----------------------------------------
+# Resolve paths
+#----------------------------------------
+# selectedWCs.txt is expected next to the combined card
+SELECTED_WCS="$(realpath "$(dirname "${COM_CARD}")/selectedWCs.txt")"
+
+#----------------------------------------
 # Main script
 #----------------------------------------
 
@@ -53,7 +62,7 @@ ulimit -s unlimited
 if [[ "$MODEL" == "AAC" ]]; then
   PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analyticAnomalousCouplingEFTNegative"
   AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows \
---optimize-simpdf-constraints=cms --PO selectedWCs=selectedWCs.txt"
+--optimize-simpdf-constraints=cms --PO selectedWCs=${SELECTED_WCS}"
   RUN_COMMAND="time text2workspace.py \
     ${COM_CARD} \
     -P ${PHY_MODEL} \
