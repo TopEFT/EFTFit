@@ -29,11 +29,15 @@ class AnaliticAnomalousCouplingEFTNegative(PhysicsModel):
 
 
     def loadOperators(self,fpath):
-        print("Loading operators from {fpath}".format(fpath=fpath))
-        jsn = open(fpath,'r').read()
-        operators = json.loads(jsn)
-        self.alloperators = []
+        print(f"Loading operators from {fpath}")
+        with open(fpath) as f:
+            operators = json.load(f)
+        available = set(operators)
+        print("\tAvailable signals:", available)
         for sig in self.sgnl_known:
+            if sig not in available:
+                print(f"\tWARNING: no operators for '{sig}', skipping.")
+                continue
             self.Operators[sig] = operators[sig]
             self.numOperators[sig] = len(operators[sig])
             self.alloperators.extend(operators[sig])
