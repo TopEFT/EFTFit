@@ -436,7 +436,7 @@ class EFTFit(object):
 
         print(f"CMSSW_BASE after manipulation is {CMSSW_BASE}")
 
-        if not (workspace.startswith("/afs/") or workspace.startswith("/users/")):
+        if not (workspace.startswith("/afs/") or workspace.startswith("/users/") or  workspace.startswith("/scratch365/")):
             wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
             if not os.path.exists(wsname):
                 print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
@@ -509,7 +509,7 @@ class EFTFit(object):
             sp.call(['mkdir', 'condor{}'.format(name)])
             sp.call(['chmod', 'a+x', 'condor_{}.sh'.format(name.replace('.', ''))])
             sp.call(['sed', '-i', 's/ulimit.*/&\\nunset PERL5LIB/', 'condor_{}.sh'.format(name.replace('.', ''))])
-            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
+            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=20000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
 
             # Replace hardcoded paths with $CMSSW_BASE and dynamic paths
             CMSSW_BASE = self.__override_CMSSW_BASE()

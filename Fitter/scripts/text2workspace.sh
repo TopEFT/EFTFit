@@ -78,7 +78,7 @@ ulimit -s unlimited
 
 # choose physics model
 if [[ "$MODEL" == "AAC" ]]; then
-  PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analyticAnomalousCouplingEFTNegative"
+  PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analiticAnomalousCouplingEFTNegative"
   AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows \
 --optimize-simpdf-constraints=cms --PO selectedWCs=${SELECTED_WCS}"
   RUN_COMMAND="time text2workspace.py \
