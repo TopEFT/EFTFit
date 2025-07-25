@@ -6,10 +6,14 @@
 #----------------------------------------
 # Default parameters
 #----------------------------------------
+DIR="."
 WS_NAME="workspace.root"
 COM_CARD="combinedcard.txt"
 SCAL_DATA="scalings.json"
 MODEL="IM"  # IM or AAC
+
+# Will be set later based on the combined card path
+SELECTED_WCS=""
 
 #----------------------------------------
 # Usage function
@@ -18,9 +22,8 @@ PrintUsage() {
   cat <<EOF
 Usage: $0 [options]
 
-  -n <workspace>    Name of the output workspace file (default: $WS_NAME)
-  -c <card>         Combined card input file       (default: $COM_CARD)
-  -s <scaling-data> Scalings JSON file             (default: $SCAL_DATA)
+  -d <dir>          Directory containing ${WS_NAME}, ${COM_CARD} and ${SCAL_DATA}
+                    (default: current directory)
   -m <model>        Physics model: IM or AAC       (default: $MODEL)
   -h                Show this help message and exit
 EOF
@@ -30,17 +33,41 @@ EOF
 #----------------------------------------
 # Parse options
 #----------------------------------------
-while getopts "n:c:s:m:h" opt; do
+while getopts "d:m:h" opt; do
   case "$opt" in
-    n) WS_NAME="$OPTARG"    ;;
-    c) COM_CARD="$OPTARG"   ;;
-    s) SCAL_DATA="$OPTARG"  ;;
+    d) DIR="$OPTARG"        ;;
     m) MODEL="$OPTARG"      ;;
     h) PrintUsage           ;;
     *) PrintUsage           ;;
   esac
 done
 shift $((OPTIND -1))
+
+#----------------------------------------
+# Resolve paths
+#----------------------------------------
+
+if [[ ! -d "$DIR" ]]; then
+  echo "Error: directory '$DIR' not found." >&2
+  exit 1
+fi
+
+WS_NAME="$(realpath "$DIR/$WS_NAME")"
+COM_CARD="$(realpath "$DIR/$COM_CARD")"
+SCAL_DATA="$(realpath "$DIR/$SCAL_DATA")"
+SELECTED_WCS="$(realpath "$DIR/selectedWCs.txt")"
+
+for file in "$COM_CARD" "$SCAL_DATA"; do
+  if [[ ! -f "$file" ]]; then
+    echo "Error: required file '$file' not found." >&2
+    exit 1
+  fi
+done
+
+if [[ "$MODEL" == "AAC" && ! -f "$SELECTED_WCS" ]]; then
+  echo "Error: required file '$SELECTED_WCS' not found." >&2
+  exit 1
+fi
 
 #----------------------------------------
 # Main script
@@ -53,7 +80,7 @@ ulimit -s unlimited
 if [[ "$MODEL" == "AAC" ]]; then
   PHY_MODEL="EFTFit.Fitter.AnomalousCouplingEFTNegative:analyticAnomalousCouplingEFTNegative"
   AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows \
---optimize-simpdf-constraints=cms --PO selectedWCs=selectedWCs.txt"
+--optimize-simpdf-constraints=cms --PO selectedWCs=${SELECTED_WCS}"
   RUN_COMMAND="time text2workspace.py \
     ${COM_CARD} \
     -P ${PHY_MODEL} \
