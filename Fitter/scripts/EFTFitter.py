@@ -147,13 +147,33 @@ class EFTFit(object):
     #        if level=='info': logging.info(line.rstrip('\n'))
     #        if level=='err': logging.error(line.rstrip('\n'))
 
+    def __override_CMSSW_BASE(self):
+        """If CMSSW_BASE points to an /afs/ path but cwd is under /users/,
+        climb back up from cwd until you hit the CMSSW_* directory and reset CMSSW_BASE."""
+        cmssw_base = os.environ.get('CMSSW_BASE', '')
+        cwd = os.getcwd()
+        cmssw_dir = os.path.basename(cmssw_base)
+
+        if cmssw_base.startswith('/afs/') and cwd.startswith('/users/'):
+            path = cwd
+            # walk up until we find the CMSSW_* dir
+            while os.path.basename(path) != cmssw_dir and path not in ('', os.path.sep):
+                path = os.path.dirname(path)
+
+            if os.path.basename(path) == cmssw_dir:
+                cmssw_base = path
+
+        return cmssw_base
+
     def makeWorkspaceSM(self, datacard='EFT_MultiDim_Datacard.txt'):
         ### Generates a workspace from a datacard ###
         logging.info("Creating workspace")
         if not os.path.isfile(datacard):
             logging.error("Datacard does not exist!")
             return
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['text2workspace.py',datacard,'-P','HiggsAnalysis.CombinedLimit.PhysicsModel:multiSignalModel',
                 '--channel-masks',
                 #'--PO','map=.*/ttll:mu_ttll[1]','--PO','map=.*/tHq:mu_ttH[1,0,3]','--PO','map=.*/ttlnu:mu_ttlnu[1,0,3]','--PO','map=.*/ttH:mu_ttH[1,0,3]','--PO','map=.*/tllq:mu_tllq[1,0,3]',
@@ -177,7 +197,9 @@ class EFTFit(object):
 
     def bestFitSM(self, name='.test', freeze=[], autoMaxPOIs=True, other=[], mask=[], mask_syst=[]):
         ### Multidimensional fit ###
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
         if freeze:
             params_all=['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
@@ -218,7 +240,8 @@ class EFTFit(object):
         ### Can be used to do 2D scans as well ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/SMWorkspace.root','-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
@@ -267,7 +290,9 @@ class EFTFit(object):
         if not os.path.isfile(datacard):
             logging.error("Datacard does not exist!")
             sys.exit()
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['text2workspace.py',datacard,'-P','EFTFit.Fitter.EFTModel:eftmodel','--PO','fits='+CMSSW_BASE+'/src/EFTFit/Fitter/hist_files/EFT_Parameterization.npy','-o','EFTWorkspace.root','--channel-masks']
 
         logging.info(' '.join(args))
@@ -279,7 +304,9 @@ class EFTFit(object):
         
     def bestFit(self, name='.test', params_POI=[], startValuesString='', freeze=False, autoBounds=True, other=[]):
         ### Multidimensional fit ###
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         if params_POI == []:
             params_POI = self.wcs
         args=['combine','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/EFTWorkspace.root','-v','2','--saveFitResult','-M','MultiDimFit','-H','AsymptoticLimits','--cminPoiOnlyFit','--cminDefaultMinimizerStrategy=2']
@@ -317,7 +344,7 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in for a single parameter using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
 
         nsplit = 100 # jobs per task
         jobs = points // nsplit # points per job
@@ -405,12 +432,18 @@ class EFTFit(object):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
-        if not "/afs/" in workspace:
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
+        print(f"CMSSW_BASE after manipulation is {CMSSW_BASE}")
+
+        if not (workspace.startswith("/afs/") or workspace.startswith("/users/") or  workspace.startswith("/scratch365/")):
             wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
             if not os.path.exists(wsname):
                 print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
                 wsname = workspace
+        else:
+            wsname = workspace
+
         if not os.path.exists(wsname):
             raise RuntimeError('Failed to find the workspace, either considering it as a local afs path or an absolute path. Please, fix it!')
         print('Workspace found! I am gonna use it for running fits...')
@@ -476,14 +509,14 @@ class EFTFit(object):
             sp.call(['mkdir', 'condor{}'.format(name)])
             sp.call(['chmod', 'a+x', 'condor_{}.sh'.format(name.replace('.', ''))])
             sp.call(['sed', '-i', 's/ulimit.*/&\\nunset PERL5LIB/', 'condor_{}.sh'.format(name.replace('.', ''))])
-            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
+            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=20000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
 
             # Replace hardcoded paths with $CMSSW_BASE and dynamic paths
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            CMSSW_BASE = self.__override_CMSSW_BASE()
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             sp.call(['sed', '-i',
-                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(cmssw_base, name.replace('.', '')),
+                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(CMSSW_BASE, name.replace('.', '')),
                      'condor_{}.sub'.format(name.replace('.', ''))
             ])
             
@@ -633,7 +666,7 @@ class EFTFit(object):
             if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
                 os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
-    def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
+    def submitEFTWilks(self, name='.test', limits='/users/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
         '''
         Submit jobs for GoodnessOfFit:
             doBest = False - Fix all NPs to 0, run toys with seed(s) speicfied below
@@ -657,7 +690,9 @@ class EFTFit(object):
         if not doBest:
             best = ','.join(['{}={}'.format(key,val[sig]) for key,val in limits.items() if key in self.wcs])
         '''
-        CMSSW_BASE = os.getenv('CMSSW_BASE')
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','GoodnessOfFit','--algo','saturated','--cminPreScan','--cminDefaultMinimizerStrategy=0', '--noMCbonly=1']
         if not doBest:
             args = ['combineTool.py','-d',CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace,'-M','MultiDimFit','--algo', 'none', '--skipInitialFit', '--cminPreScan','--cminDefaultMinimizerStrategy=0']
@@ -1133,7 +1168,7 @@ class EFTFit(object):
         eval `scramv1 runtime -sh`
         cd %(PWD)s
         """ % ({
-            'CMSSW_BASE': os.environ['CMSSW_BASE'],
+            'CMSSW_BASE': self.__override_CMSSW_BASE,
             'SCRAM_ARCH': os.environ['SCRAM_ARCH'],
             'PWD': os.environ['PWD']
         })
@@ -1182,8 +1217,8 @@ class EFTFit(object):
         jobs = 0
         wsp_files = set()
 
-        cmssw_base = os.getenv('CMSSW_BASE')
-        script_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'scripts')
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+        script_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'scripts')
         
         #for i, proc in enumerate(range(0, points, split), points // split):
         for i,proc in enumerate(list(range(0,points,split)), points/split):
@@ -1447,6 +1482,7 @@ class EFTFit(object):
         if not wcs: wcs = self.wcs
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+        CMSSW_BASE = self.__override_CMSSW_BASE()
         for wc in wcs:
             print('Submitting', wc)
             target = 'condor_%s.sh' % wc
@@ -1455,10 +1491,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             condorFile.write('if [ $1 -eq 0 ]; then\n')
             condorFile.write('  combineTool.py -M Impacts -n %s%s --doInitialFit --redefineSignalPOIs %s --robustFit 1 --setParameters %s --freezeParameters ctW,ctZ,cpQM,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,cQq13,cQq83,cQq11,ctq1,cQq81,ctq8,ctt1,cQQ1,cQt8,cQt1,ctp --setParameterRanges ctW=-4,4:ctZ=-5,5:cpt=-40,30:ctp=-35,65:ctli=-10,10:ctlSi=-10,10:cQl3i=-10,10:cptb=-20,20:ctG=-2,2:cpQM=-10,30:ctlTi=-2,2:ctei=-10,10:cQei=-10,10:cQlMi=-10,10:cpQ3=-15,10:cbW=-5,5:cQq13=-1,1:cQq83=-2,2:cQq11=-2,2:ctq1=-2,2:cQq81=-5,5:ctq8=-5,5:ctt1=-5,5:cQQ1=-10,10:cQt8=-20,20:cQt1=-10,10 -m 1 -d %s' % (wc, version,  wc, wcs_start, workspace))
@@ -1470,8 +1506,9 @@ class EFTFit(object):
             condorFile.write('fi\n')
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            CMSSW_BASE = self.__override_CMSSW_BASE()
+
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s.sub' % wc
             with open(target, 'w') as condorFile:
@@ -1509,6 +1546,9 @@ class EFTFit(object):
         user = os.getlogin()
         ranges = ':'.join([wc+'='+','.join((str(r[0]), str(r[1]))) for wc,r in list(self.wc_ranges_differential.items()) if wc in self.wcs])
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         for wc in wcs:
             print('Submitting', wc)
             if unblind:
@@ -1519,10 +1559,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             for i,np in enumerate(self.systematics):
                 condorFile.write('if [ $1 -eq {} ]; then\n'.format(i))
@@ -1539,8 +1579,7 @@ class EFTFit(object):
                 condorFile.write('fi\n')
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')            
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')            
             target = 'condor_%s_fit.sub' % wc
 
             with open(target, 'w') as condorFile:
@@ -1573,6 +1612,9 @@ class EFTFit(object):
         if not wcs: wcs = self.wcs
         user = os.getlogin()
         wcs_start = ','.join(wc+'=0' for wc in self.wcs)
+
+        CMSSW_BASE = self.__override_CMSSW_BASE()
+
         for wc in wcs:
             target = 'condor_%s_collect.sh' % wc
             condorFile = open(target,'w')
@@ -1580,10 +1622,10 @@ class EFTFit(object):
             condorFile.write('ulimit -s unlimited\n')
             condorFile.write('unset PERL5LIB\n')
             condorFile.write('set -e\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src\n'.format(user[0], user))
+            condorFile.write('cd {}/src\n'.format(CMSSW_BASE))
             condorFile.write('export SCRAM_ARCH={}\n'.format(os.environ['SCRAM_ARCH']))
             condorFile.write('eval `scramv1 runtime -sh`\n')
-            condorFile.write('cd /afs/crc.nd.edu/user/{}/{}/CMSSW_14_1_0_pre4/src/EFTFit/Fitter/test/{}\n'.format(user[0], user, job_dir))
+            condorFile.write('cd {}/src/EFTFit/Fitter/test/{}\n'.format(CMSSW_BASE, job_dir))
             condorFile.write('\n')
             condorFile.write('combineTool.py -M Impacts -d %s -o impacts%s%s.json --setParameters %s -m 1 -n %s --redefineSignalPOIs %s' % (workspace, wc, version, wcs_start, wc, wc))
             if unblind: print('Running over ACTUAL DATA!')
@@ -1595,8 +1637,7 @@ class EFTFit(object):
             condorFile.write('\nplotImpacts.py -i impacts%s%s.json -o impacts%s%s\n' % (wc, version, wc, version))
             condorFile.close()
 
-            cmssw_base = os.getenv('CMSSW_BASE')
-            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+            test_dir = os.path.join(CMSSW_BASE, 'src', 'EFTFit', 'Fitter', 'test')
 
             target = 'condor_%s_collect.sub' % wc
             with open(target, 'w') as condorFile:
