@@ -11,6 +11,9 @@
 #include "RooDataSet.h"
 #include "RooCatType.h"
 #include "RooAddition.h"
+#include "HiggsAnalysis/CombinedLimit/interface/CMSHistFunc.h"
+#include "HiggsAnalysis/CombinedLimit/interface/CMSHistErrorPropagator.h"
+#include "HiggsAnalysis/CombinedLimit/interface/CMSHistFuncWrapper.h"
 
 #include "WSHelper.h"
 

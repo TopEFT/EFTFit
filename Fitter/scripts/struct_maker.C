@@ -72,10 +72,14 @@ RooFitResult* load_fitresult(TString fpath, TString fr_key, TFile* f) {
 
 void struct_maker(int SR_selector) {
     //TFile* ws_file = TFile::Open("/scratch365/kmohrman/forFurong/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys/ptz-lj0pt_fullR2_anatest18v07_withAutostats_withSys.root");
-    std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/";
-    std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
+    //std::string in_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_anatest25/";
+    //std::string out_dir = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
+    //CAUTION: Hardcoded paths
+    std::string in_dir = "/afs/crc.nd.edu/user/a/abasnet/CMSSW_10_2_13/src/EFTFit/Fitter/test/top22006_wps/";
+    std::string out_dir = "/afs/crc.nd.edu/user/a/abasnet/CMSSW_10_2_13/src/EFTFit/Fitter/test/fit_results/";
 
-    TString fpath_workspace = TString::Format("%s%s", in_dir.c_str(), "wps.root");
+    //CAUTION: Hardcoded workspace name
+    TString fpath_workspace = TString::Format("%s%s", in_dir.c_str(), "ptz-lj0pt_fullR2_anatest25v01_withAutostats_withSys.root");
     TFile* ws_file = TFile::Open(fpath_workspace);
     
     RooWorkspace* ws = (RooWorkspace*) ws_file->Get("w");
@@ -86,7 +90,7 @@ void struct_maker(int SR_selector) {
         AnalysisCategory::index_mapping.push_back(half_int);
     }
     AnalysisCategory::roo_counter = 0;
-    bool do_postfit = false; // true: do postfit, false: do prefit
+    bool do_postfit = true; // true: do postfit, false: do prefit
     
     //TString fpath_datacard = "/afs/crc.nd.edu/user/f/fyan2/macrotesting/CMSSW_10_2_13/src/EFTFit/Fitter/test/card_ub_2017/combinedcard.txt";  // hard-coded path for the datacard for now.
     TString fpath_datacard = TString::Format("%s%s", in_dir.c_str(), "combinedcard.txt");
@@ -111,7 +115,9 @@ void struct_maker(int SR_selector) {
     RooFitResult* postfit = nullptr;
     
     if (do_postfit) {
-        postfit = load_fitresult(in_dir + "multidimfit.root", FR_MDKEY, postfit_file);
+        //postfit = load_fitresult(in_dir + "multidimfit.root", FR_MDKEY, postfit_file);
+        //CAUTION: Hardcoded file name
+        postfit = load_fitresult(in_dir + "multidimfitmultidimfit.root", FR_MDKEY, postfit_file);
         ws->saveSnapshot("postfit_i",postfit->floatParsInit(),kTRUE);
         ws->saveSnapshot("postfit_f",postfit->floatParsFinal(),kTRUE);
     }
@@ -154,8 +160,6 @@ void struct_maker(int SR_selector) {
         file_name = file_path + file_name;
         std::string file_name_sum = TString::Format("SR%d_sum", idx).Data();
         file_name_sum = file_path_sum + file_name_sum;
-        
-        cout << "Output file: " << file_name << endl;
         
         file_names.push_back(file_name);
         

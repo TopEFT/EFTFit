@@ -34,6 +34,24 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     {"4l","4\\ell"},
     {"3l_onZ_2b_2j3j","3\\ell \\text{ on-Z 2b 2j3j}"},
     {"3l_onZ_2b_4j5j","3\\ell \\text{ on-Z 2b 4j5j}"},
+    {"2los_sf_ph", "2\\ell \\text{os SF SR}"},
+    {"2los_of_ph", "2\\ell \\text{os OF SR}"},
+    {"2los_ph_CR_sf_Zg","2\\ell \\text{os SF Z}\\gamma \\, \\text{CR}"},
+
+    {"2los_sf_ph_1j" ,"1"},
+    {"2los_sf_ph_2j" ,"2"},
+    {"2los_sf_ph_3j" ,"3"},
+    {"2los_sf_ph_4j" ,"4"},
+
+    {"2los_of_ph_1j" ,"1"},
+    {"2los_of_ph_2j" ,"2"},
+    {"2los_of_ph_3j" ,"3"},
+    {"2los_of_ph_4j" ,"4"},
+
+    {"2los_ph_CR_sf_Zg_1j" ,"1"},
+    {"2los_ph_CR_sf_Zg_2j" ,"2"},
+    {"2los_ph_CR_sf_Zg_3j" ,"3"},
+    {"2los_ph_CR_sf_Zg_4j" ,"4"},
 
     {"2lss_p_4j"     ,"4"},
     {"2lss_p_5j"     ,"5"},
@@ -88,6 +106,21 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP {
     {"4l_2j"         ,"2"},
     {"4l_3j"         ,"3"},
     {"4l_4j"         ,"4"},
+
+    {"2los_sf_ph_1j" ,"1"},
+    {"2los_sf_ph_2j" ,"2"},
+    {"2los_sf_ph_3j" ,"3"},
+    {"2los_sf_ph_4j" ,"4"},
+
+    {"2los_of_ph_1j" ,"1"},
+    {"2los_of_ph_2j" ,"2"},
+    {"2los_of_ph_3j" ,"3"},
+    {"2los_of_ph_4j" ,"4"},
+
+    {"2los_ph_CR_sf_Zg_1j" ,"1"},
+    {"2los_ph_CR_sf_Zg_2j" ,"2"},
+    {"2los_ph_CR_sf_Zg_3j" ,"3"},
+    {"2los_ph_CR_sf_Zg_4j" ,"4"},
 };
 
 std::unordered_map<std::string,std::string> BIN_LABEL_MAP_DIVIDED {
@@ -105,6 +138,9 @@ std::unordered_map<std::string,std::string> BIN_LABEL_MAP_DIVIDED {
     {"4l","4\\ell"},
     {"3l_onZ_2b_2j3j","\\splitline{3\\ell \\text{ on-Z}}{\\text{2b 2j3j}}"},
     {"3l_onZ_2b_4j5j","\\splitline{3\\ell \\text{ on-Z}}{\\text{2b 4j5j}}"},
+    {"2los_sf_ph", "2\\ell \\text{os SF SR}"},
+    {"2los_of_ph", "2\\ell \\text{os OF SR}"},
+    {"2los_ph_CR_sf_Zg","2\\ell \\text{os SF Z}\\gamma \\,\\text{CR}"},
 };
 
 struct PlotGroup {
