@@ -18,6 +18,31 @@
 
 typedef std::vector<TString> vTStr;
 
+
+//Caution: What I have here is a hack. The processes for ttgamma and TOP-22-006 diverged, but I didn't want to get rid of TOP-22-006 related code here. So I made this change where you can choose whether you are running only over ttgamma analysis or TOP-22-006 analysis. In the future, there won't be this distinction, and you might have to revisit this. So, the way it works is if you want to use ttgamma analysis processes, comment out "#define USE_TOP22006_PROCS" and vice-versa
+
+#define USE_TTA_PROCS
+//#define USE_TOP22006_PROCS
+
+#ifdef USE_TTA_PROCS
+vTStr ALL_PROCS {
+    "fakes", "fakePh","Diboson","Triboson","tWZ","ttH","ttll","ttlnu","tllq","tHq","tttt","ttA","ZGISR","ZGFSR","STGamma","Others"
+};
+
+
+vTStr SIG_PROCS {"ttlnu", "ttll", "ttH", "tllq", "tHq", "tttt","ttA"};
+
+vTStr YIELD_TABLE_ORDER {"Diboson","Triboson","fakes","fakePh","ttlnu","ttll","ttH","tllq","tHq","tttt","ttA","ZGISR","ZGFSR","STGamma","Others"};
+
+vTStr BKGD_PROCS {"Diboson", "Triboson", "fakes", "fakePh","ZGISR","ZGFSR","STGamma", "tWZ","Others"};
+
+vTStr SR_list = {"2los_sf_ph","2los_of_ph","2los_ph_CR_sf_Zg"};
+
+std::vector<std::string> kin_list = {"photon_pt"};
+
+#endif
+
+#ifdef USE_TOP22006_PROCS
 vTStr ALL_PROCS {
     "charge_flips","fakes",
     "Diboson","Triboson",
@@ -25,35 +50,56 @@ vTStr ALL_PROCS {
     "ttH","ttll","ttlnu","tllq","tHq","tttt"
 };
 
+vTStr SIG_PROCS {"ttlnu", "ttll", "ttH", "tllq", "tHq", "tttt"};
+
 vTStr YIELD_TABLE_ORDER {
     "Diboson","Triboson","charge_flips","fakes","convs",
     "ttlnu","ttll","ttH","tllq","tHq","tttt"
 };
 
-vTStr WC_list = {"ctW", "ctZ", "ctp", "cpQM", "ctG", "cbW", "cpQ3", 
-                 "cptb", "cpt", "cQl3i", "cQlMi", "cQei", "ctli", 
-                 "ctei", "ctlSi", "ctlTi", "cQq13", "cQq83", "cQq11", 
-                 "ctq1", "cQq81", "ctq8", "ctt1", "cQQ1", "cQt8", "cQt1"};
-
-vTStr SIG_PROCS {"ttlnu", "ttll", "ttH", "tllq", "tHq", "tttt"};
-
 vTStr BKGD_PROCS {"Diboson", "Triboson", "charge_flips", "fakes", "convs", "tWZ"};
 
-vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
+//vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
 
-vTStr SR_list_2 = SR_list; // Comment this line and uncomment the line below to split onZ 2b category.
-// vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
-// vTStr SR_list_2 = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b_2j3j", "3l_onZ_2b_4j5j", "4l"};
+std::vector<std::string> kin_list = {"lj0pt", "ptz"};
+#endif
+
+vTStr WC_list = {"ctW", "ctZ", "ctp", "cpQM", "ctG", "cbW", "cpQ3",
+                 "cptb", "cpt", "cQl3i", "cQlMi", "cQei", "ctli",
+                 "ctei", "ctlSi", "ctlTi", "cQq13", "cQq83", "cQq11",
+                 "ctq1", "cQq81", "ctq8", "ctt1", "cQQ1", "cQt8", "cQt1"};
+
+//vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b", "4l"};
+
+//vTStr SR_list = {"2lss_p"}; //CHANGED
+
+//vTStr SR_list_2 = SR_list; // Comment this line and uncomment the line below to split onZ 2b category.
+
+//vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
+//The order we want for TOP-22-006
+//vTStr SR_list = {"2lss_m", "2lss_p", "2lss_4t_m", "2lss_4t_p", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "4l","3l_onZ_2b_2j3j","3l_onZ_2b_4j5j"};
+//vTStr SR_list = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m", "3l_p_offZ_1b", "3l_m_offZ_1b", "3l_p_offZ_2b", "3l_m_offZ_2b", "3l_onZ_1b", "3l_onZ_2b_2j3j", "3l_onZ_2b_4j5j", "4l"};
+vTStr SR_list_2 = SR_list;
 
 vTStr SR_list_3 = {"2lss_p", "2lss_m", "2lss_4t", "3l_offZ", "3l_onZ_2b_2j3j", "4l", "3l_onZ_1b", "3l_onZ_2b_4j5j"};
 
 vTStr SR_list_2lss = {"2lss_p", "2lss_m", "2lss_4t_p", "2lss_4t_m"};
 
-std::vector<std::string> kin_list = {"ht"};//{"lj0pt", "ptz"};
-
 std::unordered_map<std::string,std::vector<TString> > cat_groups {
     {"all",
       {
+        "2los_sf_ph_1j",
+        "2los_sf_ph_2j",
+        "2los_sf_ph_3j",
+        "2los_sf_ph_4j",
+        "2los_of_ph_1j",
+        "2los_of_ph_2j",
+        "2los_of_ph_3j",
+        "2los_of_ph_4j",
+        "2los_ph_CR_sf_Zg_1j",
+        "2los_ph_CR_sf_Zg_2j",
+        "2los_ph_CR_sf_Zg_3j",
+        "2los_ph_CR_sf_Zg_4j",
         "2lss_p_4j",
         "2lss_p_5j",
         "2lss_p_6j",
@@ -235,6 +281,33 @@ std::unordered_map<std::string,std::vector<TString> > cat_groups {
         "3l_m_offZ_2b_3j",
         "3l_m_offZ_2b_4j",
         "3l_m_offZ_2b_5j",
+      }
+    },
+
+    {"2los_sf_ph",
+      {
+        "2los_sf_ph_1j",
+        "2los_sf_ph_2j",
+        "2los_sf_ph_3j",
+        "2los_sf_ph_4j",
+      }
+    },
+
+    {"2los_of_ph",
+      {
+        "2los_of_ph_1j",
+        "2los_of_ph_2j",
+        "2los_of_ph_3j",
+        "2los_of_ph_4j",
+      }
+    },
+
+    {"2los_ph_CR_sf_Zg",
+      {
+        "2los_ph_CR_sf_Zg_1j",
+        "2los_ph_CR_sf_Zg_2j",
+        "2los_ph_CR_sf_Zg_3j",
+        "2los_ph_CR_sf_Zg_4j"
       }
     },
 };
