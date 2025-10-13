@@ -20,8 +20,9 @@ class EFTPlot(object):
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
+        # TODO update others like 'ctp' -> 'ctH' when ws is ready
+        self.wcs_pairs = [('ctBRe','ctWRe'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctGRe','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbWRe')]
+        self.wcs = ['ctWRe','ctBRe','ctp','cpQM','ctGRe','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
@@ -41,8 +42,11 @@ class EFTPlot(object):
             'cpt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
+            'ctGRe'  : (-0.8,0.8),
             'ctW'  : (-1.5,1.5),
+            'ctWRe'  : (-1.5,1.5),
             'ctZ'  : (-2.0,2.0),
+            'ctBRe'  : (-2.0,2.0),
             'ctei' : (-4.0,4.0),
             'ctlSi': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
@@ -60,10 +64,13 @@ class EFTPlot(object):
         self.histosFileName = 'Histos.root'
         self.texdic = {
             'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctWRe': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctBRe': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctGRe': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
             'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
@@ -88,10 +95,13 @@ class EFTPlot(object):
         }
         self.texdicfrac = {
             'ctW': '\it{c}_{\mathrm{tW}}',
+            'ctWRe': '\it{c}_{\mathrm{tWRe}}',
             'ctZ': '\it{c}_{\mathrm{tZ}}',
+            'ctBRe': '\it{c}_{\mathrm{tBRe}}',
             'ctp': '\it{c}_{\mathrm{t} \\varphi}',
             'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}',
             'ctG': '\it{c}_{\mathrm{tG}}',
+            'ctGRe': '\it{c}_{\mathrm{tGRe}}',
             'cbW': '\it{c}_{\mathrm{bW}}',
             'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}',
             'cptb': '\it{c}_{\\varphi \mathrm{tb}}',
@@ -116,10 +126,13 @@ class EFTPlot(object):
         }
         self.texdicmacro = {
             'ctW': '\ctW',
+            'ctWRe': '\ctWRe',
             'ctZ': '\ctZ',
+            'ctBRe': '\ctBRe',
             'ctp': '\ctp',
             'cpQM': '\cpQM',
             'ctG': '\ctG',
+            'ctGRe': '\ctGRe',
             'cbW': '\cbW',
             'cpQ3': '\cpQa',
             'cptb': '\cptb',
@@ -360,11 +373,38 @@ class EFTPlot(object):
         if not wc:
             logging.error("No wc specified!")
             return
-        for name1 in name1_lst:
+
+        # Hacks for rotations
+        # This allows the new SMEFTsim WCs to play nice with older TOP-22-006 files.
+        wc1 = wc
+        wc2 = wc
+        for iname,name1 in enumerate(name1_lst):
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
+                if 'B' in name1:
+                    name1 = name1.replace('ctBRe', 'ctZ')
+                    wc = 'ctZ'
+                    wc1 = 'ctZ'
+                else:
+                    name1 = name1.replace('Re', '')
+                    wc = wc.replace('Re', '')
+                    wc1 = wc.replace('Re', '')
+                print(f'Trying {name1}')
+                name1_lst[iname] = name1
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
                 logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
                 return
-        for name2 in name1_lst:
+        for iname,name2 in enumerate(name2_lst):
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name2,pf1)):
+                if 'B' in name2:
+                    name2 = name1.replace('ctBRe', 'ctZ')
+                    wc = 'ctZ'
+                    wc2 = 'ctZ'
+                else:
+                    name2 = name2.replace('Re', '')
+                    wc = wc.replace('Re', '')
+                    wc2 = wc.replace('Re', '')
+                print(f'Trying {name2}')
+                name2_lst[iname] = name2
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
                 logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
                 return
@@ -377,8 +417,8 @@ class EFTPlot(object):
         p1.cd()
 
         # Get coordinates for TGraphs
-        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc,unique=True,dir_path=d1)
-        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc,unique=True,dir_path=d2)
+        graph1wcs,graph1nlls = self.GetWCsNLLFromRoot(name1_lst,wc1,unique=True,dir_path=d1)
+        graph2wcs,graph2nlls = self.GetWCsNLLFromRoot(name2_lst,wc2,unique=True,dir_path=d2)
 
         # Rezero the y axis and make the tgraphs
         #zero = graph1nlls.index(0)
@@ -412,8 +452,8 @@ class EFTPlot(object):
         #multigraph.GetXaxis().SetNdivisions(7)
 
         # Squeeze X down to whatever range captures the float points
-        xmin = self.wc_ranges[wc][0]
-        xmax = self.wc_ranges[wc][1]
+        xmin = self.wc_ranges[wc1][0]
+        xmax = self.wc_ranges[wc1][1]
         for idx in range(graph1.GetN()):
             if graph1.GetY()[idx] < ceiling and graph1.GetX()[idx] < xmin:
                 xmin = graph1.GetX()[idx]
@@ -1863,9 +1903,23 @@ class EFTPlot(object):
 
             # This is mostly used to compare TOP-19-001 to Run II, it will skip the 10 WCs not in TOP-19-001 only and set them to +/- 999
             missing_wc = False
+            # Hacks for rotations
+            # This allows the new SMEFTsim WCs to play nice with older TOP-22-006 files.
             for basename in basename_lst:
                 logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
-                fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
+                if not os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)):
+                    if 'B' in param:
+                        param = 'ctZ'
+                    else:
+                        param = param.replace('Re', '')
+                if os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)):
+                    #fit_array.append([param,0,[-999 ],[999]])
+                    fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
+                else:
+                    print('WARNING,', '{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix), 'does not exist! Setting to +/- 999')
+                    missing_wc = True
+                    if param not in map(itemgetter(0),fit_array):
+                        fit_array.append([param,0,[-999 ],[999]])
                 try:
                     _ = fit_file.Get('limit')
                     fit_file.Close()

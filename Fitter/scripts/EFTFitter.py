@@ -25,7 +25,8 @@ class EFTFit(object):
 
         # WCs lists for easy use
         # Full list of opeators
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1', ] #TOP-22-006
+        # TODO update others like 'ctp' -> 'ctH' when ws is ready
+        self.wcs = ['ctWRe', 'ctBRe', 'ctp', 'cpQM', 'ctGRe', 'cbW', 'cpQ3', 'cptb', 'cpt', 'cQl3i', 'cQlMi', 'cQei', 'ctli', 'ctei', 'ctlSi', 'ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1']
         #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
         #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
         # Default pair of wcs for 2D scans
@@ -50,8 +51,11 @@ class EFTFit(object):
             'cpt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
+            'ctGRe'  : (-0.8,0.8),
             'ctW'  : (-1.5,1.5),
+            'ctWRe'  : (-1.5,1.5),
             'ctZ'  : (-2.0,2.0),
+            'ctBRe'  : (-2.0,2.0),
             'ctei' : (-4.0,4.0),
             'ctlSi': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
@@ -78,8 +82,11 @@ class EFTFit(object):
             'cpt'  : (-15.0*2,15.0*2),
             'cptb' : (-9.0*2,9.0*2),
             'ctG'  : (-0.8*2,0.8*2),
+            'ctGRe'  : (-0.8*2,0.8*2),
             'ctW'  : (-1.5*2,1.5*2),
+            'ctWRe'  : (-1.5*2,1.5*2),
             'ctZ'  : (-2.0*2,2.0*2),
+            'ctBRe'  : (-2.0*2,2.0*2),
             'ctei' : (-4.0*2,4.0*2),
             'ctlSi': (-5.0*2,5.0*2),
             'ctlTi': (-0.9*2,0.9*2),
@@ -108,8 +115,11 @@ class EFTFit(object):
             'cpt'  : (-25.0,20.0),
             'cptb' : (-17.0,17.0),
             'ctG'  : (-1.5,1.5),
+            'ctGRe'  : (-1.5,1.5),
             'ctW'  : (-4.0,3.0),
+            'ctWRe'  : (-4.0,3.0),
             'ctZ'  : (-4.0,4.0),
+            'ctBRe'  : (-4.0,4.0),
             'ctei' : (-8.0,8.0),
             'ctlSi': (-8.0,8.0),
             'ctlTi': (-1.4,1.4),
@@ -874,7 +884,18 @@ class EFTFit(object):
             else:
                 masks = ','.join(mask)
             mask = []
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
+            other_ranges = [wc_ranges[wc_other] for wc_other in self.wcs if wc != wc_other]
+            other_ranges = ':'.join(['{}=0,0'.format(wc_other) for wc_other in self.wcs if wc != wc_other])
+            ranges = ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]
+            if freeze:
+                '''
+                This fixes an issue with the rotaiton scheme.
+                If the new WCs (e.g. ctGRe) are included for dim6top rotations only (i.e. you don't have any pure SMEFTsim bins),
+                then these are "internal parameters" and wind up getting set to their best fit values even when fronzen.
+                To fix this, we set their ranges to [0,0] to force combine to fix them to the SM only when it should be a frozen WC
+                '''
+                ranges = ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1]) + ':' + other_ranges]
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ranges+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
