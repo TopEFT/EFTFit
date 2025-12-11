@@ -25,10 +25,10 @@ class EFTFit(object):
 
         # WCs lists for easy use
         # Full list of opeators
-        # TODO update others like 'ctp' -> 'ctH' when ws is ready
-        self.wcs = ['ctWRe', 'ctBRe', 'ctp', 'cpQM', 'ctGRe', 'cbW', 'cpQ3', 'cptb', 'cpt', 'cQl3i', 'cQlMi', 'cQei', 'ctli', 'ctei', 'ctlSi', 'ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1']
-        #self.wcs = ['ctp', 'cpQM', 'cpQ3', 'cpt', 'cptb', 'ctZ', 'ctW', 'cbW'] #TOP-24-004
-        #self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi'] #TOP-19-001
+        # TODO add new WCs
+        self.wcs = ['cHt', 'ctHRe', 'cHtbRe', 'cQl1i', 'cQl3i', 'cQj18', 'cQj11', 'ctj8', 'cleQt3Rei', 'ctj1', 'ctli', 'cQj31', 'cbW', 'cHQ1', 'cHQ3', 'ctei', 'cQei', 'cleQt1Rei', 'cQj38', 'ctBRe', 'ctWRe', 'ctGRe', 'ctt', 'cQt1', 'cQt8', 'cQQ1']
+        # TOP-22-006
+        self.wcs = ['ctW', 'ctZ', 'ctp', 'cpQM', 'ctG', 'cbW', 'cpQ3', 'cptb', 'cpt', 'cQl3i', 'cQlMi', 'cQei', 'ctli', 'ctei', 'ctlSi', 'ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1']
         # Default pair of wcs for 2D scans
         # Scan ranges of the wcs
         self.at23v01_2sig_prof = {'ctlTi': [-0.37460753448249934, 0.37456553009578053], 'ctq1': [-0.2184374526296913, 0.21149076882524775], 'ctq8': [-0.6849733172669766, 0.25913443066575303], 'cQq83': [-0.1729820133118581, 0.1643935607326637], 'cQQ1': [-3.0622943484810774, 3.3295794607259963], 'cQt1': [-2.7549317478099273, 2.709140633280104], 'cQt8': [-5.208519171130861, 5.846070290900961], 'ctli': [-1.7912919548903847, 2.1313275751809675], 'cQq81': [-0.6931605230972014, 0.22472203594018714], 'cQlMi': [-1.5701580939064013, 2.308562271259127], 'cbW': [-0.774498659891837, 0.7785760997417999], 'cpQ3': [-0.7999267419016539, 2.1053510234908166], 'ctei': [-1.789099599899366, 2.219641594315739], 'ctlSi': [-2.6297986071455313, 2.6317949240743284], 'ctW': [-0.5595801509610011, 0.46706568379424357], 'cpQM': [-6.143737116235924, 8.096702605664662], 'cQei': [-1.9244486948695827, 1.9614340380338822], 'ctZ': [-0.7286708753806125, 0.6450395866915755], 'cQl3i': [-2.920952087582164, 2.639050916924742], 'ctG': [-0.2780854299079727, 0.23945699061451634], 'cQq13': [-0.07660660914160784, 0.07102679687100005], 'cQq11': [-0.19470826306682623, 0.1947277372883481], 'cptb': [-3.362661720898583, 3.361818811283507], 'ctt1': [-1.5812961023069028, 1.6227282264447938], 'ctp': [-9.34032472114984, 2.2960707194931254], 'cpt': [-10.507390689909828, 7.938575701774626]}
@@ -39,17 +39,26 @@ class EFTFit(object):
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
+            'cQl1i': (-4.0,4.0),
             'cQq11': (-0.7,0.7),
+            'cQj11': (-0.7,0.7),
             'cQq13': (-0.35,0.35),
+            'cQj31': (-0.35,0.35),
             'cQq81': (-1.7,1.5),
+            'cQj18': (-1.7,1.5),
             'cQq83': (-0.6,0.6),
+            'cQj38': (-0.6,0.6),
             'cQt1' : (-4.0,4.0),
             'cQt8' : (-8.0,8.0),
             'cbW'  : (-3.0,3.0),
             'cpQ3' : (-4.0,4.0),
+            'cHQ3' : (-4.0,4.0),
             'cpQM' : (-10.0,17.0),
+            'cHQ1' : (-10.0,17.0),
             'cpt'  : (-15.0,15.0),
+            'cHt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
+            'cHtbRe' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
             'ctGRe'  : (-0.8,0.8),
             'ctW'  : (-1.5,1.5),
@@ -58,29 +67,44 @@ class EFTFit(object):
             'ctBRe'  : (-2.0,2.0),
             'ctei' : (-4.0,4.0),
             'ctlSi': (-5.0,5.0),
+            'cleQt1Rei': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
+            'cleQt3Rei': (-0.9,0.9),
             'ctli' : (-4.0,4.0),
             'ctp'  : (-15.0,40.0),
+            'ctHRe'  : (-15.0,40.0),
             'ctq1' : (-0.6,0.6),
+            'ctj1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
+            'ctj8' : (-1.4,1.4),
             'ctt1' : (-2.6,2.6),
+            'ctt' : (-2.6,2.6),
         }
         self.wc_ranges_differential = {
             'cQQ1' : (-6.0*2,6.0*2),
             'cQei' : (-4.0*2,4.0*2),
             'cQl3i': (-5.5*2,5.5*2),
             'cQlMi': (-4.0*2,4.0*2),
+            'cQl1i': (-4.0*2,4.0*2),
             'cQq11': (-0.7*2,0.7*2),
+            'cQj11': (-0.7*2,0.7*2),
             'cQq13': (-0.35*2,0.35*2),
+            'cQj31': (-0.35*2,0.35*2),
             'cQq81': (-1.7*2,1.5*2),
+            'cQj18': (-1.7*2,1.5*2),
             'cQq83': (-0.6*2,0.6*2),
+            'cQj38': (-0.6*2,0.6*2),
             'cQt1' : (-6.0*2,6.0*2),
             'cQt8' : (-10.0*2,10.0*2),
             'cbW'  : (-3.0*2,3.0*2),
             'cpQ3' : (-4.0*2,4.0*2),
+            'cHQ3' : (-4.0*2,4.0*2),
             'cpQM' : (-15.0*2,20.0*2),
+            'cHQ1' : (-15.0*2,20.0*2),
             'cpt'  : (-15.0*2,15.0*2),
+            'cHt'  : (-15.0*2,15.0*2),
             'cptb' : (-9.0*2,9.0*2),
+            'cHtb' : (-9.0*2,9.0*2),
             'ctG'  : (-0.8*2,0.8*2),
             'ctGRe'  : (-0.8*2,0.8*2),
             'ctW'  : (-1.5*2,1.5*2),
@@ -89,12 +113,18 @@ class EFTFit(object):
             'ctBRe'  : (-2.0*2,2.0*2),
             'ctei' : (-4.0*2,4.0*2),
             'ctlSi': (-5.0*2,5.0*2),
-            'ctlTi': (-0.9*2,0.9*2),
+            'cleQt1Rei': (-5.0*2,5.0*2),
+            'cleQ': (-0.9*2,0.9*2),
             'ctli' : (-4.0*2,4.0*2),
             'ctp'  : (-15.0*2,40.0*2),
+            'ctH'  : (-15.0*2,40.0*2),
+            'ctHRe'  : (-15.0*2,40.0*2),
             'ctq1' : (-0.6*2,0.6*2),
+            'ctj1' : (-0.6*2,0.6*2),
             'ctq8' : (-1.4*2,1.4*2),
+            'ctj8' : (-1.4*2,1.4*2),
             'ctt1' : (-2.6*2,2.6*2),
+            'ctt' : (-2.6*2,2.6*2),
         }
 
         # Limits appropriate for asimov njets fits (for prof, but can be used for frozen too)
@@ -103,17 +133,30 @@ class EFTFit(object):
             'cQei' : (-7.0,7.0),
             'cQl3i': (-10.0,10.0),
             'cQlMi': (-8.0,8.0),
+            'cQl1i': (-8.0,8.0),
             'cQq11': (-1.5,1.5),
+            'cQj11': (-1.5,1.5),
             'cQq13': (-0.6,0.6),
+            'cQj31': (-0.6,0.6),
             'cQq81': (-4.0,3.0),
+            'cQj18': (-4.0,3.0),
             'cQq83': (-1.2,1.2),
+            'cQj38': (-1.2,1.2),
             'cQt1' : (-5.0,5.0),
             'cQt8' : (-10.0,10.0),
             'cbW'  : (-5.0,5.0),
             'cpQ3' : (-10.0,7.0),
+            'cHQ3' : (-10.0,7.0),
             'cpQM' : (-11.0,30.0),
+            'cpQM' : (-5.0,5.0),
+            'cHQ1' : (-11.0,30.0),
+            'cHQ1' : (-5.0,5.0),
             'cpt'  : (-25.0,20.0),
+            'cpt'  : (-5.0,5.0),
+            'cHt'  : (-25.0,20.0),
+            'cHt'  : (-5.0,5.0),
             'cptb' : (-17.0,17.0),
+            'cHtbRe' : (-17.0,17.0),
             'ctG'  : (-1.5,1.5),
             'ctGRe'  : (-1.5,1.5),
             'ctW'  : (-4.0,3.0),
@@ -122,12 +165,18 @@ class EFTFit(object):
             'ctBRe'  : (-4.0,4.0),
             'ctei' : (-8.0,8.0),
             'ctlSi': (-8.0,8.0),
+            'cleQt1Rei': (-8.0,8.0),
             'ctlTi': (-1.4,1.4),
+            'cleQt3Rei': (-1.4,1.4),
             'ctli' : (-8.0,8.0),
             'ctp'  : (-11.0,35.0),
+            'ctHRe'  : (-11.0,35.0),
             'ctq1' : (-1.4,1.4),
+            'ctj1' : (-1.4,1.4),
             'ctq8' : (-3.0,3.0),
+            'ctj8' : (-3.0,3.0),
             'ctt1' : (-3.0,3.0),
+            'ctt' : (-3.0,3.0),
         }
 
 
@@ -464,6 +513,7 @@ class EFTFit(object):
         if not freeze: wall_time /= 2 # profiled scans take longer, so submit less points per job
         if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
         if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+        elif batch=='condor' and freeze==True and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','300','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         logging.info(' '.join(args))
@@ -583,8 +633,9 @@ class EFTFit(object):
         return ','.join(startValues)
 
 
-    def retrieveGridScan(self, name='.test', batch='crab', user='apiccine'):#getpass.getuser()):
+    def retrieveGridScan(self, name='.test', batch='crab', user=getpass.getuser(), remove=True):
         ### Retrieves finished grid jobs, extracts, and hadd's into a single file ###
+        user = user[:-1] if user[-1].isdigit() else user # Remove trailing number to match CRAB username
         taskname = name.replace('.','')
         logging.info("Retrieving gridScan files. Task name: "+taskname)
 
@@ -614,7 +665,7 @@ class EFTFit(object):
                     if tarfile.endswith('.tar'):
                         print(tarfiles[0]+'/'+tarfile)
                         sp.call(['tar', '-xf', tarfiles[0]+'/'+tarfile,'-C', taskname+'tmp'])
-            haddargs = ['hadd','-f','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
+            haddargs = ['hadd','-f','-j','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+['{}tmp/{}'.format(taskname,rootfile) for rootfile in os.listdir(taskname+'tmp') if rootfile.endswith('.root')]
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
@@ -629,19 +680,21 @@ class EFTFit(object):
                 logging.info("No files to hadd. Returning.")
                 return
             #haddargs = ['hadd','-f','higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
-            haddargs = ['hadd','-f','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
-            print((['hadd','-f','../../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))))
+            haddargs = ['hadd','-f','-j','-k','../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))
+            print(' '.join(haddargs))
+            #print((['hadd','-f','../../fit_files/higgsCombine'+name+'.MultiDimFit.root']+sorted(glob.glob('higgsCombine{}.POINTS*.root'.format(name)))))
             process = sp.Popen(haddargs, stdout=sp.PIPE, stderr=sp.PIPE)
             with process.stdout,process.stderr:
                 self.log_subprocess_output(process.stdout,'info')
                 self.log_subprocess_output(process.stderr,'err')
             process.wait()
-            for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
-                os.remove(rootfile)
-            if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
-                os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
-            if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
-                os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
+            if remove:
+                for rootfile in glob.glob('higgsCombine{}.POINTS*.root'.format(name)):
+                    os.remove(rootfile)
+                if os.path.isfile('condor_{}.sh'.format(name.replace('.',''))):
+                    os.rename('condor_{}.sh'.format(name.replace('.','')),'condor{0}/condor_{0}.sh'.format(name))
+                if os.path.isfile('condor_{}.sub'.format(name.replace('.',''))):
+                    os.rename('condor_{}.sub'.format(name.replace('.','')),'condor{0}/condor_{0}.sub'.format(name))
 
     def submitEFTWilks(self, name='.test', limits='/afs/crc.nd.edu/user/b/byates2/Public/wc_top22006_a24_prof_2sigma.json', workspace='ptz-lj0pt_fullR2_anatest24v01_withAutostats_withSys.root', doBest=False, asimov=False, fixed=False, wc=None, sig=0, batch='condor'):
         '''
@@ -884,7 +937,6 @@ class EFTFit(object):
             else:
                 masks = ','.join(mask)
             mask = []
-            other_ranges = [wc_ranges[wc_other] for wc_other in self.wcs if wc != wc_other]
             other_ranges = ':'.join(['{}=0,0'.format(wc_other) for wc_other in self.wcs if wc != wc_other])
             ranges = ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]
             if freeze:
@@ -914,6 +966,7 @@ class EFTFit(object):
         # Use EVERY combination of wcs
         if allPairs:
             scan_wcs = self.wcs
+            if wcs is not []: scan_wcs = wcs
 
             params = ','.join(['{}=0'.format(wc) for wc in scan_wcs])
             for wcs in itertools.combinations(scan_wcs,2):
@@ -1007,21 +1060,21 @@ class EFTFit(object):
                     self.log_subprocess_output(process.stderr,'err')
                 process.wait()
 
-    def batchRetrieve1DScansEFT(self, basename='.test', batch='crab', scan_wcs=[]):
+    def batchRetrieve1DScansEFT(self, basename='.test', batch='crab', scan_wcs=[], remove=True):
         ### For each wc, retrieves finished 1D deltaNLL grid jobs, extracts, and hadd's into a single file ###
         if not scan_wcs:
             scan_wcs = self.wcs
 
         for wc in scan_wcs:
-            self.retrieveGridScan('{}.{}'.format(basename,wc),batch)
+            self.retrieveGridScan('{}.{}'.format(basename,wc),batch, remove=remove)
 
-    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False, wcs=[]):
+    def batchRetrieve2DScansEFT(self, basename='.EFT.gridScan', batch='crab', allPairs=False, wcs=[], remove=True):
         ### For pairs of wcs, retrieves finished grid jobs, extracts, and hadd's into a single file ###
         # Use EVERY combination of wcs
         if allPairs:
             scan_wcs = self.wcs
             for wcs in itertools.combinations(scan_wcs,2):
-                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch)
+                self.retrieveGridScan('{}.{}{}'.format(basename,wcs[0],wcs[1]),batch,remove=remove)
 
         # Use each wc only once
         if not allPairs:

@@ -20,9 +20,12 @@ class EFTPlot(object):
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
         self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        self.wcs = ['ctW', 'ctZ', 'ctp', 'cpQM', 'ctG', 'cbW', 'cpQ3', 'cptb', 'cpt', 'cQl3i', 'cQlMi', 'cQei', 'ctli', 'ctei', 'ctlSi', 'ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1']
+        self.rotate = {'ctW': 'ctWRe', 'ctZ': 'ctBRe', 'ctp': 'ctHRe', 'cpQM': 'cHQ1', 'ctG': 'ctGRe', 'cbW': 'cbW', 'cpQ3': 'cHQ3', 'cptb': 'cHtbRe', 'cpt': 'cHt', 'cQl3i': 'cQl3i', 'cQlMi': 'cQl1i', 'cQei': 'cQei', 'ctli': 'ctli', 'ctei': 'ctei', 'ctlSi': 'cleQt1Rei', 'ctlTi': 'cleQt3Rei', 'cQq13': 'cQj31', 'cQq83': 'cQj38', 'cQq11': 'cQj11', 'ctq1': 'ctj1', 'cQq81': 'cQj18', 'ctq8': 'ctj8', 'ctt1': 'ctt', 'cQQ1': 'cQQ1', 'cQt8': 'cQt8', 'cQt1': 'cQt1'}
+        #self.rotate = {'ctW': 'ctBRe', 'ctZ': 'ctZRe', 'ctp': 'ctH', 'cpQM': 'cHQ1', 'ctG': 'ctGRe', 'cbW': 'cbW', 'cpQ3': 'cHQ3', 'cptb': 'cHtbRe', 'cpt': 'cHt', 'cQl3i': 'cQl3i', 'cQlMi': 'cQl1i', 'cQei': 'cQei', 'ctli': 'ctli', 'ctei': 'ctei', 'ctlSi': 'cleQt1Rei', 'ctlTi': 'cleQt3Rei'}
         # TODO update others like 'ctp' -> 'ctH' when ws is ready
         self.wcs_pairs = [('ctBRe','ctWRe'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctGRe','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbWRe')]
-        self.wcs = ['ctWRe','ctBRe','ctp','cpQM','ctGRe','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
+        #self.wcs = ['ctWRe','ctBRe','ctp','cpQM','ctGRe','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
@@ -30,17 +33,26 @@ class EFTPlot(object):
             'cQei' : (-4.0,4.0),
             'cQl3i': (-5.5,5.5),
             'cQlMi': (-4.0,4.0),
+            'cQl1i': (-4.0,4.0),
             'cQq11': (-0.7,0.7),
+            'cQj11': (-0.7,0.7),
             'cQq13': (-0.35,0.35),
+            'cQj31': (-0.35,0.35),
             'cQq81': (-1.7,1.5),
             'cQq83': (-0.6,0.6),
+            'cQj38': (-0.6,0.6),
             'cQt1' : (-6.0,6.0),
             'cQt8' : (-10.0,10.0),
             'cbW'  : (-3.0,3.0),
             'cpQ3' : (-4.0,4.0),
-            'cpQM' : (-15.0,20.0),
+            'chQ3' : (-4.0,4.0),
+            'cpQM' : (-2.0,2.0),
+            'cHQ1' : (-15.0,20.0),
             'cpt'  : (-15.0,15.0),
+            'cpt'  : (-5.0,5.0),
+            'cHt'  : (-15.0,15.0),
             'cptb' : (-9.0,9.0),
+            'cHtbRe' : (-9.0,9.0),
             'ctG'  : (-0.8,0.8),
             'ctGRe'  : (-0.8,0.8),
             'ctW'  : (-1.5,1.5),
@@ -49,12 +61,18 @@ class EFTPlot(object):
             'ctBRe'  : (-3.0,3.0),
             'ctei' : (-4.0,4.0),
             'ctlSi': (-5.0,5.0),
+            'cleQt1Rei': (-5.0,5.0),
             'ctlTi': (-0.9,0.9),
+            'cleQt3Rei': (-0.9,0.9),
             'ctli' : (-4.0,4.0),
             'ctp'  : (-15.0,40.0),
+            'ctHRe'  : (-15.0,40.0),
             'ctq1' : (-0.6,0.6),
+            'ctj1' : (-0.6,0.6),
             'ctq8' : (-1.4,1.4),
+            'ctj8' : (-1.4,1.4),
             'ctt1' : (-2.6,2.6),
+            'ctt' : (-2.6,2.6),
         }
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
@@ -200,6 +218,9 @@ class EFTPlot(object):
         graphwcs = []
         graphnlls = []
         for name in base_name_lst:
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit.root'.format(dir_path,name)) and wc in self.rotate and os.path.exists('{}/higgsCombine{}.MultiDimFit.root'.format(dir_path,name.replace(wc, self.rotate[wc]))):
+                name = name.replace(wc, self.rotate[wc])
+                wc = self.rotate[wc]
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit.root'.format(dir_path,name)):
                 logging.error("File {}/higgsCombine{}.MultiDimFit.root does not exist!".format(dir_path,name))
                 return [graphwcs,graphnlls]
@@ -379,35 +400,46 @@ class EFTPlot(object):
         wc1 = wc
         wc2 = wc
         for iname,name1 in enumerate(name1_lst):
-            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
-                if 'B' in name1:
-                    name1 = name1.replace('ctBRe', 'ctZ')
-                    wc = 'ctZ'
-                    wc1 = 'ctZ'
-                else:
-                    name1 = name1.replace('Re', '')
-                    wc = wc.replace('Re', '')
-                    wc1 = wc.replace('Re', '')
-                print(f'Trying {name1}')
-                name1_lst[iname] = name1
+            old = None
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)) and wc in self.rotate and os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1.replace(wc, self.rotate[wc]),pf1)):
+                name1 = name1.replace(wc, self.rotate[wc])
+                old = wc
+                wc = self.rotate[wc]
+            #if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
+            #    if 'B' in name1:
+            #        name1 = name1.replace('ctBRe', 'ctZ')
+            #        wc = 'ctZ'
+            #        wc1 = 'ctZ'
+            #    else:
+            #        name1 = name1.replace('Re', '')
+            #        wc = wc.replace('Re', '')
+            #        wc1 = wc.replace('Re', '')
+            #    print(f'Trying {name1}')
+            #    name1_lst[iname] = name1
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name1,pf1)):
                 logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name1,pf1))
                 return
         for iname,name2 in enumerate(name2_lst):
-            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d1,name2,pf1)):
-                if 'B' in name2:
-                    name2 = name1.replace('ctBRe', 'ctZ')
-                    wc = 'ctZ'
-                    wc2 = 'ctZ'
-                else:
-                    name2 = name2.replace('Re', '')
-                    wc = wc.replace('Re', '')
-                    wc2 = wc.replace('Re', '')
-                print(f'Trying {name2}')
-                name2_lst[iname] = name2
+            if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)) and wc in self.rotate and os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2.replace(wc, self.rotate[wc]),pf2)):
+                name2 = name2.replace(wc, self.rotate[wc])
+                old = wc
+                wc = self.rotate[wc]
+            #if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf1)):
+            #    if 'B' in name2:
+            #        name2 = name1.replace('ctBRe', 'ctZ')
+            #        wc = 'ctZ'
+            #        wc2 = 'ctZ'
+            #    else:
+            #        name2 = name2.replace('Re', '')
+            #        wc = wc.replace('Re', '')
+            #        wc2 = wc.replace('Re', '')
+            #    print(f'Trying {name2}')
+            #    name2_lst[iname] = name2
             if not os.path.exists('{}/higgsCombine{}.MultiDimFit{}.root'.format(d2,name2,pf2)):
                 logging.error("File higgsCombine{}.MultiDimFit{}.root does not exist!".format(name2,pf2))
                 return
+            if old is not None:
+                wc = old
 
         ROOT.gROOT.SetBatch(True)
 
@@ -1893,7 +1925,6 @@ class EFTPlot(object):
         ### Use 1D scans instead of regular MultiDimFit ###
         if not params:
             params = self.wcs
-            
 
         ROOT.gROOT.SetBatch(True)
 
@@ -1905,13 +1936,18 @@ class EFTPlot(object):
             missing_wc = False
             # Hacks for rotations
             # This allows the new SMEFTsim WCs to play nice with older TOP-22-006 files.
+            old = None
             for basename in basename_lst:
                 logging.debug("Obtaining result of scan: higgsCombine{}.{}.MultiDimFit{}.root".format(basename,param,postfix))
-                if not os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)):
-                    if 'B' in param:
-                        param = 'ctZ'
-                    else:
-                        param = param.replace('Re', '')
+                if not os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)) and os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,self.rotate[param],postfix)):
+                    #basename = basename.replace(param, self.rotate[param])
+                    old = param
+                    param = self.rotate[param]
+                #if not os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)):
+                #    if 'B' in param:
+                #        param = 'ctZ'
+                #    else:
+                #        param = param.replace('Re', '')
                 if os.path.exists('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix)):
                     #fit_array.append([param,0,[-999 ],[999]])
                     fit_file = ROOT.TFile.Open('{}/higgsCombine{}.{}.MultiDimFit{}.root'.format(dir_path,basename,param,postfix))
@@ -1928,6 +1964,8 @@ class EFTPlot(object):
                     if param not in map(itemgetter(0),fit_array):
                         fit_array.append([param,0,[-999 ],[999]])
             if missing_wc: continue
+            if old is not None:
+                param = old
 
             basename_lst_with_wcs_appended = self.AppendStrToItemsInLst(basename_lst,"."+param)
             wc_values, nll_values = self.GetWCsNLLFromRoot(basename_lst_with_wcs_appended,param,unique=True,dir_path=dir_path)
@@ -2131,7 +2169,7 @@ class EFTPlot(object):
             print('\\end{table}')
 
         for idx,line in enumerate(fits_float):
-            if line[0]=='ctG':
+            if line[0]=='ctG' or line[0]=='ctGRe':
                 line[0] = 'ctG#times5'
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
@@ -2173,7 +2211,7 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze):
-            if line[0]=='ctG':
+            if line[0]=='ctG' or line[0]=='ctGRe':
                 line[0] = 'ctG#times5'
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
@@ -2215,7 +2253,7 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_float1sigma):
-            if line[0]=='ctG':
+            if line[0]=='ctG' or line[0]=='ctGRe':
                 line[0] = 'ctG#times5'
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
@@ -2257,7 +2295,7 @@ class EFTPlot(object):
                 line[3] = [val/2 for val in line[3]]
 
         for idx,line in enumerate(fits_freeze1sigma):
-            if line[0]=='ctG':
+            if line[0]=='ctG' or line[0]=='ctGRe':
                 line[0] = 'ctG#times5'
                 line[1] = line[1]*5
                 line[2] = [val*5 for val in line[2]]
