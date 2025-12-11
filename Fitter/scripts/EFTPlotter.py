@@ -19,7 +19,6 @@ class EFTPlot(object):
         self.ContourHelper = ContourHelper()
 
         self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
         self.wcs = ['ctW', 'ctZ', 'ctp', 'cpQM', 'ctG', 'cbW', 'cpQ3', 'cptb', 'cpt', 'cQl3i', 'cQlMi', 'cQei', 'ctli', 'ctei', 'ctlSi', 'ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'ctt1', 'cQQ1', 'cQt8', 'cQt1']
         self.rotate = {'ctW': 'ctWRe', 'ctZ': 'ctBRe', 'ctp': 'ctHRe', 'cpQM': 'cHQ1', 'ctG': 'ctGRe', 'cbW': 'cbW', 'cpQ3': 'cHQ3', 'cptb': 'cHtbRe', 'cpt': 'cHt', 'cQl3i': 'cQl3i', 'cQlMi': 'cQl1i', 'cQei': 'cQei', 'ctli': 'ctli', 'ctei': 'ctei', 'ctlSi': 'cleQt1Rei', 'ctlTi': 'cleQt3Rei', 'cQq13': 'cQj31', 'cQq83': 'cQj38', 'cQq11': 'cQj11', 'ctq1': 'ctj1', 'cQq81': 'cQj18', 'ctq8': 'ctj8', 'ctt1': 'ctt', 'cQQ1': 'cQQ1', 'cQt8': 'cQt8', 'cQt1': 'cQt1'}
         #self.rotate = {'ctW': 'ctBRe', 'ctZ': 'ctZRe', 'ctp': 'ctH', 'cpQM': 'cHQ1', 'ctG': 'ctGRe', 'cbW': 'cbW', 'cpQ3': 'cHQ3', 'cptb': 'cHtbRe', 'cpt': 'cHt', 'cQl3i': 'cQl3i', 'cQlMi': 'cQl1i', 'cQei': 'cQei', 'ctli': 'ctli', 'ctei': 'ctei', 'ctlSi': 'cleQt1Rei', 'ctlTi': 'cleQt3Rei'}
