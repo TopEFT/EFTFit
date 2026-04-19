@@ -10,3 +10,4 @@
 **/test/condor*.sub
 **/test/*.txt
 **/test/*.root
+Fitter/test/*

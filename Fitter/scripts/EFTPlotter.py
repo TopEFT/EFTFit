@@ -18,74 +18,79 @@ class EFTPlot(object):
         self.logger = logging.getLogger(__name__)
         self.ContourHelper = ContourHelper()
 
-        self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
-        self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
-        self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
+        # self.SMMus = ['mu_ttll','mu_ttlnu','mu_ttH','mu_tllq']
+        # self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi']
+        # self.wcs_pairs = [('ctZ','ctW'),('ctp','cpt'),('ctlSi','ctli'),('cptb','cQl3i'),('ctG','cpQM'),('ctei','ctlTi'),('cQlMi','cQei'),('cpQ3','cbW')]
+        # self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
+        
+        self.wcs = ["cQd1", "ctj1", "cQj31", "ctj8", "ctd1", "ctd8", "ctGRe", "ctGIm", "cQj11", "cQj18", "ctu8", "cQd8", "ctu1", "cQu1", "cQj38", "cQu8"]
+        
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
         self.wc_ranges = {
-            'cQQ1' : (-6.0,6.0),
-            'cQei' : (-4.0,4.0),
-            'cQl3i': (-5.5,5.5),
-            'cQlMi': (-4.0,4.0),
-            'cQq11': (-0.7,0.7),
-            'cQq13': (-0.35,0.35),
-            'cQq81': (-1.7,1.5),
-            'cQq83': (-0.6,0.6),
-            'cQt1' : (-6.0,6.0),
-            'cQt8' : (-10.0,10.0),
-            'cbW'  : (-3.0,3.0),
-            'cpQ3' : (-4.0,4.0),
-            'cpQM' : (-15.0,20.0),
-            'cpt'  : (-15.0,15.0),
-            'cptb' : (-9.0,9.0),
-            'ctG'  : (-0.8,0.8),
-            'ctW'  : (-1.5,1.5),
-            'ctZ'  : (-2.0,2.0),
-            'ctei' : (-4.0,4.0),
-            'ctlSi': (-5.0,5.0),
-            'ctlTi': (-0.9,0.9),
-            'ctli' : (-4.0,4.0),
-            'ctp'  : (-15.0,40.0),
-            'ctq1' : (-0.6,0.6),
-            'ctq8' : (-1.4,1.4),
-            'ctt1' : (-2.6,2.6),
+            "cQd1": (-10.0, 10.0),
+            "ctj1": (-10.0, 10.0),
+            "cQj31":(-10.0, 10.0),
+            "ctj8": (-10.0, 10.0),
+            "ctd1": (-10.0, 10.0),
+            "ctd8": (-10.0, 10.0),
+            "ctGRe":(-10.0, 10.0),
+            "ctGIm":(-10.0, 10.0),
+            "cQj11":(-10.0, 10.0),
+            "cQj18":(-10.0, 10.0),
+            "ctu8": (-10.0, 10.0),
+            "cQd8": (-10.0, 10.0),
+            "ctu1": (-10.0, 10.0),
+            "cQu1": (-10.0, 10.0),
+            "cQj38":(-10.0, 10.0),
+            "cQu8": (-10.0, 10.0)
         }
+
+
         if wc_ranges is not None:
             self.wc_ranges = wc_ranges
 
-        self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
-                         }
+        # self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
+        #                  }
+
         self.histosFileName = 'Histos.root'
         self.texdic = {
-            'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
+            'ctGRe': 'Re \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctGIm': 'Im \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQj31': '\it{c}^{(3,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'cQj31': '\it{c}^{(3,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQj11': '\it{c}^{(1,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQj18': '\it{c}^{(1,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQu8': '\it{c}^{(8)}_{\mathrm{Qu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'cQd8': '\it{c}^{(8)}_{\mathrm{Qd}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'ctj8': '\it{c}^{(8)}_{\mathrm{qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctu8': '\it{c}^{(8)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctd8': '\it{c}^{(8)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            'ctd1': '\it{c}^{(1)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            'ctu1': '\it{c}^{(1)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
         }
+
         self.texdicfrac = {
             'ctW': '\it{c}_{\mathrm{tW}}',
             'ctZ': '\it{c}_{\mathrm{tZ}}',
