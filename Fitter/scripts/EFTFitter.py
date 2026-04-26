@@ -35,8 +35,8 @@ class EFTFit(object):
             "ctj8": (-10.0, 10.0),
             "ctd1": (-10.0, 10.0),
             "ctd8": (-10.0, 10.0),
-            "ctGRe":(-10.0, 10.0),
-            "ctGIm":(-10.0, 10.0),
+            "ctGRe":(-1.0, 1.0),
+            "ctGIm":(-1.0, 1.0),
             "cQj11":(-10.0, 10.0),
             "cQj18":(-10.0, 10.0),
             "ctu8": (-10.0, 10.0),
@@ -54,8 +54,8 @@ class EFTFit(object):
             "ctj8": (-10.0, 10.0),
             "ctd1": (-10.0, 10.0),
             "ctd8": (-10.0, 10.0),
-            "ctGRe":(-10.0, 10.0),
-            "ctGIm":(-10.0, 10.0),
+            "ctGRe":(-1.0, 1.0),
+            "ctGIm":(-1.0, 1.0),
             "cQj11":(-10.0, 10.0),
             "cQj18":(-10.0, 10.0),
             "ctu8": (-10.0, 10.0),
@@ -79,11 +79,16 @@ class EFTFit(object):
         # 'prop_binch10_bin0', 'prop_binch10_bin1', 'prop_binch10_bin2', 'prop_binch11_bin0', 'prop_binch11_bin1', 'prop_binch11_bin2', 'prop_binch11_bin3_fakes_sm', 'prop_binch12_bin0_fakes_sm', 'prop_binch12_bin1', 'prop_binch12_bin2', 'prop_binch12_bin3_fakes_sm', 'prop_binch13_bin0', 'prop_binch13_bin1', 'prop_binch13_bin2', 'prop_binch13_bin3', 'prop_binch14_bin0', 'prop_binch14_bin1', 'prop_binch14_bin2', 'prop_binch14_bin3', 'prop_binch14_bin3_fakes_sm', 'prop_binch15_bin0', 'prop_binch15_bin1', 'prop_binch15_bin2', 'prop_binch15_bin3_fakes_sm', 'prop_binch16_bin0_fakes_sm', 'prop_binch16_bin1', 'prop_binch16_bin2', 'prop_binch16_bin3_fakes_sm', 'prop_binch17_bin0', 'prop_binch17_bin1', 'prop_binch17_bin2', 'prop_binch18_bin0', 'prop_binch18_bin1', 'prop_binch18_bin2', 'prop_binch18_bin3', 'prop_binch18_bin3_fakes_sm', 'prop_binch19_bin0', 'prop_binch19_bin1', 'prop_binch19_bin2', 'prop_binch19_bin3', 'prop_binch19_bin3_fakes_sm', 'prop_binch1_bin0', 'prop_binch1_bin1', 'prop_binch1_bin2_fakes_sm', 'prop_binch20_bin0_fakes_sm', 'prop_binch20_bin1_fakes_sm', 'prop_binch20_bin3_fakes_sm', 'prop_binch21_bin0', 'prop_binch21_bin1', 'prop_binch21_bin2_fakes_sm', 'prop_binch22_bin0', 'prop_binch22_bin1', 'prop_binch22_bin2_fakes_sm', 'prop_binch23_bin0_fakes_sm', 'prop_binch23_bin1', 'prop_binch23_bin1_fakes_sm', 'prop_binch23_bin2_fakes_sm', 'prop_binch23_bin3', 'prop_binch24_bin0_fakes_sm', 'prop_binch24_bin2_fakes_sm', 'prop_binch25_bin0', 'prop_binch25_bin1', 'prop_binch25_bin2', 'prop_binch25_bin3', 'prop_binch26_bin0', 'prop_binch26_bin1', 'prop_binch26_bin2', 'prop_binch26_bin3', 'prop_binch26_bin4', 'prop_binch27_bin0', 'prop_binch27_bin1', 'prop_binch28_bin0', 'prop_binch28_bin1', 'prop_binch28_bin3', 'prop_binch29_bin0', 'prop_binch29_bin1', 'prop_binch29_bin2', 'prop_binch29_bin3', 'prop_binch2_bin0_fakes_sm', 'prop_binch2_bin1', 'prop_binch2_bin2_fakes_sm', 'prop_binch30_bin0', 'prop_binch30_bin1', 'prop_binch31_bin0', 'prop_binch32_bin0', 'prop_binch32_bin1', 'prop_binch32_bin2', 'prop_binch32_bin3_fakes_sm', 'prop_binch33_bin0', 'prop_binch33_bin1', 'prop_binch33_bin2', 'prop_binch33_bin3', 'prop_binch34_bin0', 'prop_binch34_bin1', 'prop_binch34_bin2', 'prop_binch34_bin3', 'prop_binch35_bin0', 'prop_binch35_bin1', 'prop_binch35_bin2', 'prop_binch35_bin3_fakes_sm', 'prop_binch36_bin0_fakes_sm', 'prop_binch36_bin1', 'prop_binch36_bin1_fakes_sm', 'prop_binch36_bin2_fakes_sm', 'prop_binch37_bin0', 'prop_binch37_bin1', 'prop_binch37_bin2', 'prop_binch37_bin2_fakes_sm', 'prop_binch38_bin0', 'prop_binch38_bin1', 'prop_binch39_bin0_fakes_sm', 'prop_binch39_bin1_fakes_sm', 'prop_binch3_bin0_fakes_sm', 'prop_binch3_bin1_fakes_sm', 'prop_binch3_bin2_fakes_sm', 'prop_binch40_bin0_fakes_sm', 'prop_binch40_bin1_fakes_sm', 'prop_binch40_bin2_fakes_sm', 'prop_binch40_bin3_fakes_sm', 'prop_binch4_bin1_fakes_sm', 'prop_binch4_bin2_fakes_sm', 'prop_binch5_bin0', 'prop_binch5_bin1', 'prop_binch5_bin2_fakes_sm', 'prop_binch6_bin0_fakes_sm', 'prop_binch6_bin1', 'prop_binch6_bin2_fakes_sm', 'prop_binch6_bin3_fakes_sm', 'prop_binch7_bin0_fakes_sm', 'prop_binch7_bin1_fakes_sm', 'prop_binch7_bin2_fakes_sm', 'prop_binch7_bin3_fakes_sm', 'prop_binch8_bin1_fakes_sm', 'prop_binch8_bin2_fakes_sm', 'prop_binch8_bin3_fakes_sm', 'prop_binch9_bin0', 'prop_binch9_bin1', 'prop_binch9_bin2', 'prop_binch9_bin3']
 
         self.systematics = [
-            'L1prefire', 'PU', 'lumi',
-            'FSR', 'ISR', 'hdamp', 
-            'fact_DY', 'fact_Diboson', 'fact_TTll', 'fact_Triboson', 'fact_WWZ', 'fact_tW', 'fact_tt',
-            'renorm_DY', 'renorm_Diboson', 'renorm_TTll', 'renorm_Triboson', 'renorm_WWZ', 'renorm_tW', 'renorm_tt',
-            'btagSFbc_2017', 'btagSFbc_correlated', 'btagSFlight_2017', 'btagSFlight_correlated', 
+            'L1prefire', 'PU', 'lumi', 
+            'FSR', 'ISR', 'hdamp', 'PDF',
+            'smxsec_tt', 'smxsec_tW', 'smxsec_DY', 'smxsec_Others',
+            # 'fact_DY', 'fact_Diboson', 'fact_TTll', 'fact_Triboson', 'fact_WWZ', 'fact_tW', 'fact_tt',
+            # 'renorm_DY', 'renorm_Diboson', 'renorm_TTll', 'renorm_Triboson', 'renorm_WWZ', 'renorm_tW', 'renorm_tt',
+            'fact_tt', 'fact_tW', 'fact_DY', 
+            'renorm_tt', 'renorm_tW', 'renorm_DY', 
+            'factrenorm'
+            'btagSFbc_2017', 'btagSFbc_2018', 'btagSFbc_correlated', 
+            'btagSFlight_2017', 'btagSFlight_2018', 'btagSFlight_correlated', 
             'elecID',  'muonID', 'muonISO',  'trigSF',
             'jetPuID', ]
 
