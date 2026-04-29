@@ -115,32 +115,48 @@ class EFTPlot(object):
         }
 
         self.texdicfrac = {
-            'ctW': '\it{c}_{\mathrm{tW}}',
-            'ctZ': '\it{c}_{\mathrm{tZ}}',
-            'ctp': '\it{c}_{\mathrm{t} \\varphi}',
-            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}',
-            'ctG': '\it{c}_{\mathrm{tG}}',
-            'cbW': '\it{c}_{\mathrm{bW}}',
-            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}',
-            'cptb': '\it{c}_{\\varphi \mathrm{tb}}',
-            'cpt': '\it{c}_{\\varphi \mathrm{t}}',
-            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}',
-            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}',
-            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}',
-            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}',
-            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}',
-            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}',
-            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}',
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}',
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}',
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}',
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}',
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}',
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}',
-            'ctt1': '\it{c}^{1}_{\mathrm{tt}}',
-            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}',
-            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
-            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}'
+            # 'ctW': '\it{c}_{\mathrm{tW}}',
+            # 'ctZ': '\it{c}_{\mathrm{tZ}}',
+            # 'ctp': '\it{c}_{\mathrm{t} \\varphi}',
+            # 'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}',
+            # 'ctG': '\it{c}_{\mathrm{tG}}',
+            # 'cbW': '\it{c}_{\mathrm{bW}}',
+            # 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}',
+            # 'cptb': '\it{c}_{\\varphi \mathrm{tb}}',
+            # 'cpt': '\it{c}_{\\varphi \mathrm{t}}',
+            # 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}',
+            # 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}',
+            # 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}',
+            # 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}',
+            # 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}',
+            # 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}',
+            # 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}',
+            # 'cQq81': '\it{c}^{18}_{\mathrm{Qq}}',
+            # 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}',
+            # 'ctq8': '\it{c}^{8}_{\mathrm{tq}}',
+            # 'ctq1': '\it{c}^{1}_{\mathrm{tq}}',
+            # 'cQq13': '\it{c}^{31}_{\mathrm{Qq}}',
+            # 'cQq83': '\it{c}^{38}_{\mathrm{Qq}}',
+            # 'ctt1': '\it{c}^{1}_{\mathrm{tt}}',
+            # 'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}',
+            # 'cQt8': '\it{c}^{8}_{\mathrm{Qt}}',
+            # 'cQt1': '\it{c}^{1}_{\mathrm{Qt}}',
+            'ctGRe': 'Re \it{c}_{\mathrm{tG}}', 
+            'ctGIm': 'Im \it{c}_{\mathrm{tG}}', 
+            'cQj31': '\it{c}^{(3,1)}_{\mathrm{Qq}}', 
+            'cQj38': '\it{c}^{(3,8)}_{\mathrm{Qq}}',
+            'cQj11': '\it{c}^{(1,1)}_{\mathrm{Qq}}',
+            'cQj18': '\it{c}^{(1,8)}_{\mathrm{Qq}}',
+            'cQu1': '\it{c}^{(1)}_{\mathrm{Qu}}',
+            'cQu8': '\it{c}^{(8)}_{\mathrm{Qu}}',
+            'cQd1': '\it{c}^{(1)}_{\mathrm{Qd}}',
+            'cQd8': '\it{c}^{(8)}_{\mathrm{Qd}}',
+            'ctj1': '\it{c}^{(1)}_{\mathrm{qt}}',
+            'ctj8': '\it{c}^{(8)}_{\mathrm{qt}}',
+            'ctu8': '\it{c}^{(8)}_{\mathrm{tu}}',
+            'ctd8': '\it{c}^{(8)}_{\mathrm{td}}',
+            'ctd1': '\it{c}^{(1)}_{\mathrm{td}}',
+            'ctu1': '\it{c}^{(1)}_{\mathrm{tu}}',
         }
         self.texdicmacro = {
             'ctW': '\ctW',
@@ -2087,7 +2103,7 @@ class EFTPlot(object):
             for i in range(len(fits_float)):
                 wc = fits_float[i][0]
                 wc = wc.split('#')[0]
-                wc = self.texdicmacro[wc]
+                # wc = self.texdicmacro[wc]
                 old_low  = fits_float[i][2]
                 old_high = fits_float[i][3]
                 new_low  = fits_freeze[i][2]
@@ -2282,9 +2298,11 @@ class EFTPlot(object):
         if asimov_plotstyle_flag:
             canvas = ROOT.TCanvas('canvas','Summary Plot',500,800)
         canvas.SetGrid(1)
-        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
+        # h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -6, 6, 4*numWC+1, 0, 4*numWC)
+        h_fit = ROOT.TH2F('h_fit','Summary Plot (SM Expectation)', 1, -3, 3, 4*numWC+1, 0, 4*numWC)     #change x axis bounds
         if not asimov_plotstyle_flag:
-            h_fit = ROOT.TH2F('h_fit','Summary Plot', 6, -6, 6, 4*numWC+1, 0, 4*numWC)
+            # h_fit = ROOT.TH2F('h_fit','Summary Plot', 6, -6, 6, 4*numWC+1, 0, 4*numWC)
+            h_fit = ROOT.TH2F('h_fit','Summary Plot', 6, -3, 3, 4*numWC+1, 0, 4*numWC)                  #change x axis bounds
         h_fit.Draw()
         h_fit.SetStats(0)
         h_fit.GetYaxis().SetTickLength(0)
