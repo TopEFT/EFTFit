@@ -24,6 +24,7 @@ class EFTPlot(object):
         # self.wcs = ['ctW','ctZ','ctp','cpQM','ctG','cbW','cpQ3','cptb','cpt','cQl3i','cQlMi','cQei','ctli','ctei','ctlSi','ctlTi', 'cQq13', 'cQq83', 'cQq11', 'ctq1', 'cQq81', 'ctq8', 'cQt1', 'cQt8', 'cQQ1', 'ctt1'] #TOP-22-006
         #self.wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
         
+        self.wcs_pairs = [('ctj1', 'ctj8')]
         self.wcs = ["cQd1", "ctj1", "cQj31", "ctj8", "ctd1", "ctd8", "ctGRe", "ctGIm", "cQj11", "cQj18", "ctu8", "cQd8", "ctu1", "cQu1", "cQj38", "cQu8"]
         
         # Set the WC ranges (if not specified, just use some numbers that generally work for njets)
@@ -72,47 +73,42 @@ class EFTPlot(object):
         # self.sm_ranges = {  'mu_ttH':(0,7),   'mu_ttlnu':(0,3)
         #                  }
 
+        # self.texdic changed to give good looking labels in PDF over png - the rendering is not identical
         self.histosFileName = 'Histos.root'
         self.texdic = {
-            'ctGRe': 'Re \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctGIm': 'Im \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQj31': '\it{c}^{(3,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQj38': '\it{c}^{(3,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQj11': '\it{c}^{(1,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQj18': '\it{c}^{(1,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQu1': '\it{c}^{(1)}_{\mathrm{Qu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQu8': '\it{c}^{(8)}_{\mathrm{Qu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQd1': '\it{c}^{(1)}_{\mathrm{Qd}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQd8': '\it{c}^{(8)}_{\mathrm{Qd}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'ctj1': '\it{c}^{(1)}_{\mathrm{qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctj8': '\it{c}^{(8)}_{\mathrm{qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctu8': '\it{c}^{(8)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctd8': '\it{c}^{(8)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'ctd1': '\it{c}^{(1)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctu1': '\it{c}^{(1)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-
-            # 'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            # 'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            # 'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            # 'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            # 'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
-        }
+            'ctGRe': 'Re \it{c}_{tG}/\Lambda^{2} [TeV^{-2}]', 
+            'ctGIm': 'Im \it{c}_{tG}/\Lambda^{2} [TeV^{-2}]', 
+            'cQj31': '\it{c}^{(3,1)}_{Qq}/\Lambda^{2} [TeV^{-2}]', 
+            'cQj38': '\it{c}^{(3,8)}_{Qq}/\Lambda^{2} [TeV^{-2}]',
+            'cQj11': '\it{c}^{(1,1)}_{Qq}/\Lambda^{2} [TeV^{-2}]',
+            'cQj18': '\it{c}^{(1,8)}_{Qq}/\Lambda^{2} [TeV^{-2}]',
+            'cQu1': '\it{c}^{(1)}_{Qu}/\Lambda^{2} [TeV^{-2}]',
+            'cQu8': '\it{c}^{(8)}_{Qu}/\Lambda^{2} [TeV^{-2}]',
+            'cQd1': '\it{c}^{(1)}_{Qd}/\Lambda^{2} [TeV^{-2}]',
+            'cQd8': '\it{c}^{(8)}_{Qd}/\Lambda^{2} [TeV^{-2}]',
+            'ctj1': '\it{c}^{(1)}_{qt}/\Lambda^{2} [TeV^{-2}]', 
+            'ctj8': '\it{c}^{(8)}_{qt}/\Lambda^{2} [TeV^{-2}]', 
+            'ctu8': '\it{c}^{(8)}_{tu}/\Lambda^{2} [TeV^{-2}]', 
+            'ctd8': '\it{c}^{(8)}_{td}/\Lambda^{2} [TeV^{-2}]',
+            'ctd1': '\it{c}^{(1)}_{td}/\Lambda^{2} [TeV^{-2}]', 
+            'ctu1': '\it{c}^{(1)}_{tu}/\Lambda^{2} [TeV^{-2}]',
+            # 'ctGRe': 'Re \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctGIm': 'Im \it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQj31': '\it{c}^{(3,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'cQj38': '\it{c}^{(3,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQj11': '\it{c}^{(1,1)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQj18': '\it{c}^{(1,8)}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQu1': '\it{c}^{(1)}_{\mathrm{Qu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQu8': '\it{c}^{(8)}_{\mathrm{Qu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQd1': '\it{c}^{(1)}_{\mathrm{Qd}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'cQd8': '\it{c}^{(8)}_{\mathrm{Qd}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'ctj1': '\it{c}^{(1)}_{\mathrm{qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctj8': '\it{c}^{(8)}_{\mathrm{qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctu8': '\it{c}^{(8)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctd8': '\it{c}^{(8)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            # 'ctd1': '\it{c}^{(1)}_{\mathrm{td}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            # 'ctu1': '\it{c}^{(1)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            }
 
         self.texdicfrac = {
             # 'ctW': '\it{c}_{\mathrm{tW}}',
@@ -580,25 +576,29 @@ class EFTPlot(object):
         else:
             if final: 
                 canvas.Print('Overlay{}1DNLL{}_final.png'.format(wc, filename),'png')
-                canvas.Print('Overlay{}1DNLL{}_final.eps'.format(wc, filename),'eps')
-                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_final.eps'.format(wc, filename))
+                canvas.Print('Overlay{}1DNLL{}_final.pdf'.format(wc, filename),'pdf')
+                # canvas.Print('Overlay{}1DNLL{}_final.eps'.format(wc, filename),'eps')
+                # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_final.eps'.format(wc, filename))
             else: 
                 canvas.Print('Overlay{}1DNLL{}_prelim.png'.format(wc, filename),'png')
-                canvas.Print('Overlay{}1DNLL{}_prelim.eps'.format(wc, filename),'eps')
-                os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_prelim.eps'.format(wc, filename))
+                canvas.Print('Overlay{}1DNLL{}_prelim.pdf'.format(wc, filename),'pdf')
+                # canvas.Print('Overlay{}1DNLL{}_prelim.eps'.format(wc, filename),'eps')
+                # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop Overlay{}1DNLL{}_prelim.eps'.format(wc, filename))
         canvas = ROOT.TCanvas('canvas', 'canvas', 400, 100)
         canvas.cd()
         legend.Draw()
         canvas.Print('ext_leg_Overlay1DNLL.png','png')
-        canvas.Print('ext_leg_Overlay1DNLL.eps','eps')
-        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
-        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext{}_leg_Overlay1DNLL.eps'.format(wc))
+        # canvas.Print('ext_leg_Overlay1DNLL.eps','eps')
+        canvas.Print('ext_leg_Overlay1DNLL.pdf','pdf')
+        # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_Overlay1DNLL.eps')
+        # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext{}_leg_Overlay1DNLL.eps'.format(wc))
 
         legend2.Draw()
         canvas.Print('ext_leg_CL.png','png')
-        canvas.Print('ext_leg_CL.eps','eps')
-        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_CL.eps')
-        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_CL.eps')
+        # canvas.Print('ext_leg_CL.eps','eps')
+        canvas.Print('ext_leg_CL.pdf','pdf')
+        # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" ext_leg_CL.eps')
+        # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop ext_leg_CL.eps')
 
     def OverlayZoomLLPlot1DEFT(self, name1='.test', name2='.test', wc='', log=False):
         if not wc:
@@ -782,13 +782,20 @@ class EFTPlot(object):
             logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
             return
 
+        # if not os.path.exists('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name)):
+        #     logging.error("File higgsCombine{}.MultiDimFit.root does not exist!".format(name))
+        #     return
+
         ROOT.gROOT.SetBatch(True)
 
         canvas = ROOT.TCanvas('c','c',800,800)
+        canvas.SetLeftMargin(0.15)
+        canvas.SetBottomMargin(0.12)
 
         # Open file and draw 2D histogram
         # wcs[0] is y-axis variable, wcs[1] is x-axis variable
         rootFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
+        # rootFile = ROOT.TFile.Open('higgsCombine{}.MultiDimFit.mH120.root'.format(name))
         limitTree = rootFile.Get('limit')
         hname = '{}{}less{}'.format(wcs[0],wcs[1],ceiling)
         if log:
@@ -839,8 +846,11 @@ class EFTPlot(object):
 
         # Save plot
         canvas.Print(hname+".png",'png')
-        canvas.Print(hname+".eps",'eps')
-        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(hname,hname))
+        # canvas.Print(hname+".pdf", 'pdf')
+        canvas.SaveAs(hname+".pdf", 'pdf') # \mathrm and \mathcal and \text do not work for PDF - will have to change to regular WC name
+
+        # canvas.Print(hname+".eps",'eps')
+        # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}.eps {}.pdf'.format(hname,hname))
 
         # Save to root file
         # Log settings don't save to the histogram, so redundant to save those
@@ -1193,9 +1203,10 @@ class EFTPlot(object):
         if final: canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
         else:
             canvas.Print('{}{}contour.png'.format(wcs[0],wcs[1]),'png')
-            canvas.Print('{}{}contour.eps'.format(wcs[0],wcs[1]),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour.eps {}{}contour.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # canvas.Print('{}{}contour.eps'.format(wcs[0],wcs[1]),'eps')
+            # canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
+            # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour.eps {}{}contour.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         if final: 
             #canvas.Print('{}{}contour_final.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_final.png'.format(wcs[0],wcs[1]),'png')
@@ -1206,9 +1217,10 @@ class EFTPlot(object):
         else: 
             #canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_prelim.png'.format(wcs[0],wcs[1]),'png')
-            canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim.eps {}{}contour_prelim.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
+            canvas.Print('{}{}contour_prelim.pdf'.format(wcs[0],wcs[1]),'pdf')
+            # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim.eps {}{}contour_prelim.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
 
         # Versions with 1D lines included
         c681D.Draw('L SAME')
@@ -1217,22 +1229,25 @@ class EFTPlot(object):
         if final: canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
         else:
             canvas.Print('{}{}contour_1d.png'.format(wcs[0],wcs[1]),'png')
-            canvas.Print('{}{}contour_1d.eps'.format(wcs[0],wcs[1]),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_1d.eps {}{}contour_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            # canvas.Print('{}{}contour_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_1d.eps {}{}contour_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         if final: 
             #canvas.Print('{}{}contour_final_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_final_1d.png'.format(wcs[0],wcs[1]),'png')
-            canvas.Print('{}{}contour_final_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            # canvas.Print('{}{}contour_final_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            canvas.Print('{}{}contour_final_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
             #convert EPS to PDF to preserve \ell
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final_1d.eps {}{}contour_final_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final_1d.eps {}{}contour_final_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         else: 
             #canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_prelim_1d.png'.format(wcs[0],wcs[1]),'png')
-            canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
-            os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
-            os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim_1d.eps {}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
+            canvas.Print('{}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
+            # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_prelim_1d.eps {}{}contour_prelim_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         canvas = ROOT.TCanvas('cleg', 'cleg', 600, 100)
         hSM.SetMarkerSize(2)
         hc68.SetMarkerSize(2)
@@ -1253,10 +1268,10 @@ class EFTPlot(object):
         legend.SetNColumns(4)
         legend.Draw()
         canvas.Print('contour_leg.png')
-        canvas.Print('contour_leg.eps')
+        # canvas.Print('contour_leg.eps')
         canvas.Print('contour_leg.pdf')
-        os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" contour_leg.eps')
-        os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop contour_leg.eps contour_leg.pdf')
+        # os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" contour_leg.eps')
+        # os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop contour_leg.eps contour_leg.pdf')
 
         # Save contour to histogram file
         outfile = ROOT.TFile(self.histosFileName,'UPDATE')
@@ -1785,35 +1800,32 @@ class EFTPlot(object):
 
     def BatchBatch2DPlotsEFT(self, basenamegrid='.EFT.Float.gridScan.Jan01', allpairs=False, final=False, wcs=[]):
         ROOT.gROOT.SetBatch(True)
-        
+
+        if not os.path.isdir('Histos{}'.format(basenamegrid)):
+            sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
+            print('Created directory Histos{}'.format(basenamegrid))
+
         wcs_pairs = self.wcs_pairs
         if allpairs:
-            wcs_pairs = itertools.combinations(wcs,2)
+            wcs_pairs = itertools.combinations(self.wcs,2)
             #wcs_pairs = itertools.combinations(self.wcs,2)
         else:
-            wcs_pairs = [('ctW','ctG'),('ctZ','ctG'),('ctp','ctG'),('cpQM','ctG'),('cbW','ctG'),('cpQ3','ctG'),('cptb','ctG'),('cpt','ctG'),('cQl3i','ctG'),('cQlMi','ctG'),('cQei','ctG'),('ctli','ctG'),('ctei','ctG'),('ctlSi','ctG'),('ctlTi','ctG')]
-            #pairs from AN
-            wcs_pairs = [('cQlMi','cQei'),('cpQ3','cbW'),('cptb','cQl3i'),('ctG','cpQM'),('ctZ','ctW'),('ctei','ctlTi'),('ctlSi','ctli'),('ctp','cpt')]
-            wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
-            wcs_pairs = [('ctp','cpt'), ('ctp','cQq11'), ('ctp','ctq1'), ('ctp','cQq81'), ('ctp','ctq8')]
-            wcs_pairs = [('cQei',w) for w in self.wcs if w != 'cQei']
-            wcs_pairs = [('cQq83',w) for w in self.wcs if w != 'cQq83']
-            wcs_pairs = [('cQlMi',w) for w in self.wcs if w != 'cQlMi']
-            # Pairs from `ptz-lj0pt_fullR2_anatest10v01_withSys.root` where abs(correlation) > 0.4
-            wcs_pairs = [('cpt', 'cpQM'), ('ctlSi', 'ctlTi'), ('cQlMi', 'ctei'), ('cbW', 'cpQ3'), ('cQq81', 'cbW'), ('cbW', 'cptb'), ('cptb', 'cpQ3'), ('cQt1', 'ctt1'), ('ctp', 'ctG'), ('cQq81', 'cpQ3')]
-            wcs_pairs = [('ctW','ctZ'),('ctG','ctZ'),('ctp','ctZ'),('cpQM','ctZ'),('cbW','ctZ'),('cpQ3','ctZ'),('cptb','ctZ'),('cpt','ctZ'),('cQl3i','ctZ'),('cQlMi','ctZ'),('cQei','ctZ'),('ctli','ctZ'),('ctei','ctZ'),('ctlSi','ctZ'),('ctlTi','ctZ')]
-            wcs_pairs = [('ctZ', 'ctW'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW')]
-            wcs_pairs = [('ctp', 'cpt'), ('ctZ', 'ctW'), ('ctG', 'cpQM'), ('cptb', 'cQl3i'), ('cpQ3', 'cbW'), ('cQlMi', 'cQei')] # From TOP-19-001
-            # All diagrams in TOP-22-006 or in AN
-            wcs_pairs = [('cQQ1', 'cQt1'), ('cQQ1', 'cQt8'), ('cQlMi', 'cQei'), ('cQt1', 'cQt8'), ('cQt1', 'ctt1'), ('cpQ3', 'cbW'), ('cpQM', 'cpt'), ('cptb', 'cQl3i'), ('ctG', 'cpQM'), ('ctG', 'ctp'), ('ctW', 'ctZ'), ('ctp', 'cpt')]
-            # All diagrams in TOP-22-006 paper
-            wcs_pairs = [('ctW', 'ctZ') ,('cpQM', 'cpt') ,('ctG', 'ctp') ,('cQt1', 'cQt8') ,('cQQ1', 'cQt8') ,('cQt1', 'ctt1') ,('cQQ1', 'cQt1')]
+            # wcs_pairs = [('cQq83',w) for w in self.wcs if w != 'cQq83']
+            # wcs_pairs = [('cQlMi',w) for w in self.wcs if w != 'cQlMi']
+            # # All diagrams in TOP-22-006 or in AN
+            # wcs_pairs = [('cQQ1', 'cQt1'), ('cQQ1', 'cQt8'), ('cQlMi', 'cQei'), ('cQt1', 'cQt8'), ('cQt1', 'ctt1'), ('cpQ3', 'cbW'), ('cpQM', 'cpt'), ('cptb', 'cQl3i'), ('ctG', 'cpQM'), ('ctG', 'ctp'), ('ctW', 'ctZ'), ('ctp', 'cpt')]
+            # # All diagrams in TOP-22-006 paper
+            # wcs_pairs = [('ctW', 'ctZ') ,('cpQM', 'cpt') ,('ctG', 'ctp') ,('cQt1', 'cQt8') ,('cQQ1', 'cQt8') ,('cQt1', 'ctt1') ,('cQQ1', 'cQt1')]
+
+            wcs_pairs = [('ctj1', 'ctj8')]
             if len(wcs) > 0:
                 wcs_pairs = []
                 if isinstance(wcs, str): wcs = [wcs]
                 for wc in wcs:
-                    if isinstance(wc, tuple): continue
-                    wcs_pairs = wcs_pairs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
+                    if isinstance(wc, tuple): wcs_pairs.append(wc)
+                    else: wcs_pairs = wcs_pairs + [(wc, other_wc) for other_wc in self.wcs if wc != other_wc]
+
+        print(f"wc_pairs: {wcs_pairs}")
 
         html = 'index.html'
         htmlFile = open(html,'w')
@@ -1862,12 +1874,11 @@ class EFTPlot(object):
             #self.Batch2DPlots('{}.{}{}'.format(histosFileName,pair[0],pair[1]), '{}.{}{}'.format(basenamegrid,pair[0],pair[1]), '{}.{}{}'.format(basenamefit,pair[0],pair[1]), operators=pair, freeze=freeze)
             self.Batch2DPlotsEFT('{}.{}{}'.format(basenamegrid,pair[0],pair[1]), wcs=pair, final=final)
 
-            if not os.path.isdir('Histos{}'.format(basenamegrid)):
-                sp.call(['mkdir', 'Histos{}'.format(basenamegrid)])
-                print('Created directory Histos{}'.format(basenamegrid))
             sp.call(['mv', 'Histos{}.{}{}.root'.format(basenamegrid,pair[0],pair[1]), 'Histos{}/'.format(basenamegrid)])
 
             for filename in os.listdir('.'):
+                if filename.endswith('2D.png'):
+                    sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.png') or filename.endswith('contour_prelim.png') or filename.endswith('contour_final.png') or '_leg.' in filename or ('less' in filename and filename.endswith('.png')):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour.pdf') or filename.endswith('contour_prelim.pdf') or filename.endswith('contour_final.pdf') or '_leg.' in filename or ('less' in filename and filename.endswith('.pdf')):            
@@ -1875,9 +1886,9 @@ class EFTPlot(object):
                 if filename.endswith('contour.eps') or filename.endswith('contour_final.eps') or ('less' in filename and filename.endswith('.eps')) or filename.endswith('contour_prelim.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 # 1D lines
-                if filename.endswith('contour_1d.png') or filename.endswith('contour_final_1d.png') or ('less' in filename and filename.endswith('_1d.png')):            
+                if filename.endswith('contour_1d.png') or filename.endswith('contour_final_1d.png') or ('less' in filename and filename.endswith('_1d.png')) or filename.endswith('contour_prelim_1d.png'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
-                if filename.endswith('contour_1d.pdf') or filename.endswith('contour_final_1d.pdf') or ('less' in filename and filename.endswith('_1d.pdf')):            
+                if filename.endswith('contour_1d.pdf') or filename.endswith('contour_final_1d.pdf') or ('less' in filename and filename.endswith('_1d.pdf')) or filename.endswith('contour_prelim_1d.pdf'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
                 if filename.endswith('contour_1d.eps') or filename.endswith('contour_final_1d.eps') or ('less' in filename and filename.endswith('_1d.eps')) or filename.endswith('contour_prelim_1d.eps'):            
                     sp.call(['mv', filename, 'Histos{}/'.format(basenamegrid)])
