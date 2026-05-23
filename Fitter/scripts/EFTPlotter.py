@@ -2641,10 +2641,12 @@ class EFTPlot(object):
             if final:
                 canvas.Print('{}_final.png'.format(name),'png')
                 canvas.Print('{}_final.eps'.format(name),'eps')
+                canvas.Print('{}_final.pdf'.format(name),'pdf')
                 os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}_final.eps'.format(name))
                 os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}_final.eps {}_final.pdf'.format(name, name))
             else:
                 canvas.Print('{}{}.png'.format(name, filename),'png')
+                canvas.Print('{}{}.pdf'.format(name, filename),'pdf')
                 canvas.Print('{}{}.eps'.format(name, filename),'eps')
                 os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}.eps'.format(name, filename))
                 os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}.eps {}{}.pdf'.format(name, filename, name, filename))

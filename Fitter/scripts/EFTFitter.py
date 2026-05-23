@@ -36,7 +36,8 @@ class EFTFit(object):
             "ctd1": (-10.0, 10.0),
             "ctd8": (-10.0, 10.0),
             "ctGRe":(-1.0, 1.0),
-            "ctGIm":(-1.0, 1.0),
+            # 'ctGRe':(0.1,0.4),
+            "ctGIm":(-2.0, 2.0),
             "cQj11":(-10.0, 10.0),
             "cQj18":(-10.0, 10.0),
             "ctu8": (-10.0, 10.0),
@@ -48,22 +49,22 @@ class EFTFit(object):
         }
 
         self.wc_ranges_differential = {
-            "cQd1": (-4.0, 4.0),
-            "ctj1": (-4.0, 4.0),
-            "cQj31":(-4.0, 4.0),
-            "ctj8": (-4.0, 4.0),
-            "ctd1": (-4.0, 4.0),
-            "ctd8": (-4.0, 4.0),
-            "ctGRe":(-1.5, 1.5),
-            "ctGIm":(-1.5, 1.5),
-            "cQj11":(-4.0, 4.0),
-            "cQj18":(-4.0, 4.0),
-            "ctu8": (-4.0, 4.0),
-            "cQd8": (-4.0, 4.0),
-            "ctu1": (-4.0, 4.0),
-            "cQu1": (-4.0, 4.0),
-            "cQj38":(-4.0, 4.0),
-            "cQu8": (-4.0, 4.0)
+            "cQd1": (-5.0, 5.0),
+            "ctj1": (-5.0, 5.0),
+            "cQj31":(-5.0, 5.0),
+            "ctj8": (-5.0, 5.0),
+            "ctd1": (-5.0, 5.0),
+            "ctd8": (-5.0, 5.0),
+            "ctGRe":(-2.5, 2.5),
+            "ctGIm":(-2.5, 2.5),
+            "cQj11":(-5.0, 5.0),
+            "cQj18":(-5.0, 5.0),
+            "ctu8": (-5.0, 5.0),
+            "cQd8": (-5.0, 5.0),
+            "ctu1": (-5.0, 5.0),
+            "cQu1": (-5.0, 5.0),
+            "cQj38":(-5.0, 5.0),
+            "cQu8": (-5.0, 5.0)
         }
 
         # self.systematics = [
@@ -373,7 +374,7 @@ class EFTFit(object):
         # Remove the temporary directory and split root files
         sp.call(['rm','-r',taskname+'tmp'])
 
-    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', track_error=False):
+    def gridScan(self, name='.test', batch='', freeze=False, scan_params=['ctW'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', track_error=False, RandProf=None):
         ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
         logging.info("Doing grid scan...")
 
@@ -398,6 +399,8 @@ class EFTFit(object):
 
         if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track)])
         if track_error: args.extend('--trackErrors rgx{.*}')
+        if RandProf:
+            args.extend(['--randPointsSeed 98764 --pointsRandProf {}'.format(RandProf)])
 
         if not freeze:        args.extend(['--floatOtherPOIs','1'])
         params = ['{}=0'.format(wc) for wc in scan_params+params_tracked]
@@ -420,12 +423,14 @@ class EFTFit(object):
             masks = [item for sub in masks for item in sub]
             params += mask
             args.extend(['--setParameters',','.join(masks)])
+        # if RandProf:
+        #     args.extend([f"--randPointsSeed 98764 --pointsRandProf {RandProf}"])
 
         point_scale = 8#hrs
         wall_time  = 8#hrs
         if not freeze: wall_time /= 2 # profiled scans take longer, so submit less points per job
         if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
-        if batch=='condor' and freeze==False and points>3000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','3000','--dry-run'])
+        if batch=='condor' and freeze==False and points>4000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','4000','--dry-run'])
         elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
         logging.info(' '.join(args))
@@ -476,6 +481,128 @@ class EFTFit(object):
             sp.call(['mv', 'higgsCombine'+name+'.MultiDimFit.mH120.root', '../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
             logging.info("Done with gridScan.")
 
+    def gridScan_ctG(self, name='.test', batch='', freeze=False, scan_params=['ctGRe'], params_tracked=[], points=90000, other=[], mask=[], mask_syst=[], workspace='EFTWorkspace.root', track_error=False, RandProf=None):
+        ### Runs deltaNLL Scan in two parameters using CRAB or Condor ###
+        logging.info("Doing grid scan...")
+
+        CMSSW_BASE = os.getenv('CMSSW_BASE')
+        if not "/afs/" in workspace:
+            wsname = CMSSW_BASE+'/src/EFTFit/Fitter/test/'+workspace
+            if not os.path.exists(wsname):
+                print('WARNING! I was not able to find the workspace in afs, I will try finding it by assuming you passed me an absolute path')
+                wsname = workspace
+        if not os.path.exists(wsname):
+            raise RuntimeError('Failed to find the workspace, either considering it as a local afs path or an absolute path. Please, fix it!')
+        print('Workspace found! I am gonna use it for running fits...')
+        # args = ['combineTool.py','-d',wsname,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=1', '--cminFallback "Migrad:1:0.2,Migrad:0:0.5"']     # originally --cminDefaultMinimizerStrategy=0 
+        args = [
+            'combineTool.py', '-d', wsname, 
+            '-M', 'MultiDimFit', 
+            '--algo', 'grid', 
+            '--cminPreScan', 
+            '--cminDefaultMinimizerStrategy=1', 
+            '--cminFallback', 'Migrad:1:0.2,Migrad:0:0.5,simplex:0:0.2',
+            '--cminDefaultMinimizerTolerance', '0.01'  # Force a tighter tolerance so frozen scans don't stop early
+        ]
+
+        args.extend(['--points','{}'.format(points)])
+        if name:              args.extend(['-n','{}'.format(name)])
+        if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
+        track = []
+        if any('trackParameters' in s for s in other):
+            index = other.index('--trackParameters')
+            other.pop(index)
+            track.append(other.pop(index))
+
+        if params_tracked: args.extend(['--trackParameters',','.join(params_tracked+track)])
+        # if track_error: args.extend('--trackErrors rgx{.*}')
+        # if RandProf:
+        #     args.extend(['--randPointsSeed 98764 --pointsRandProf {}'.format(RandProf)])
+
+        # if not freeze:        args.extend(['--floatOtherPOIs','1'])
+        if RandProf and not freeze:
+            args.extend(['--randPointsSeed', '98764', '--pointsRandProf', '{}'.format(RandProf)])
+
+        if not freeze: 
+            args.extend(['--floatOtherPOIs', '1'])
+
+        params = ['{}=0'.format(wc) for wc in scan_params+params_tracked]
+        if '--setParameters' not in other: # Set all starting points to 0 unless the user specifies otherwise
+            other.append('--setParameters')
+            other.append(','.join(['{}=0'.format(wc) for wc in scan_params+params_tracked]))
+        if other:             args.extend(other)
+        if mask_syst:
+            freeze.append(','.join(mask_syst))
+        if mask:
+            masks = []
+            for m in mask:
+                msk = findMask(m)
+                if not msk:
+                    print('No bins found containig ' + m + '! Please check the spelling, and try again.')
+                    return
+                if 'sfz' not in m:
+                    msk = [x for x in msk if 'sfz' not in x]
+                masks.append(msk)
+            masks = [item for sub in masks for item in sub]
+            params += mask
+            args.extend(['--setParameters',','.join(masks)])
+        # if RandProf:
+        #     args.extend([f"--randPointsSeed 98764 --pointsRandProf {RandProf}"])
+
+        point_scale = 8#hrs
+        wall_time  = 8#hrs
+        if not freeze: wall_time /= 2 # profiled scans take longer, so submit less points per job
+        if batch=='crab':      args.extend(['--job-mode','crab3','--task-name',name.replace('.',''),'--custom-crab','custom_crab.py','--split-points',str(int(round(wall_time*point_scale)))])
+        if batch=='condor' and freeze==False and points>4000: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','4000','--dry-run'])
+        elif batch=='condor' and freeze==False: args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        elif batch=='condor':          args.extend(['--job-mode','condor','--task-name',name.replace('.',''),'--split-points','10','--dry-run'])
+        logging.info(' '.join(args))
+
+        # Run the combineTool.py command
+        process = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+
+        with process.stdout, process.stderr:
+            self.log_subprocess_output(process.stdout, 'info')
+            self.log_subprocess_output(process.stderr, 'err')
+        process.wait()
+
+        # Condor needs executable permissions on the .sh file, so we used --dry-run
+        # Add the permission and complete the submission.
+        if batch == 'condor':
+            if os.path.exists('condor{}'.format(name)):
+                logging.error("Directory condor{} already exists!".format(name))
+                logging.error("Aborting submission.")
+
+            sp.call(['mkdir', 'condor{}'.format(name)])
+            sp.call(['chmod', 'a+x', 'condor_{}.sh'.format(name.replace('.', ''))])
+            sp.call(['sed', '-i', 's/ulimit.*/&\\nunset PERL5LIB/', 'condor_{}.sh'.format(name.replace('.', ''))])
+            sp.call(['sed', '-i', 's/queue/\\n\\nrequestMemory=10000\\n+JobFlavour = "workday"\\n\\nqueue/', 'condor_{}.sub'.format(name.replace('.', ''))])  # Ask for at least 10GB of RAM
+
+            # Replace hardcoded paths with $CMSSW_BASE and dynamic paths
+            cmssw_base = os.getenv('CMSSW_BASE')
+            test_dir = os.path.join(cmssw_base, 'src', 'EFTFit', 'Fitter', 'test')
+
+            sp.call(['sed', '-i',
+                     's|executable = \(.*\)|executable = {}/src/EFTFit/Fitter/test/condor_{}.sh\\narguments = $(ProcId)|'.format(cmssw_base, name.replace('.', '')),
+                     'condor_{}.sub'.format(name.replace('.', ''))
+            ])
+            
+            logging.info('Now submitting condor jobs.')
+            condorsub = sp.Popen(['condor_submit', '-append', 'initialdir=condor{}'.format(name), 'condor_{}.sub'.format(name.replace('.', ''))], 
+                                 stdout=sp.PIPE, stderr=sp.PIPE)
+            #Maybe can be commented out
+            with condorsub.stdout, condorsub.stderr:
+                self.log_subprocess_output(condorsub.stdout, 'info')
+                self.log_subprocess_output(condorsub.stderr, 'err')
+
+            condorsub.wait()
+
+        if batch:
+            logging.info("Done with gridScan batch submission.")
+
+        if not batch:
+            sp.call(['mv', 'higgsCombine'+name+'.MultiDimFit.mH120.root', '../fit_files/higgsCombine'+name+'.MultiDimFit.root'])
+            logging.info("Done with gridScan.")
 
     def getBestValues2D(self, name, scan_params=[], params_tracked=[]):
         ### Gets values of parameters for grid scan point with best deltaNLL ###
@@ -828,7 +955,7 @@ class EFTFit(object):
 
         return (graphwcs, graphnlls)
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None):
+    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
@@ -854,7 +981,44 @@ class EFTFit(object):
             else:
                 masks = ','.join(mask)
             mask = []
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace)
+            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace, track_error=False, RandProf=RandProf)
+
+    def batch1DScanEFT_ctG(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None):
+        ### For each wc, run a 1D deltaNLL Scan.
+        if not scan_wcs:
+            scan_wcs = self.wcs
+
+        # Set the WC ranges if not specified
+        if wc_ranges is None: wc_ranges = self.wc_ranges
+
+        zero_ignore = []
+        freeze_ignore = []
+        if len(ignore)>0:
+            zero_ignore = ['--setParameters ' + ','.join(['{}=0'.format(wc) for wc in ignore])]
+            freeze_ignore = ['--freezeParameters ' + ','.join(['{}'.format(wc) for wc in ignore])]
+            for iwc in ignore:
+                if iwc in scan_wcs: scan_wcs.remove(iwc)
+                
+        if wc_val is None:
+            params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
+        else:
+            params = ','.join(['{}=0'.format(wc) if wc not in wc_val.keys() else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
+        for wc in scan_wcs:
+            if isinstance(mask, list) and len(mask)==1:
+                masks = mask[0]
+            else:
+                masks = ','.join(mask)
+            mask = []
+
+            all_ranges_list = []
+            for active_wc in self.wcs:
+                if active_wc not in ignore:
+                    all_ranges_list.append('{}={},{}'.format(active_wc, wc_ranges[active_wc][0], wc_ranges[active_wc][1]))
+
+            combined_ranges_arg = '--setParameterRanges ' + ':'.join(all_ranges_list)
+
+            self.gridScan_ctG('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, [combined_ranges_arg]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace, track_error=False, RandProf=RandProf)
+
 
     '''
     example: `fitter.batch2DScanEFT('.test.ctZ', batch='crab', wcs=['ctZ'], workspace='wps_njet_runII.root')`
@@ -863,12 +1027,14 @@ class EFTFit(object):
 
     def batch2DScanEFT(self, basename='.EFT.2DgridScan', batch='condor', freeze=False, points=90000, allPairs=False, other=[], mask=[], mask_syst=[], wcs=[], workspace='workspace.root', differential=None):
         ### For pairs of wcs, runs deltaNLL Scan in two wcs using CRAB or Condor ###
-        if differential is None:
-            differential = 'njets' not in workspace
-            print('Assuming')
-            print('njets' if not differential else 'differential')
-            print('based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.')
-        wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
+        # if differential is None:
+        #     differential = 'njets' not in workspace
+        #     print('Assuming')
+        #     print('njets' if not differential else 'differential')
+        #     print('based on the workspace.\nTo force differential or njets set `differential=True/False` respectively.')
+        # wc_ranges = self.wc_ranges_differential if differential else self.wc_ranges_njets
+
+        wc_ranges = self.wc_ranges_differential
 
         # Use EVERY combination of wcs
         if allPairs:
@@ -1506,6 +1672,8 @@ class EFTFit(object):
             sub_path = os.path.join(target_dir, f'condor_{wc}_initial.sub')
             with open(sub_path, 'w') as condorFile:
                 condorFile.write(self.Impact_condorsub(wc, sh_path))
+                condorFile.write('requestMemory = 4000\n\n')
+                condorFile.write('request_disk = 50000\n')
                 condorFile.write('\nqueue 1\n')
 
             os.system(f"chmod 777 {sh_path}")
@@ -1546,10 +1714,11 @@ class EFTFit(object):
                         condorFile.write( ' -t -1\n')
                     condorFile.write('fi\n')
 
-            sub_path = os.path.join(target_dir, f'condor_{wc}_nuisance.sub')
+            sub_path = os.path.join(target_dir, f'condor_{wc}_nEuisance.sub')
             with open(sub_path, 'w') as condorFile:
                 condorFile.write(self.Impact_condorsub(wc, sh_path))
                 condorFile.write('requestMemory = 8192\n\n')
+                condorFile.write('request_disk = 100000\n')
                 condorFile.write(f'queue {len(self.systematics)}\n')
             
             os.system(f"chmod 777 {sh_path}")
@@ -1588,6 +1757,8 @@ class EFTFit(object):
             sub_path = os.path.join(target_dir, f'condor_{wc}_collect.sub')
             with open(sub_path, 'w') as condorFile:
                 condorFile.write(self.Impact_condorsub(wc, sh_path))
+                condorFile.write('requestMemory = 4000\n\n')
+                condorFile.write('request_disk = 10000\n')
                 condorFile.write('\nqueue 1\n')
                 
             os.system(f"chmod 777 {sh_path}")
