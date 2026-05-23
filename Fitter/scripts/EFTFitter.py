@@ -955,6 +955,67 @@ class EFTFit(object):
 
         return (graphwcs, graphnlls)
 
+    def batch1DScanNuisance_SingleWC(self, scan_nuisances, targeted_wc, basename='.test_nuis', batch='crab', points=50, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], RandProf=None):
+        ### Run a 1D scan over nuisances, keeping ONLY the targeted_wc active (all other WCs fixed to 0 and frozen)
+        
+        if isinstance(scan_nuisances, str):
+            scan_nuisances = [scan_nuisances]
+            
+        # 1. Set all WCs to 0 initially
+        params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
+            
+        if isinstance(mask, list) and len(mask) == 1:
+            masks = mask[0]
+        else:
+            masks = ','.join(mask)
+        mask = []
+
+        # 2. Identify all OTHER WCs that need to be locked and frozen to 0
+        wcs_to_freeze = [wc for wc in self.wcs if wc != targeted_wc]
+        
+        # Add any extra WCs you explicitly want to ignore to this freeze list
+        for iwc in ignore:
+            if iwc not in wcs_to_freeze: 
+                wcs_to_freeze.append(iwc)
+
+        # 3. Define ranges: Box the nuisance parameter and your single targeted WC
+        # Nuisance scanned typically from -3 to 3 sigma
+        nuis_range_default = '-3.0,3.0' 
+        
+        for nuis in scan_nuisances:
+            scan_name = '{}.{}_isolated_{}'.format(basename, nuis, targeted_wc)
+            
+            # Combine parameter ranges for the nuisance and the lone active WC
+            nuis_range = '{}={}'.format(nuis, nuis_range_default)
+            wc_range = '{}={},{}'.format(targeted_wc, self.wc_ranges[targeted_wc][0], self.wc_ranges[targeted_wc][1])
+            combined_ranges_arg = '--setParameterRanges ' + ':'.join([nuis_range, wc_range])
+
+            # 4. Configure the tracking
+            # We scan the nuisance, so it goes into the POI slot.
+            # The single targeted WC is allowed to float/profile during this scan.
+            tracked_params = [targeted_wc]
+            
+            # Formulate the freeze command for all other WCs
+            freeze_arg = ['--freezeParameters ' + ','.join(wcs_to_freeze)]
+            
+            # Ensure the nuisance is treated as a floating POI by the minimizer
+            nuis_options = freeze_arg + other 
+
+            self.gridScan(
+                scan_name, 
+                batch, 
+                False,            # Keep freeze=False so gridScan configures floatOtherPOIs and walltimes normally
+                [nuis], 
+                tracked_params, 
+                points, 
+                [combined_ranges_arg] + nuis_options + ['--setParameters', params + ',' + masks], 
+                mask, 
+                mask_syst, 
+                workspace, 
+                track_error=False, 
+                RandProf=RandProf
+            )
+
     def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:

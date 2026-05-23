@@ -729,6 +729,36 @@ class EFTPlot(object):
             basename_lst_with_wc_appended = self.AppendStrToItemsInLst(basename_lst,"."+wc)
             self.LLPlot1DEFT(basename_lst_with_wc_appended, frozen, wc, log)
 
+
+    def BatchLLPlot1DNuisance_SingleWC(self, scan_nuisances, targeted_wc, basename_lst=['.test_nuis'], frozen=False, log=False):
+        """
+        Compatible plotting wrapper for nuisance 1D scans that safe-guards 
+        against dictionary crashes and missing range definitions.
+        """
+        if isinstance(scan_nuisances, str):
+            scan_nuisances = [scan_nuisances]
+
+        ROOT.gROOT.SetBatch(True)
+
+        for nuis in scan_nuisances:
+            # Reconstruct the exact combined name format matching your files:
+            # e.g., '.test_btagSFbc_cor.ctu8_btagSFbc_correlated'
+            custom_basenames = []
+            for base in basename_lst:
+                combined_name = '{}.{}_isolated_{}'.format(base, nuis, targeted_wc)
+                custom_basenames.append(combined_name)
+            
+            # TRAP 1 PROTECTION: Dynamically inject the nuisance range into the dictionary
+            # so the underlying LLPlot1DEFT doesn't throw a KeyError
+            if nuis not in self.wc_ranges:
+                self.wc_ranges[nuis] = [-3.0, 3.0] # Nuisances are scanned from -3 to +3 sigma
+            
+            print(f">>> Processing 1D Nuisance Plot for: {nuis} (WC: {targeted_wc})")
+            
+            # Execute your exact function. It will save an image called '<nuis_name>1DNLL.png'
+            self.LLPlot1DEFT(custom_basenames, frozen, nuis, log)
+
+
     def BatchLLPlotNDEFT(self, basename='.test', frozen=False, wcs=[], log=False):
         if not wcs:
             wcs = self.wcs
