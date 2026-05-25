@@ -110,6 +110,25 @@ class EFTPlot(object):
             # 'ctu1': '\it{c}^{(1)}_{\mathrm{tu}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
             }
 
+        self.texdic_BestScan = {
+            'ctGRe': 'Re \it{c}_{tG}', 
+            'ctGIm': 'Im \it{c}_{tG}', 
+            'cQj31': '\it{c}^{(3,1)}_{Qq}', 
+            'cQj38': '\it{c}^{(3,8)}_{Qq}',
+            'cQj11': '\it{c}^{(1,1)}_{Qq}',
+            'cQj18': '\it{c}^{(1,8)}_{Qq}',
+            'cQu1': '\it{c}^{(1)}_{Qu}',
+            'cQu8': '\it{c}^{(8)}_{Qu}',
+            'cQd1': '\it{c}^{(1)}_{Qd}',
+            'cQd8': '\it{c}^{(8)}_{Qd}',
+            'ctj1': '\it{c}^{(1)}_{qt}', 
+            'ctj8': '\it{c}^{(8)}_{qt}', 
+            'ctu8': '\it{c}^{(8)}_{tu}', 
+            'ctd8': '\it{c}^{(8)}_{td}',
+            'ctd1': '\it{c}^{(1)}_{td}', 
+            'ctu1': '\it{c}^{(1)}_{tu}',
+        }
+
         self.texdicfrac = {
             # 'ctW': '\it{c}_{\mathrm{tW}}',
             # 'ctZ': '\it{c}_{\mathrm{tZ}}',
@@ -2096,7 +2115,6 @@ class EFTPlot(object):
         return fit_array
 
     def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['Others profiled', 'Others fixed to SM'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
-    #def BestScanPlot(self, basename_float_lst=[''], basename_freeze_lst=[''], final=False, titles = ['\mathrm{Others\;profiled}', '\mathrm{Others\;fixed\;to\;SM}'], filename='', wcs=[], printFOM=False, asimov_plotstyle_flag=False):
 
         # Colors to use for the plots
         clr_float = 1 # Black
@@ -2111,7 +2129,8 @@ class EFTPlot(object):
         if not type(basename_float_lst) is list: raise Exception("Error: Please pass a list")
         if not type(basename_freeze_lst) is list: raise Exception("Error: Please pass a list")
 
-        titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
+        # titles = ['\mathrm{' + title.replace(' ', '\;') + '}' for title in titles]
+        # titles = ['#mathrm{' + title + '}' for title in titles]
 
         # Retrieve WC, Best Fit Value, Interval Lower Values, Interval Higher Values
         print('two sigma')
@@ -2161,173 +2180,6 @@ class EFTPlot(object):
             print('\\label{<LABEL>}')
             print('\\end{table}')
 
-        for idx,line in enumerate(fits_float):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq13':
-                line[0] = 'cQq13#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctq1':
-                line[0] = 'ctq1#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq11':
-                line[0] = 'cQq11#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq83':
-                line[0] = 'cQq83#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-
-        for idx,line in enumerate(fits_freeze):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq13':
-                line[0] = 'cQq13#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctq1':
-                line[0] = 'ctq1#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq11':
-                line[0] = 'cQq11#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq83':
-                line[0] = 'cQq83#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-
-        for idx,line in enumerate(fits_float1sigma):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq13':
-                line[0] = 'cQq13#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctq1':
-                line[0] = 'ctq1#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq11':
-                line[0] = 'cQq11#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq83':
-                line[0] = 'cQq83#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-
-        for idx,line in enumerate(fits_freeze1sigma):
-            if line[0]=='ctG':
-                line[0] = 'ctG#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq13':
-                line[0] = 'cQq13#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctq1':
-                line[0] = 'ctq1#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq11':
-                line[0] = 'cQq11#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='cQq83':
-                line[0] = 'cQq83#times5'
-                line[1] = line[1]*5
-                line[2] = [val*5 for val in line[2]]
-                line[3] = [val*5 for val in line[3]]
-            if line[0]=='ctp':
-                line[0] = 'ctp#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpt':
-                line[0] = 'cpt#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
-            if line[0]=='cpQM':
-                line[0] = 'cpQM#divide2'
-                line[1] = line[1]/2
-                line[2] = [val/2 for val in line[2]]
-                line[3] = [val/2 for val in line[3]]
 
         # Set y-coordinates for points and lines
         numWC=len(self.wcs)
@@ -2365,7 +2217,7 @@ class EFTPlot(object):
                 scale = tex[tex.find('#times'):]
                 scale = scale.replace('#times', '\\times')
                 tex = tex[0:tex.find('#times')]
-            tex = self.texdicfrac[tex]
+            tex = self.texdic_BestScan[tex] #texdicfrac[tex]
             y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.16,yval-1,tex+scale))
             #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
             y_labels[idy].SetTextAlign(22)
@@ -2589,10 +2441,14 @@ class EFTPlot(object):
         graph_freeze_1sigma = graph_freeze.Clone("graph_freeze_1sigma")
         graph_float_1sigma.SetLineWidth(3)
         graph_freeze_1sigma.SetLineWidth(3)
-        legend.AddEntry(graph_float,titles[0]+"\,(2\sigma)",'l')
-        legend.AddEntry(graph_float_1sigma,titles[0]+"\,(1\sigma)",'l')
-        legend.AddEntry(graph_freeze,titles[1]+"\,(2\sigma)",'l')
-        legend.AddEntry(graph_freeze_1sigma,titles[1]+"\,(1\sigma)",'l')
+        legend.AddEntry(graph_float, titles[0] + ' (2#sigma)', 'l')
+        legend.AddEntry(graph_float_1sigma, titles[0] + ' (1#sigma)', 'l')
+        legend.AddEntry(graph_freeze, titles[1] + ' (2#sigma)', 'l')
+        legend.AddEntry(graph_freeze_1sigma, titles[1] + ' (1#sigma)', 'l')
+        # legend.AddEntry(graph_float,titles[0]+"\,(2\sigma)",'l')
+        # legend.AddEntry(graph_float_1sigma,titles[0]+"\,(1\sigma)",'l')
+        # legend.AddEntry(graph_freeze,titles[1]+"\,(2\sigma)",'l')
+        # legend.AddEntry(graph_freeze_1sigma,titles[1]+"\,(1\sigma)",'l')
         legend.SetTextSize(0.025)
 
         # Draw everything
@@ -2631,11 +2487,11 @@ class EFTPlot(object):
                     scale = tex[tex.find('#times'):]
                     scale = scale.replace('#times', '\\times')
                     tex = tex[0:tex.find('#times')]
-                tex = self.texdicfrac[tex]
+                tex = self.texdic_BestScan[tex]
                 if 'FoM' in name:
                     y_labels.append(ROOT.TLatex(-0.15*1.16,yval-1,tex+scale))
                 else:
-                    y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.16,yval-1,tex+scale))
+                    y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.10,yval-1,tex+scale))
                 #y_labels.append(ROOT.TLatex(h_fit.GetXaxis().GetXmin()*1.125,yval-1,tex+scale))
                 y_labels[idy].SetTextAlign(22)
                 y_labels[idy].SetTextSize(0.03)

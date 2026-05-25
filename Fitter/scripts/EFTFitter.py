@@ -387,7 +387,7 @@ class EFTFit(object):
         if not os.path.exists(wsname):
             raise RuntimeError('Failed to find the workspace, either considering it as a local afs path or an absolute path. Please, fix it!')
         print('Workspace found! I am gonna use it for running fits...')
-        args = ['combineTool.py','-d',wsname,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=0']
+        args = ['combineTool.py','-d',wsname,'-M','MultiDimFit','--algo','grid','--cminPreScan','--cminDefaultMinimizerStrategy=1'] #'--cminDefaultMinimizerStrategy=0'
         args.extend(['--points','{}'.format(points)])
         if name:              args.extend(['-n','{}'.format(name)])
         if scan_params:     args.extend(['-P',' -P '.join(scan_params)]) # Preserves constraints
@@ -960,7 +960,7 @@ class EFTFit(object):
         
         if isinstance(scan_nuisances, str):
             scan_nuisances = [scan_nuisances]
-            
+
         # 1. Set all WCs to 0 initially
         params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
             
@@ -1016,7 +1016,7 @@ class EFTFit(object):
                 RandProf=RandProf
             )
 
-    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None):
+    def batch1DScanEFT(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None, track=None):
         ### For each wc, run a 1D deltaNLL Scan.
         if not scan_wcs:
             scan_wcs = self.wcs
@@ -1036,13 +1036,28 @@ class EFTFit(object):
             params = ','.join(['{}=0'.format(wc) for wc in self.wcs])
         else:
             params = ','.join(['{}=0'.format(wc) if wc not in wc_val.keys() else '{}={}'.format(wc, wc_val[wc]) for wc in self.wcs])
+
         for wc in scan_wcs:
             if isinstance(mask, list) and len(mask)==1:
                 masks = mask[0]
             else:
                 masks = ','.join(mask)
             mask = []
-            self.gridScan('{}.{}'.format(basename,wc), batch, freeze, [wc], [wcs for wcs in self.wcs if wcs != wc], points, ['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], mask, mask_syst, workspace, track_error=False, RandProf=RandProf)
+            params_tracked = [wcs for wcs in self.wcs if wcs != wc]
+            if track is not None:
+                params_tracked.extend(track)
+            self.gridScan(name='{}.{}'.format(basename,wc), 
+                            batch=batch, 
+                            freeze=freeze, 
+                            scan_params=[wc], 
+                            params_tracked= params_tracked, #[wcs for wcs in self.wcs if wcs != wc], 
+                            points=points, 
+                            other=['--setParameterRanges {}={},{}'.format(wc,wc_ranges[wc][0],wc_ranges[wc][1])]+zero_ignore+freeze_ignore+other+['--setParameters', params+','+masks], 
+                            mask=mask, 
+                            mask_syst=mask_syst, 
+                            workspace=workspace, 
+                            track_error=False, 
+                            RandProf=RandProf)
 
     def batch1DScanEFT_ctG(self, basename='.test', batch='crab', freeze=False, scan_wcs=[], points=300, other=[], mask=[], mask_syst=[], workspace='workspace.root', ignore=[], wc_ranges=None, wc_val=None, RandProf=None):
         ### For each wc, run a 1D deltaNLL Scan.
@@ -1775,7 +1790,7 @@ class EFTFit(object):
                         condorFile.write( ' -t -1\n')
                     condorFile.write('fi\n')
 
-            sub_path = os.path.join(target_dir, f'condor_{wc}_nEuisance.sub')
+            sub_path = os.path.join(target_dir, f'condor_{wc}_nuisance.sub')
             with open(sub_path, 'w') as condorFile:
                 condorFile.write(self.Impact_condorsub(wc, sh_path))
                 condorFile.write('requestMemory = 8192\n\n')
