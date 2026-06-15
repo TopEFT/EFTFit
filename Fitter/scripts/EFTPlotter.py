@@ -524,6 +524,7 @@ class EFTPlot(object):
 
         # Labels
         Title = ROOT.TLatex(0.5, 0.95, "{} 2#DeltaNLL".format(wc))
+        # Title = ROOT.TLatex(0.5, 0.95, "{} -2#DeltaNLL".format(wc))
         Title.SetNDC(1)
         Title.SetTextAlign(20)
         #Title.Draw('same')
@@ -535,7 +536,8 @@ class EFTPlot(object):
         XTitle.SetTextFont(42)
         canvas.cd()
         XTitle.Draw('same')
-        YTitle = ROOT.TLatex(0.03, 0.85, "2#DeltaNLL")
+        # YTitle = ROOT.TLatex(0.03, 0.85, "2#DeltaNLL")
+        YTitle = ROOT.TLatex(0.05, 0.83, "-2#DeltalnL")
         YTitle.SetNDC(1)
         YTitle.SetTextAlign(20)
         YTitle.SetTextFont(42)
@@ -544,13 +546,13 @@ class EFTPlot(object):
         YTitle.Draw('same')
 
         # CMS-required text
-        self.CMS_text = ROOT.TLatex(0.18, 0.96, "CMS")# Simulation")
+        self.CMS_text = ROOT.TLatex(0.18, 0.92, "CMS")# Simulation")
         self.CMS_text.SetNDC(1)
         self.CMS_text.SetTextSize(0.04)
         self.CMS_text.SetTextAlign(30)
         self.CMS_text.Draw('same')
         #self.CMS_extra = ROOT.TLatex(0.37, 0.952, " Supplementary")# Simulation")
-        if not final: self.CMS_extra = ROOT.TLatex(0.37, 0.91, "Preliminary")# Simulation")
+        if not final: self.CMS_extra = ROOT.TLatex(0.35, 0.91, "Preliminary")# Simulation")
         self.CMS_extra.SetNDC(1)
         self.CMS_extra.SetTextSize(0.04)
         self.CMS_extra.SetTextAlign(30)
