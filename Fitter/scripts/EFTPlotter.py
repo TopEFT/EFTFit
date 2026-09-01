@@ -59,32 +59,66 @@ class EFTPlot(object):
                          }
         self.histosFileName = 'Histos.root'
         self.texdic = {
-            'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
-            'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
-            'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
+            #'ctW': '\it{c}_{\mathrm{tW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctZ': '\it{c}_{\mathrm{tZ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctp': '\it{c}_{\mathrm{t} \\varphi}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cpQM': '\it{c}^{-}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctG': '\it{c}_{\mathrm{tG}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cbW': '\it{c}_{\mathrm{bW}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cpQ3': '\it{c}^{3}_{\\varphi \mathrm{Q}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cptb': '\it{c}_{\\varphi \mathrm{tb}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cpt': '\it{c}_{\\varphi \mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQl3': '\it{c}^{3(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQlM': '\it{c}^{-(\\ell)}_{\mathrm{Q}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQe': '\it{c}^{(\\ell)}_{\mathrm{Qe}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctl': '\it{c}^{(\\ell)}_{\mathrm{t}\\ell}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cte': '\it{c}^{(\\ell)}_{\mathrm{te}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctlS': '\it{c}^{S(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctlT': '\it{c}^{T(\\ell)}_{\mathrm{t}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQq81': '\it{c}^{18}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQq11': '\it{c}^{11}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctq8': '\it{c}^{8}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctq1': '\it{c}^{1}_{\mathrm{tq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQq13': '\it{c}^{31}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'cQq83': '\it{c}^{38}_{\mathrm{Qq}}/\mathrm{\Lambda^{2} [TeV^{-2}]}', 
+            #'ctt1': '\it{c}^{1}_{\mathrm{tt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            #'cQQ1': '\it{c}^{1}_{\mathrm{QQ}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            #'cQt8': '\it{c}^{8}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}',
+            #'cQt1': '\it{c}^{1}_{\mathrm{Qt}}/\mathrm{\Lambda^{2} [TeV^{-2}]}'
+
+            'ctW' : r'#it{c}_{tW}/#Lambda^{2} [TeV^{-2}]',
+            'ctZ' : r'#it{c}_{tZ}/#Lambda^{2} [TeV^{-2}]',
+            'ctp' : r'#it{c}_{t#varphi}/#Lambda^{2} [TeV^{-2}]',
+            'cpQM': r'#it{c}^{(-)}_{#varphi Q}/#Lambda^{2} [TeV^{-2}]',
+            'ctG' : r'#it{c}_{tG}/#Lambda^{2} [TeV^{-2}]',
+            'cbW' : r'#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]',
+            'cpQ3': r'#it{c}^{(3)}_{#varphi Q}/#Lambda^{2} [TeV^{-2}]',
+            'cptb': r'#it{c}_{#varphi tb}/#Lambda^{2} [TeV^{-2}]',
+            'cpt' : r'#it{c}_{#varphi t}/#Lambda^{2} [TeV^{-2}]',
+
+            'cQl3': r'#it{c}^{(3,l)}_{Ql}/#Lambda^{2} [TeV^{-2}]',
+            'cQlM': r'#it{c}^{(-,l)}_{Ql}/#Lambda^{2} [TeV^{-2}]',
+            'cQe' : r'#it{c}^{(l)}_{Qe}/#Lambda^{2} [TeV^{-2}]',
+            'ctl' : r'#it{c}^{(l)}_{tl}/#Lambda^{2} [TeV^{-2}]',
+            'cte' : r'#it{c}^{(l)}_{te}/#Lambda^{2} [TeV^{-2}]',
+            'ctlS': r'#it{c}^{(S,l)}_{t}/#Lambda^{2} [TeV^{-2}]',
+            'ctlT': r'#it{c}^{(T,l)}_{t}/#Lambda^{2} [TeV^{-2}]',
+
+            'cQq81': r'#it{c}^{(1,8)}_{Qq}/#Lambda^{2} [TeV^{-2}]',
+            'cQq11': r'#it{c}^{(1,1)}_{Qq}/#Lambda^{2} [TeV^{-2}]',
+            'ctq8' : r'#it{c}^{(8)}_{tq}/#Lambda^{2} [TeV^{-2}]',
+            'ctq1' : r'#it{c}^{(1)}_{tq}/#Lambda^{2} [TeV^{-2}]',
+            'cQq13': r'#it{c}^{(3,1)}_{Qq}/#Lambda^{2} [TeV^{-2}]',
+            'cQq83': r'#it{c}^{(3,8)}_{Qq}/#Lambda^{2} [TeV^{-2}]',
+
+            'ctt1': r'#it{c}^{(1)}_{tt}/#Lambda^{2} [TeV^{-2}]',
+            'cQQ1': r'#it{c}^{(1)}_{QQ}/#Lambda^{2} [TeV^{-2}]',
+            'cQt8': r'#it{c}^{(8)}_{Qt}/#Lambda^{2} [TeV^{-2}]',
+            'cQt1': r'#it{c}^{(1)}_{Qt}/#Lambda^{2} [TeV^{-2}]',
+
+            #'cbW' : r'#it{c}_{bW}/#Lambda^{2} [TeV^{-2}]',
+            #'cpQ3': r'#it{c}^{(3)}_{#varphi Q}/#Lambda^{2} [TeV^{-2}]',
+
         }
         self.texdicfrac = {
             'ctW': '\it{c}_{\mathrm{tW}}',
@@ -158,7 +192,7 @@ class EFTPlot(object):
         #self.CMS_extra.Draw('same')
         self.lumi = 138
         self.arXiv = "arXiv:2012.04120"
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + "+60 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -352,7 +386,7 @@ class EFTPlot(object):
         nll_1sigma = kwargs.pop('nll_1sigma',1)
         nll_2sigma = kwargs.pop('nll_2sigma',4)
         nll_3sigma = kwargs.pop('nll_3sigma',9)
-        ceiling = kwargs.pop('ceiling',10)
+        ceiling = kwargs.pop('ceiling',12)
         #ceiling = kwargs.pop('ceiling',max(10, nll_3sigma+1))
         final = kwargs.pop('final',False)
         filename = kwargs.pop('filename','')
@@ -832,13 +866,15 @@ class EFTPlot(object):
         if len(edge_y) % len(bins_y) > 0 or (len(bins_y) == 1 and len(edge_y) != 2): raise Exception('Please specify ' + str(len(edge_y)/2) + ' bins for y (' + ','.join([str(e) for e in edge_y]) + ')!')
 
         # Build arrays for bins
-        nedge = len(edge_x)/2
+        nedge = int(len(edge_x)/2)
+        print(nedge)
+        print(type(nedge))
         full_edge_x = edge_x
         full_edge_y = edge_y
         edge_x = np.linspace(full_edge_x[0], full_edge_x[-1], bins_x[0])
         for edge in range(1, nedge):
             edge_x = np.append(edge_x, np.linspace(full_edge_x[edge], full_edge_x[-1 - edge], bins_x[edge]))
-        nedge = len(edge_y)/2
+        nedge = int(len(edge_y)/2)
         edge_y = np.linspace(full_edge_y[0], full_edge_y[-1], bins_y[0])
         for edge in range(1, nedge):
             edge_y = np.append(edge_y, np.linspace(full_edge_y[edge], full_edge_y[-1 - edge], bins_y[edge]))
@@ -997,7 +1033,7 @@ class EFTPlot(object):
         gridFile = ROOT.TFile.Open('../fit_files/higgsCombine{}.MultiDimFit.root'.format(name))
         gridTree = gridFile.Get('limit')
         minZ = gridTree.GetMinimum('deltaNLL')
-        points = 100
+        points = 100 
         #gridTree.Draw('2*(deltaNLL-{}):{}:{}>>+hist'.format(minZ,wcs[0],wcs[1]), '2*(deltaNLL-{})<{}'.format(minZ,9))
         #hist2d = ROOT.TH3F('hist', 'hist2d', points, self.wc_ranges[wcs[1]][0], self.wc_ranges[wcs[1]][1], points, self.wc_ranges[wcs[0]][0], self.wc_ranges[wcs[0]][1], 100, 0, 9)
         #hist2d = canvas.GetPrimitive("hist")
@@ -1009,6 +1045,7 @@ class EFTPlot(object):
         original = ROOT.TProfile2D(canvas.GetPrimitive('grid'))
         h_contour = ROOT.TProfile2D('h_contour','h_contour',points,self.wc_ranges[wcs[1]][0]*1.1,self.wc_ranges[wcs[1]][1]*1.1,points,self.wc_ranges[wcs[0]][0]*1.1,self.wc_ranges[wcs[0]][1]*1.1)
         h_contour = original.Clone('h_conotour')
+
         canvas.Print('{}{}2D.png'.format(wcs[0],wcs[1]),'png')
         #original.Copy(h_contour)
 
@@ -1023,6 +1060,7 @@ class EFTPlot(object):
                 if original.GetBinContent(1+xbin,1+ybin)!=0:
                     h_contour.Fill(xcoord,ycoord,original.GetBinContent(1+xbin,1+ybin)-best2DeltaNLL)
                 #h_contour.SetBinContent(1+xbin,1+ybin,original.GetBinContent(1+xbin,1+ybin)-best2DeltaNLL)
+
 
         # Exclude data outside of the contours
         #h_contour.SetMaximum(11.83)
@@ -1040,9 +1078,13 @@ class EFTPlot(object):
         c681D = self.ContourHelper.GetContour(h_contour,1.00)
         c951D = self.ContourHelper.GetContour(h_contour,4.00)
         c9971D = self.ContourHelper.GetContour(h_contour,9.00)
+
+ 
         self.ContourHelper.styleMultiGraph(c68,ROOT.kYellow+1,4,1)
         self.ContourHelper.styleMultiGraph(c95,ROOT.kCyan-2,4,6)
         self.ContourHelper.styleMultiGraph(c997,ROOT.kBlue,4,3)
+
+
         #place holders for the legend, since TLine is weird
         hc68 = ROOT.TH1F('c68', 'c68', 1, 0, 1)
         hc95 = ROOT.TH1F('c95', 'c68', 1, 0, 1)
@@ -1103,7 +1145,7 @@ class EFTPlot(object):
         self.scan_type.SetTextAlign(13)
         self.scan_type.SetTextFont(42)
         self.scan_type.Draw('same')
-        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " fb^{-1} (13 TeV)")
+        self.Lumi_text = ROOT.TLatex(0.9, 0.91, str(self.lumi) + " + 62 fb^{-1} (13 TeV)")
         self.Lumi_text.SetNDC(1)
         self.Lumi_text.SetTextSize(0.04)
         self.Lumi_text.SetTextAlign(30)
@@ -1120,11 +1162,15 @@ class EFTPlot(object):
         #h_contour.GetYaxis().SetNdivisions(7)
         #hist2d.Draw('colz')
         #h_contour.Draw('same')
+
         h_contour.Draw('AXIS')
+
         #canvas.Print('contour.png','png')
+
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
+
         marker_1.DrawMarker(0,0)
         #marker_2.DrawMarker(0,0)
 
@@ -1160,7 +1206,7 @@ class EFTPlot(object):
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
             os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final.eps {}{}contour_final.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         else: 
-            #canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_prelim.png'.format(wcs[0],wcs[1]),'png')
             canvas.Print('{}{}contour_prelim.eps'.format(wcs[0],wcs[1]),'eps')
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
@@ -1184,7 +1230,7 @@ class EFTPlot(object):
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_final_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
             os.system('ps2pdf -dPDFSETTINGS=/prepress -dEPSCrop {}{}contour_final_1d.eps {}{}contour_final_1d.pdf'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
         else: 
-            #canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
+            canvas.Print('{}{}contour_1d.pdf'.format(wcs[0],wcs[1]),'pdf')
             canvas.Print('{}{}contour_prelim_1d.png'.format(wcs[0],wcs[1]),'png')
             canvas.Print('{}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1]),'eps')
             os.system('sed -i "s/STIXGeneral-Italic/STIXXGeneral-Italic/g" {}{}contour_prelim_1d.eps'.format(wcs[0],wcs[1],wcs[0],wcs[1]))
@@ -1443,8 +1489,8 @@ class EFTPlot(object):
         #h_contour.GetXaxis().SetRangeUser(0,6); # ttH
         #h_contour.GetXaxis().SetRangeUser(0,4); # tllq
         #h_contour.GetYaxis().SetRangeUser(0,3); # tll, tllnu
-        #h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
-        #h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
+        h_contour.GetXaxis().SetRange(1,h_contour.GetNbinsX()-3)
+        h_contour.GetYaxis().SetRange(1,h_contour.GetNbinsY()-3)
 
         # Set Contours
         c68 = self.ContourHelper.GetContour(h_contour,2.30)
@@ -1459,10 +1505,10 @@ class EFTPlot(object):
         marker_1.SetMarkerSize(2.0)
         marker_1.SetMarkerColor(97)
         marker_1.SetMarkerStyle(33)
-        marker_2 = ROOT.TMarker()
-        marker_2.SetMarkerSize(1.2)
-        marker_2.SetMarkerColor(89)
-        marker_2.SetMarkerStyle(33)
+#        marker_2 = ROOT.TMarker()
+#        marker_2.SetMarkerSize(1.2)
+#        marker_2.SetMarkerColor(89)
+#        marker_2.SetMarkerStyle(33)
         
         # Misc Markers -- use as needed
         # Simultaneous Fit Marker -- use as needed
@@ -1513,7 +1559,10 @@ class EFTPlot(object):
         self.Lumi_text.Draw('same')
 
         # Draw and save plot
-        h_contour.Draw('AXIS')
+#        h_contour.Draw('AXIS')
+        h_contour.Draw("COLZ CONT LIST")
+        gPad.Update()
+
         c68.Draw('L SAME')
         c95.Draw('L SAME')
         c997.Draw('L SAME')
@@ -2574,9 +2623,10 @@ class EFTPlot(object):
             self.arXiv_extra.SetTextFont(42)
             if not final: self.CMS_extra.Draw('same')
             #if not final: self.arXiv_extra.Draw('same')
-            self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
+            #self.Lumi_text = ROOT.TLatex(0.9, 0.96, str(self.lumi) + " fb^{-1} (13 TeV)")
+            self.Lumi_text = ROOT.TLatex(0.9, 0.96, "200" + " fb^{-1} (13.6 TeV)")
             self.Lumi_text.SetNDC(1)
-            self.Lumi_text.SetTextSize(0.04)
+            self.Lumi_text.SetTextSize(0.03)
             self.Lumi_text.SetTextAlign(30)
             self.Lumi_text.SetTextFont(42)
             self.Lumi_text.Draw('same')
