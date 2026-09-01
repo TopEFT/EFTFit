@@ -24,7 +24,10 @@ PHY_MODEL="HiggsAnalysis.CombinedLimit.InterferenceModels:interferenceModel"
 #AAC_OPTION="--X-allow-no-background --for-fits --no-wrappers --X-pack-asympows --optimize-simpdf-constraints=cms --PO selectedWCs=selectedWCs.txt"
 
 # run text2workspace using interference model
+
 RUN_COMMAND="time text2workspace.py $COM_CARD -P $PHY_MODEL --PO scalingData=$SCAL_DATA --PO verbose -o $WS_NAME"
+
+#RUN_COMMAND="time text2workspace.py $COM_CARD -P $PHY_MODEL --PO scalingData=$SCAL_DATA --PO verbose --X-allow-no-background -o $WS_NAME"
 
 # run text2workspace using AAC model 
 #RUN_COMMAND="time text2workspace.py $COM_CARD -P $PHY_MODEL -o $WS_NAME $AAC_OPTION" 
