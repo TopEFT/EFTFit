@@ -35,6 +35,7 @@ scramv1 b clean; scramv1 b
 ```
 cd $CMSSW_BASE/src/
 git clone https://github.com/TopEFT/EFTFit.git EFTFit
+cd EFTFit
 git checkout py3Combine
 scramv1 b clean; scramv1 b
 ```
@@ -45,7 +46,7 @@ This package is designed to be used with the CombineHarvester fork. This might c
 ```
 git clone git@github.com:cms-analysis/CombineHarvester.git
 cd CombineHarvester
-git checkout 128e41eb
+git checkout v3.0.0-pre1
 scramv1 b clean; scramv1 b
 ```
 
